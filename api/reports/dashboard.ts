@@ -1,6 +1,6 @@
 import type { VercelResponse } from "@vercel/node";
-import prisma from "../lib/prisma";
-import { authenticate, AuthRequest } from "../middleware/auth";
+import prisma from "../../lib/prisma";
+import { authenticate, AuthRequest } from "../../middleware/auth";
 
 export default async function handler(
   req: AuthRequest,

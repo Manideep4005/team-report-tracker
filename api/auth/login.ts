@@ -1,93 +1,93 @@
-import prisma from "../lib/prisma";
+import prisma from "../../lib/prisma";
 
 import bcrypt from "bcryptjs";
 
-import { generateToken } from "../lib/jwt";
+import { generateToken } from "../../lib/jwt";
 
 export default async function handler(
 
-req:any,
+    req: any,
 
-res:any
+    res: any
 
-){
+) {
 
-if(req.method!=="POST"){
+    if (req.method !== "POST") {
 
-return res.status(405).end();
+        return res.status(405).end();
 
-}
+    }
 
-const{
+    const {
 
-email,
+        email,
 
-password,
+        password,
 
-}=req.body;
+    } = req.body;
 
-const user=await prisma.user.findUnique({
+    const user = await prisma.user.findUnique({
 
-where:{
+        where: {
 
-email,
+            email,
 
-},
+        },
 
-});
+    });
 
-if(!user){
+    if (!user) {
 
-return res.status(401).json({
+        return res.status(401).json({
 
-success:false,
+            success: false,
 
-});
+        });
 
-}
+    }
 
-const ok=await bcrypt.compare(
+    const ok = await bcrypt.compare(
 
-password,
+        password,
 
-user.password
+        user.password
 
-);
+    );
 
-if(!ok){
+    if (!ok) {
 
-return res.status(401).json({
+        return res.status(401).json({
 
-success:false,
+            success: false,
 
-});
+        });
 
-}
+    }
 
-const token=generateToken(user.id);
+    const token = generateToken(user.id);
 
-res.setHeader(
+    res.setHeader(
 
-"Set-Cookie",
+        "Set-Cookie",
 
-`token=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=604800`
+        `token=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=604800`
 
-);
+    );
 
-return res.json({
+    return res.json({
 
-success:true,
+        success: true,
 
-user:{
+        user: {
 
-id:user.id,
+            id: user.id,
 
-name:user.name,
+            name: user.name,
 
-email:user.email,
+            email: user.email,
 
-},
+        },
 
-});
+    });
 
 }
