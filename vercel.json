@@ -1,11 +1,7 @@
 {
     "functions": {
         "api/**/*.ts": {
-            "includeFiles": [
-                "lib/**",
-                "middleware/**",
-                "prisma/**"
-            ]
+            "includeFiles": "lib/**"
         }
     }
 }
