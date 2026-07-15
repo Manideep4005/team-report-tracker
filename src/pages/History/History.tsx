@@ -57,7 +57,7 @@ export default function History() {
 
                     <div className="space-y-4 p-6">
 
-                        {data.map((report) => (
+                        {data.map((report: any) => (
                             <div
                                 key={report.id}
                                 className="rounded-xl border border-slate-700 bg-[#0f172a] p-5"
