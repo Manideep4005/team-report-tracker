@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
     getDashboard,
@@ -51,6 +51,12 @@ export default function Dashboard() {
 
     const [description, setDescription] = useState("");
 
+    useEffect(() => {
+        if (data?.myReport && !description) {
+            setDescription(data.myReport.description);
+        }
+    }, [data]);
+
     const reportMutation = useMutation({
         mutationFn: saveReport,
 
@@ -64,12 +70,14 @@ export default function Dashboard() {
     });
 
     async function handleSave() {
-        if (!description.trim()) {
+        const text = description.trim();
+
+        if (!text) {
             toast.warning("Please enter today's work.");
             return;
         }
 
-        reportMutation.mutate(description);
+        reportMutation.mutate(text);
     }
 
     async function handleSummary() {
@@ -94,8 +102,7 @@ export default function Dashboard() {
         );
     }
 
-    const reportText =
-        description || data?.myReport?.description || "";
+
 
     const submitted =
         data?.stats.submitted ?? 0;
@@ -246,7 +253,7 @@ export default function Dashboard() {
 
                     <textarea
                         rows={6}
-                        value={reportText}
+                        value={description}
                         onChange={(e) =>
                             setDescription(e.target.value)
                         }
