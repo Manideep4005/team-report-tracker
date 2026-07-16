@@ -13,7 +13,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
     const today = new Date().toLocaleDateString("en-IN", {
         weekday: "long",
         day: "numeric",
-        month: "long",
+        month: "short",
         year: "numeric",
     });
 
@@ -25,47 +25,56 @@ export default function Header({ onMenuClick }: HeaderProps) {
                 : "Team Work";
 
     return (
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-slate-800 bg-[#0f172a]/95 px-4 backdrop-blur-md sm:h-18 sm:px-6 lg:h-20 lg:px-8">
+        <header className="sticky top-0 z-30 border-b border-slate-800/80 bg-slate-950/90 backdrop-blur-xl">
 
-            {/* Left */}
-            <div className="flex items-center gap-4">
+            <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-3 sm:h-16 sm:px-5 lg:h-[68px] lg:px-8">
 
-                {/* Mobile Menu */}
-                <button
-                    onClick={onMenuClick}
-                    className="rounded-lg p-2 text-slate-300 transition hover:bg-slate-800 hover:text-white lg:hidden"
-                >
-                    <HiOutlineBars3 size={24} />
-                </button>
+                {/* Left */}
 
-                <div>
-                    <h1 className="text-xl font-bold text-white sm:text-2xl lg:text-3xl">
-                        {title}
-                    </h1>
+                <div className="flex items-center gap-3">
 
-                    <p className="hidden text-sm text-slate-400 sm:block">
-                        {today}
-                    </p>
+                    <button
+                        onClick={onMenuClick}
+                        className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-300 transition hover:bg-slate-800 hover:text-white lg:hidden"
+                    >
+                        <HiOutlineBars3 size={20} />
+                    </button>
+
+                    <div>
+
+                        <h1 className="text-lg font-semibold tracking-tight text-white sm:text-xl lg:text-2xl">
+                            {title}
+                        </h1>
+
+                        <p className="hidden text-xs text-slate-500 sm:block">
+                            {today}
+                        </p>
+
+                    </div>
+
                 </div>
 
-            </div>
+                {/* Right */}
 
-            {/* Right */}
-            <div className="flex items-center gap-3 sm:gap-4">
+                <div className="flex items-center gap-2 sm:gap-3">
 
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-base font-semibold text-white sm:h-11 sm:w-11 sm:text-lg">
-                    {user?.name?.charAt(0).toUpperCase()}
-                </div>
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-sm font-semibold text-white sm:h-10 sm:w-10 sm:text-base">
 
-                <div className="hidden sm:block">
+                        {user?.name?.charAt(0).toUpperCase()}
 
-                    <p className="font-medium text-white">
-                        {user?.name}
-                    </p>
+                    </div>
 
-                    <p className="max-w-[220px] truncate text-sm text-slate-400">
-                        {user?.email}
-                    </p>
+                    <div className="hidden sm:block">
+
+                        <p className="text-sm font-medium text-white">
+                            {user?.name}
+                        </p>
+
+                        <p className="max-w-[180px] truncate text-xs text-slate-500">
+                            {user?.email}
+                        </p>
+
+                    </div>
 
                 </div>
 

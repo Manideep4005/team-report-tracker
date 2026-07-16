@@ -34,28 +34,31 @@ export default function Login() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#0f172a] px-4 py-6 sm:px-6 lg:px-8">
+    <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4 py-6">
 
-      <div className="w-full max-w-md rounded-2xl border border-slate-700 bg-[#1e293b] p-6 shadow-2xl sm:p-8 lg:p-10">
+      <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl sm:p-8">
 
-        {/* Logo */}
+        {/* Heading */}
 
         <div className="mb-8 text-center">
 
+          <p className="text-xs font-semibold uppercase tracking-[0.35em] text-blue-400">
+            Team Work
+          </p>
 
-          <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+          <h1 className="mt-3 text-3xl font-bold tracking-tight text-white">
             Welcome Back
           </h1>
 
           <p className="mt-2 text-sm text-slate-400">
-            Sign in to continue to Team Work
+            Sign in to continue your daily work tracking.
           </p>
 
         </div>
 
         <form
           onSubmit={handleLogin}
-          className="space-y-6"
+          className="space-y-5"
         >
 
           {/* Email */}
@@ -73,10 +76,10 @@ export default function Login() {
               id="email"
               type="email"
               autoComplete="email"
-              placeholder="john@example.com"
+              placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="block w-full rounded-xl border border-slate-600 bg-slate-800 px-4 py-3 text-base text-white placeholder:text-slate-500 outline-none transition-all duration-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20"
+              className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white placeholder:text-slate-500 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
             />
 
           </div>
@@ -101,13 +104,13 @@ export default function Login() {
                 placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="block w-full rounded-xl border border-slate-600 bg-slate-800 px-4 py-3 pr-12 text-base text-white placeholder:text-slate-500 outline-none transition-all duration-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20"
+                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 pr-12 text-white placeholder:text-slate-500 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
               />
 
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer text-slate-400 transition hover:text-white"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-white"
               >
                 {showPassword ? (
                   <HiOutlineEyeSlash size={20} />
@@ -125,12 +128,20 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-xl bg-blue-600 px-4 py-3 text-base font-semibold text-white transition-all duration-200 hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-600/30 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full rounded-xl bg-blue-600 py-3 font-semibold text-white transition-all hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-600/20 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? "Signing In..." : "Sign In"}
           </button>
 
         </form>
+
+        <div className="mt-8 border-t border-slate-800 pt-5 text-center">
+
+          <p className="text-xs text-slate-500">
+            Team Report Tracker • Internal Team Portal
+          </p>
+
+        </div>
 
       </div>
 
