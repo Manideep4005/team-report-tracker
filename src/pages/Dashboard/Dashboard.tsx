@@ -115,18 +115,13 @@ export default function Dashboard() {
             ? 0
             : Math.round((submitted / total) * 100);
 
-    const greeting = (() => {
-        const hour = new Date().getHours();
 
-        if (hour < 12) return "Good Morning";
-        if (hour < 17) return "Good Afternoon";
-        return "Good Evening";
-    })();
 
     return (
         <div className="space-y-5">
 
-            {/* Greeting */}
+
+            {/* Today's Progress */}
 
             <section className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
 
@@ -134,12 +129,12 @@ export default function Dashboard() {
 
                     <div>
 
-                        <h1 className="text-2xl font-bold text-white">
-                            👋 {greeting}
-                        </h1>
+                        <h2 className="text-xl font-semibold text-white">
+                            Today's Progress
+                        </h2>
 
-                        <p className="mt-1 text-sm text-slate-400">
-                            Let's see today's team progress.
+                        <p className="mt-1 text-sm text-slate-500">
+                            {submitted} of {total} team members have submitted today's report.
                         </p>
 
                     </div>
@@ -149,7 +144,7 @@ export default function Dashboard() {
                         <div className="mb-2 flex items-center justify-between">
 
                             <span className="text-sm text-slate-400">
-                                Today's Progress
+                                Completion
                             </span>
 
                             <span className="text-sm font-semibold text-white">
@@ -161,17 +156,11 @@ export default function Dashboard() {
                         <div className="h-2 overflow-hidden rounded-full bg-slate-800">
 
                             <div
-                                style={{
-                                    width: `${progress}%`,
-                                }}
+                                style={{ width: `${progress}%` }}
                                 className="h-full rounded-full bg-blue-600 transition-all duration-500"
                             />
 
                         </div>
-
-                        <p className="mt-2 text-xs text-slate-500">
-                            {submitted} of {total} members submitted today
-                        </p>
 
                     </div>
 
