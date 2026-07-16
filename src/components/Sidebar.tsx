@@ -7,6 +7,7 @@ import {
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useEffect } from "react";
+import { HiOutlineUserGroup } from "react-icons/hi2";
 
 interface SidebarProps {
     open: boolean;
@@ -44,8 +45,8 @@ export default function Sidebar({
             <div
                 onClick={onClose}
                 className={`fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-200 lg:hidden ${open
-                        ? "visible opacity-100"
-                        : "invisible opacity-0"
+                    ? "visible opacity-100"
+                    : "invisible opacity-0"
                     }`}
             />
 
@@ -53,8 +54,8 @@ export default function Sidebar({
 
             <aside
                 className={`fixed left-0 top-0 z-50 flex h-dvh w-64 flex-col border-r border-slate-800 bg-slate-950 transition-transform duration-200 ease-out ${open
-                        ? "translate-x-0"
-                        : "-translate-x-full"
+                    ? "translate-x-0"
+                    : "-translate-x-full"
                     } lg:translate-x-0`}
             >
 
@@ -65,7 +66,7 @@ export default function Sidebar({
                     <div className="flex items-center gap-3">
 
                         <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-600 text-base font-bold text-white shadow-lg shadow-blue-600/30">
-                            TW
+                            <HiOutlineUserGroup size={22} />
                         </div>
 
                         <h2 className="text-lg font-semibold tracking-tight text-white">
