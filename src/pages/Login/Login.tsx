@@ -2,6 +2,7 @@ import { HiOutlineEye, HiOutlineEyeSlash } from "react-icons/hi2";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
+import { toast } from "sonner";
 
 export default function Login() {
   const { login } = useAuth();
@@ -18,7 +19,7 @@ export default function Login() {
     if (loading) return;
 
     if (!email.trim() || !password.trim()) {
-      alert("Please enter email and password.");
+      toast.warning("Please enter email and password.");
       return;
     }
 
@@ -27,7 +28,7 @@ export default function Login() {
       await login(email, password);
       navigate("/dashboard");
     } catch {
-      alert("Invalid email or password.");
+      toast.error("Invalid email or password.");
     } finally {
       setLoading(false);
     }
