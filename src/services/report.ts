@@ -2,12 +2,12 @@ import api from "./api";
 
 
 export async function getDashboard() {
-  const { data } = await api.get("/reports/dashboard");
+  const { data } = await api.get("/api/reports/dashboard");
   return data;
 }
 
 export async function saveReport(description: string) {
-  const { data } = await api.post("/reports/create", {
+  const { data } = await api.post("/api/reports/create", {
     description,
   });
 
@@ -15,7 +15,7 @@ export async function saveReport(description: string) {
 }
 
 export async function getHistory(date?: string) {
-  const { data } = await api.get("/reports/history", {
+  const { data } = await api.get("/api/reports/history", {
     params: date ? { date } : {},
   });
 
@@ -23,6 +23,6 @@ export async function getHistory(date?: string) {
 }
 
 export async function getSummary() {
-  const { data } = await api.get("/reports/summary");
+  const { data } = await api.get("/api/reports/summary");
   return data;
 }

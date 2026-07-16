@@ -18,7 +18,7 @@ export interface LoginResponse {
 
 export async function login(payload: LoginRequest) {
   const { data } = await api.post<LoginResponse>(
-    "/auth/login",
+    "/api/auth/login",
     payload
   );
 
@@ -26,11 +26,11 @@ export async function login(payload: LoginRequest) {
 }
 
 export async function logout() {
-  await api.post("/auth/logout");
+  await api.post("/api/auth/logout");
 }
 
 export async function me() {
-  const { data } = await api.get<User>("/auth/me");
+  const { data } = await api.get<User>("/api/auth/me");
 
   return data;
 }
