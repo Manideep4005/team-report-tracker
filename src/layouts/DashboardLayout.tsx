@@ -1,4 +1,4 @@
-import { type ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
 
@@ -7,16 +7,25 @@ interface Props {
 }
 
 export default function DashboardLayout({ children }: Props) {
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+
     return (
-        <div className="h-screen bg-[#020617]">
+        <div className="min-h-screen bg-[#020617]">
 
-            <Sidebar />
+            {/* Sidebar */}
+            <Sidebar
+                open={sidebarOpen}
+                onClose={() => setSidebarOpen(false)}
+            />
 
-            <div className="ml-64 flex h-screen flex-col">
+            {/* Main Content */}
+            <div className="flex min-h-screen flex-col lg:ml-64">
 
-                <Header />
+                <Header
+                    onMenuClick={() => setSidebarOpen(true)}
+                />
 
-                <main className="flex-1 overflow-y-auto p-8">
+                <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
                     {children}
                 </main>
 

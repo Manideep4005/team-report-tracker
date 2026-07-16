@@ -4,6 +4,52 @@ html {
   scroll-behavior: smooth;
 }
 
+body {
+  margin: 0;
+  min-width: 320px;
+  background: #020617;
+  color: #ffffff;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* Better box sizing */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Images */
+
+img,
+svg,
+video,
+canvas {
+  display: block;
+  max-width: 100%;
+}
+
+/* Buttons */
+
+button {
+  cursor: pointer;
+}
+
+/* Inputs */
+
+input,
+textarea,
+select {
+  font: inherit;
+}
+
 /* Firefox */
 
 * {
@@ -15,6 +61,7 @@ html {
 
 ::-webkit-scrollbar {
   width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -23,9 +70,18 @@ html {
 
 ::-webkit-scrollbar-thumb {
   background: #475569;
-  border-radius: 999px;
+  border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: #64748b;
+}
+
+/* Mobile */
+
+@media (max-width: 640px) {
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
 }

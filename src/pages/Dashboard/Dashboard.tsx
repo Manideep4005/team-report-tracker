@@ -85,7 +85,7 @@ export default function Dashboard() {
 
     if (isLoading) {
         return (
-            <div className="text-slate-300">
+            <div className="flex h-60 items-center justify-center text-slate-400">
                 Loading dashboard...
             </div>
         );
@@ -93,19 +93,20 @@ export default function Dashboard() {
 
     const reportText =
         description || data?.myReport?.description || "";
+
     return (
-        <div className="space-y-8">
+        <div className="space-y-6 lg:space-y-8">
 
             {/* Stats */}
 
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
 
-                <div className="rounded-2xl border border-slate-700 bg-slate-900 p-6">
+                <div className="rounded-xl lg:rounded-2xl border border-slate-700 bg-slate-900 p-5 lg:p-6">
                     <p className="text-sm text-slate-400">
                         Submitted Today
                     </p>
 
-                    <h2 className="mt-3 text-4xl font-bold text-green-400">
+                    <h2 className="mt-3 text-3xl font-bold text-green-400 lg:text-4xl">
                         {data?.stats.submitted}
                     </h2>
 
@@ -114,12 +115,12 @@ export default function Dashboard() {
                     </p>
                 </div>
 
-                <div className="rounded-2xl border border-slate-700 bg-slate-900 p-6">
+                <div className="rounded-xl lg:rounded-2xl border border-slate-700 bg-slate-900 p-5 lg:p-6">
                     <p className="text-sm text-slate-400">
                         Pending Today
                     </p>
 
-                    <h2 className="mt-3 text-4xl font-bold text-red-400">
+                    <h2 className="mt-3 text-3xl font-bold text-red-400 lg:text-4xl">
                         {data?.stats.pending}
                     </h2>
 
@@ -128,12 +129,12 @@ export default function Dashboard() {
                     </p>
                 </div>
 
-                <div className="rounded-2xl border border-slate-700 bg-slate-900 p-6">
+                <div className="rounded-xl lg:rounded-2xl border border-slate-700 bg-slate-900 p-5 lg:p-6">
                     <p className="text-sm text-slate-400">
                         Total Members
                     </p>
 
-                    <h2 className="mt-3 text-4xl font-bold text-blue-400">
+                    <h2 className="mt-3 text-3xl font-bold text-blue-400 lg:text-4xl">
                         {data?.stats.totalMembers}
                     </h2>
 
@@ -142,12 +143,12 @@ export default function Dashboard() {
                     </p>
                 </div>
 
-                <div className="rounded-2xl border border-slate-700 bg-slate-900 p-6">
+                <div className="rounded-xl lg:rounded-2xl border border-slate-700 bg-slate-900 p-5 lg:p-6">
                     <p className="text-sm text-slate-400">
                         Completion
                     </p>
 
-                    <h2 className="mt-3 text-4xl font-bold text-cyan-400">
+                    <h2 className="mt-3 text-3xl font-bold text-cyan-400 lg:text-4xl">
                         {data?.stats.completion}%
                     </h2>
 
@@ -160,11 +161,11 @@ export default function Dashboard() {
 
             {/* My Report */}
 
-            <div className="rounded-2xl border border-slate-700 bg-slate-900">
+            <div className="rounded-xl lg:rounded-2xl border border-slate-700 bg-slate-900">
 
-                <div className="border-b border-slate-700 px-6 py-4">
+                <div className="border-b border-slate-700 px-5 py-4 lg:px-6">
 
-                    <h2 className="text-xl font-semibold text-white">
+                    <h2 className="text-lg font-semibold text-white lg:text-xl">
                         Today's Report
                     </h2>
 
@@ -174,22 +175,22 @@ export default function Dashboard() {
 
                 </div>
 
-                <div className="p-6">
+                <div className="p-5 lg:p-6">
 
                     <textarea
-                        rows={8}
+                        rows={7}
                         value={reportText}
                         onChange={(e) => setDescription(e.target.value)}
                         placeholder="Describe what you worked on today..."
-                        className="w-full rounded-xl border border-slate-700 bg-[#0f172a] p-4 text-slate-200 outline-none transition focus:border-blue-500"
+                        className="min-h-[200px] w-full rounded-xl border border-slate-700 bg-[#0f172a] p-4 text-slate-200 outline-none transition focus:border-blue-500"
                     />
 
-                    <div className="mt-5 flex justify-end">
+                    <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-end">
 
                         <button
                             onClick={handleSave}
                             disabled={reportMutation.isPending}
-                            className="rounded-xl bg-blue-600 px-6 py-3 font-medium text-white transition hover:bg-blue-700 disabled:opacity-60"
+                            className="w-full rounded-xl bg-blue-600 px-6 py-3 font-medium text-white transition hover:bg-blue-700 disabled:opacity-60 sm:w-auto"
                         >
                             {reportMutation.isPending
                                 ? "Saving..."
@@ -206,16 +207,18 @@ export default function Dashboard() {
 
             {/* Pending & Reports */}
 
-            <div className="grid gap-8 lg:grid-cols-2">
+            <div className="grid gap-6 lg:grid-cols-2">
 
                 {/* Pending Members */}
 
-                <div className="rounded-2xl border border-slate-700 bg-slate-900">
+                <div className="rounded-xl lg:rounded-2xl border border-slate-700 bg-slate-900">
 
-                    <div className="border-b border-slate-700 px-6 py-4">
+                    <div className="border-b border-slate-700 px-5 py-4 lg:px-6">
+
                         <h3 className="text-lg font-semibold text-white">
                             Pending Submission
                         </h3>
+
                     </div>
 
                     <div className="divide-y divide-slate-800">
@@ -225,21 +228,25 @@ export default function Dashboard() {
                             .map((member) => (
                                 <div
                                     key={member.id}
-                                    className="flex items-center justify-between px-6 py-4"
+                                    className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between lg:px-6"
                                 >
-                                    <div>
+
+                                    <div className="min-w-0">
+
                                         <p className="font-medium text-white">
                                             {member.name}
                                         </p>
 
-                                        <p className="text-sm text-slate-500">
+                                        <p className="truncate text-sm text-slate-500">
                                             {member.email}
                                         </p>
+
                                     </div>
 
-                                    <span className="rounded-full bg-red-500/20 px-3 py-1 text-xs font-semibold text-red-400">
+                                    <span className="w-fit rounded-full bg-red-500/20 px-3 py-1 text-xs font-semibold text-red-400">
                                         Pending
                                     </span>
+
                                 </div>
                             ))}
 
@@ -248,47 +255,47 @@ export default function Dashboard() {
                                 🎉 Everyone has submitted today's report.
                             </div>
                         )}
-
                     </div>
+                </div>                {/* Today's Reports */}
 
-                </div>
+                <div className="rounded-xl lg:rounded-2xl border border-slate-700 bg-slate-900">
 
-                {/* Today's Reports */}
+                    <div className="border-b border-slate-700 px-5 py-4 lg:px-6">
 
-                <div className="rounded-2xl border border-slate-700 bg-slate-900">
-
-                    <div className="border-b border-slate-700 px-6 py-4">
                         <h3 className="text-lg font-semibold text-white">
                             Today's Reports
                         </h3>
+
                     </div>
 
-                    <div className="max-h-[420px] overflow-y-auto divide-y divide-slate-800">
+                    <div className="max-h-[500px] overflow-y-auto divide-y divide-slate-800">
 
                         {data?.reports.map((report) => (
                             <div
                                 key={report.id}
-                                className="px-6 py-5"
+                                className="px-5 py-5 lg:px-6"
                             >
-                                <div className="flex items-start justify-between gap-4">
 
-                                    <div className="flex-1">
+                                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+
+                                    <div className="min-w-0 flex-1">
 
                                         <p className="font-semibold text-white">
                                             {report.user.name}
                                         </p>
 
-                                        <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-400">
+                                        <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-slate-400">
                                             {report.description}
                                         </p>
 
                                     </div>
 
-                                    <span className="rounded-full bg-green-500/20 px-3 py-1 text-xs font-semibold text-green-400">
+                                    <span className="w-fit rounded-full bg-green-500/20 px-3 py-1 text-xs font-semibold text-green-400">
                                         Submitted
                                     </span>
 
                                 </div>
+
                             </div>
                         ))}
 
@@ -306,13 +313,13 @@ export default function Dashboard() {
 
             {/* Team Summary */}
 
-            <div className="rounded-2xl border border-slate-700 bg-slate-900">
+            <div className="rounded-xl lg:rounded-2xl border border-slate-700 bg-slate-900">
 
-                <div className="flex items-center justify-between px-6 py-5">
+                <div className="flex flex-col gap-4 px-5 py-5 sm:flex-row sm:items-center sm:justify-between lg:px-6">
 
                     <div>
 
-                        <h2 className="text-xl font-semibold text-white">
+                        <h2 className="text-lg font-semibold text-white lg:text-xl">
                             Daily Team Summary
                         </h2>
 
@@ -324,7 +331,7 @@ export default function Dashboard() {
 
                     <button
                         onClick={handleSummary}
-                        className="rounded-xl bg-indigo-600 px-6 py-3 font-medium text-white transition hover:bg-indigo-700"
+                        className="w-full rounded-xl bg-indigo-600 px-6 py-3 font-medium text-white transition hover:bg-indigo-700 sm:w-auto"
                     >
                         Copy Summary
                     </button>
