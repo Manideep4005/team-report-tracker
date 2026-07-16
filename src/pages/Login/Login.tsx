@@ -42,9 +42,6 @@ export default function Login() {
 
         <div className="mb-8 text-center">
 
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-600 text-2xl font-bold text-white shadow-lg shadow-blue-600/30">
-            TW
-          </div>
 
           <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
             Welcome Back
