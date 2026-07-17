@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Enable class-based dark mode */
+@custom-variant dark (&:where(.dark, .dark *));
+
 html {
   scroll-behavior: smooth;
 }
@@ -7,26 +10,24 @@ html {
 body {
   margin: 0;
   min-width: 320px;
-  background: #020617;
-  color: #ffffff;
   overflow-x: hidden;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+
+  @apply bg-slate-50 text-slate-900 antialiased dark:bg-slate-950 dark:text-white;
+
+  transition:
+    background-color .25s ease,
+    color .25s ease;
 }
 
 #root {
   min-height: 100vh;
 }
 
-/* Better box sizing */
-
 *,
 *::before,
 *::after {
   box-sizing: border-box;
 }
-
-/* Images */
 
 img,
 svg,
@@ -36,13 +37,9 @@ canvas {
   max-width: 100%;
 }
 
-/* Buttons */
-
 button {
   cursor: pointer;
 }
-
-/* Inputs */
 
 input,
 textarea,
@@ -50,14 +47,10 @@ select {
   font: inherit;
 }
 
-/* Firefox */
-
 * {
   scrollbar-width: thin;
-  scrollbar-color: #475569 transparent;
+  scrollbar-color: #64748b transparent;
 }
-
-/* Chrome */
 
 ::-webkit-scrollbar {
   width: 8px;
@@ -69,19 +62,12 @@ select {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #475569;
+  background: #64748b;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #64748b;
+  background: #475569;
 }
 
-/* Mobile */
-
-@media (max-width: 640px) {
-  ::-webkit-scrollbar {
-    width: 5px;
-    height: 5px;
-  }
-}
+@import "./styles/components.css";

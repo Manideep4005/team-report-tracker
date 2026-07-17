@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+    useMutation,
+    useQuery,
+    useQueryClient,
+} from "@tanstack/react-query";
 import {
     getDashboard,
     getSummary,
@@ -41,32 +45,49 @@ interface DashboardResponse {
 export default function Dashboard() {
     const queryClient = useQueryClient();
 
-    const { data, isLoading } = useQuery<DashboardResponse>({
-        queryKey: ["dashboard"],
-        queryFn: async () => {
-            const response = await getDashboard();
-            return response.data;
-        },
-    });
+    const { data, isLoading } =
+        useQuery<DashboardResponse>({
+            queryKey: ["dashboard"],
+            queryFn: async () => {
+                const response =
+                    await getDashboard();
 
-    const [description, setDescription] = useState("");
-    const [summaryLoading, setSummaryLoading] = useState(false);
+                return response.data;
+            },
+        });
+
+    const [description, setDescription] =
+        useState("");
+
+    const [summaryLoading, setSummaryLoading] =
+        useState(false);
 
     useEffect(() => {
-        if (data?.myReport && !description) {
-            setDescription(data.myReport.description);
+        if (
+            data?.myReport &&
+            description === ""
+        ) {
+            setDescription(
+                data.myReport.description
+            );
         }
-    }, [data]);
+    }, [data, description]);
 
     const reportMutation = useMutation({
         mutationFn: saveReport,
 
-        onSuccess: () => {
+        onSuccess: (response) => {
+            setDescription(
+                response.data.description
+            );
+
             queryClient.invalidateQueries({
                 queryKey: ["dashboard"],
             });
 
-            toast.success("Report saved successfully.");
+            toast.success(
+                "Report saved successfully."
+            );
         },
     });
 
@@ -74,7 +95,9 @@ export default function Dashboard() {
         const text = description.trim();
 
         if (!text) {
-            toast.warning("Please enter today's work.");
+            toast.warning(
+                "Please enter today's work."
+            );
             return;
         }
 
@@ -85,13 +108,20 @@ export default function Dashboard() {
         try {
             setSummaryLoading(true);
 
-            const response = await getSummary();
+            const response =
+                await getSummary();
 
-            await navigator.clipboard.writeText(response.data);
+            await navigator.clipboard.writeText(
+                response.data
+            );
 
-            toast.success("Team summary copied.");
+            toast.success(
+                "Team summary copied."
+            );
         } catch {
-            toast.error("Unable to copy summary.");
+            toast.error(
+                "Unable to copy summary."
+            );
         } finally {
             setSummaryLoading(false);
         }
@@ -100,14 +130,12 @@ export default function Dashboard() {
     if (isLoading) {
         return (
             <div className="flex h-[60vh] items-center justify-center">
-                <div className="text-slate-400">
+                <p className="text-slate-500 dark:text-slate-400">
                     Loading dashboard...
-                </div>
+                </p>
             </div>
         );
     }
-
-
 
     const submitted =
         data?.stats.submitted ?? 0;
@@ -118,52 +146,74 @@ export default function Dashboard() {
     const progress =
         total === 0
             ? 0
-            : Math.round((submitted / total) * 100);
-
-
+            : Math.round(
+                (submitted / total) * 100
+            );
 
     return (
-        <div className="space-y-5">
+        <div className="space-y-8">
 
+            <div>
+                <h1 className="page-title">
+                    Dashboard
+                </h1>
+
+                <p className="page-description">
+                    Track today's progress,
+                    manage your report and
+                    monitor your team's
+                    submissions.
+                </p>
+            </div>
 
             {/* Today's Progress */}
 
-            <section className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+            <section className="card">
 
-                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div className="card-body">
 
-                    <div>
+                    <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
 
-                        <h2 className="text-xl font-semibold text-white">
-                            Today's Progress
-                        </h2>
+                        <div>
 
-                        <p className="mt-1 text-sm text-slate-500">
-                            {submitted} of {total} team members have submitted today's report.
-                        </p>
+                            <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+                                Today's Progress
+                            </h2>
 
-                    </div>
-
-                    <div className="w-full md:w-72">
-
-                        <div className="mb-2 flex items-center justify-between">
-
-                            <span className="text-sm text-slate-400">
-                                Completion
-                            </span>
-
-                            <span className="text-sm font-semibold text-white">
-                                {progress}%
-                            </span>
+                            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                                {submitted} of {total}
+                                {" "}
+                                team members have
+                                submitted today's
+                                report.
+                            </p>
 
                         </div>
 
-                        <div className="h-2 overflow-hidden rounded-full bg-slate-800">
+                        <div className="w-full lg:w-80">
 
-                            <div
-                                style={{ width: `${progress}%` }}
-                                className="h-full rounded-full bg-blue-600 transition-all duration-500"
-                            />
+                            <div className="mb-2 flex items-center justify-between">
+
+                                <span className="text-sm text-slate-500 dark:text-slate-400">
+                                    Completion
+                                </span>
+
+                                <span className="font-semibold text-slate-900 dark:text-white">
+                                    {progress}%
+                                </span>
+
+                            </div>
+
+                            <div className="h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+
+                                <div
+                                    style={{
+                                        width: `${progress}%`,
+                                    }}
+                                    className="h-full rounded-full bg-blue-600 transition-all duration-500"
+                                />
+
+                            </div>
 
                         </div>
 
@@ -175,92 +225,90 @@ export default function Dashboard() {
 
             {/* Stats */}
 
-            <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
 
-                <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
+                <div className="card">
+                    <div className="card-body">
+                        <p className="text-3xl font-bold text-emerald-500">
+                            {data?.stats.submitted}
+                        </p>
 
-                    <p className="text-3xl font-bold text-emerald-400">
-                        {data?.stats.submitted}
-                    </p>
-
-                    <p className="mt-1 text-sm text-slate-400">
-                        Submitted
-                    </p>
-
+                        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                            Submitted
+                        </p>
+                    </div>
                 </div>
 
-                <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
+                <div className="card">
+                    <div className="card-body">
+                        <p className="text-3xl font-bold text-red-500">
+                            {data?.stats.pending}
+                        </p>
 
-                    <p className="text-3xl font-bold text-red-400">
-                        {data?.stats.pending}
-                    </p>
-
-                    <p className="mt-1 text-sm text-slate-400">
-                        Pending
-                    </p>
-
+                        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                            Pending
+                        </p>
+                    </div>
                 </div>
 
-                <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
+                <div className="card">
+                    <div className="card-body">
+                        <p className="text-3xl font-bold text-cyan-500">
+                            {data?.stats.totalMembers}
+                        </p>
 
-                    <p className="text-3xl font-bold text-cyan-400">
-                        {data?.stats.totalMembers}
-                    </p>
-
-                    <p className="mt-1 text-sm text-slate-400">
-                        Members
-                    </p>
-
+                        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                            Members
+                        </p>
+                    </div>
                 </div>
 
-                <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
+                <div className="card">
+                    <div className="card-body">
+                        <p className="text-3xl font-bold text-blue-500">
+                            {data?.stats.completion}%
+                        </p>
 
-                    <p className="text-3xl font-bold text-blue-400">
-                        {data?.stats.completion}%
-                    </p>
-
-                    <p className="mt-1 text-sm text-slate-400">
-                        Complete
-                    </p>
-
+                        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                            Completion
+                        </p>
+                    </div>
                 </div>
 
-            </section>
+            </section>            {/* Today's Report */}
 
-            {/* Today's Report */}
+            <section className="card">
 
-            <section className="rounded-2xl border border-slate-800 bg-slate-900">
+                <div className="card-header">
 
-                <div className="border-b border-slate-800 px-5 py-4">
-
-                    <h2 className="text-lg font-semibold text-white">
+                    <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
                         📝 Today's Report
                     </h2>
 
-                    <p className="mt-1 text-sm text-slate-500">
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                         Write what you've completed today.
                     </p>
 
                 </div>
 
-                <div className="p-5">
+                <div className="card-body">
 
                     <textarea
-                        rows={6}
+                        rows={7}
                         value={description}
                         onChange={(e) =>
                             setDescription(e.target.value)
                         }
                         placeholder="Completed login page, fixed API bugs, deployed frontend..."
-                        className="min-h-[170px] w-full rounded-xl border border-slate-700 bg-slate-950 p-4 text-sm text-white outline-none transition focus:border-blue-500"
+                        className="input min-h-[180px] resize-none"
                     />
 
-                    <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:justify-end">
+                    <div className="mt-5 flex justify-end">
 
                         <button
                             onClick={handleSave}
                             disabled={reportMutation.isPending}
-                            className="w-full rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 sm:w-auto"
+                            className="btn-primary"
                         >
                             {reportMutation.isPending
                                 ? "Saving..."
@@ -275,29 +323,31 @@ export default function Dashboard() {
 
             {/* Team Status + Latest Reports */}
 
-            <section className="grid gap-5 lg:grid-cols-2">                {/* Team Status */}
+            <section className="grid gap-6 xl:grid-cols-2">
 
-                <div className="rounded-2xl border border-slate-800 bg-slate-900">
+                {/* Team Status */}
 
-                    <div className="border-b border-slate-800 px-5 py-4">
+                <div className="card">
 
-                        <h2 className="text-lg font-semibold text-white">
+                    <div className="card-header">
+
+                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
                             👥 Team Status
                         </h2>
 
-                        <p className="mt-1 text-sm text-slate-500">
+                        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                             Today's submission status
                         </p>
 
                     </div>
 
-                    <div className="divide-y divide-slate-800">
+                    <div className="divide-y divide-slate-200 dark:divide-slate-800">
 
                         {data?.teamStatus.map((member) => (
 
                             <div
                                 key={member.id}
-                                className="flex items-center justify-between px-5 py-4"
+                                className="flex items-center justify-between px-6 py-4"
                             >
 
                                 <div className="flex items-center gap-3">
@@ -311,11 +361,11 @@ export default function Dashboard() {
 
                                     <div>
 
-                                        <p className="font-medium text-white">
+                                        <p className="font-medium text-slate-900 dark:text-white">
                                             {member.name}
                                         </p>
 
-                                        <p className="text-xs text-slate-500">
+                                        <p className="text-xs text-slate-500 dark:text-slate-400">
                                             {member.submitted
                                                 ? "Submitted"
                                                 : "Pending"}
@@ -327,8 +377,8 @@ export default function Dashboard() {
 
                                 <span
                                     className={`rounded-full px-3 py-1 text-xs font-semibold ${member.submitted
-                                        ? "bg-emerald-500/15 text-emerald-400"
-                                        : "bg-red-500/15 text-red-400"
+                                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400"
+                                        : "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400"
                                         }`}
                                 >
                                     {member.submitted
@@ -346,25 +396,25 @@ export default function Dashboard() {
 
                 {/* Latest Reports */}
 
-                <div className="rounded-2xl border border-slate-800 bg-slate-900">
+                <div className="card">
 
-                    <div className="border-b border-slate-800 px-5 py-4">
+                    <div className="card-header">
 
-                        <h2 className="text-lg font-semibold text-white">
+                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
                             📋 Latest Reports
                         </h2>
 
-                        <p className="mt-1 text-sm text-slate-500">
+                        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                             Today's submissions
                         </p>
 
                     </div>
 
-                    <div className="max-h-[480px] divide-y divide-slate-800 overflow-y-auto">
+                    <div className="max-h-[500px] divide-y divide-slate-200 overflow-y-auto dark:divide-slate-800">
 
                         {data?.reports.length === 0 && (
 
-                            <div className="py-10 text-center text-slate-500">
+                            <div className="py-12 text-center text-slate-500 dark:text-slate-400">
                                 No reports submitted today.
                             </div>
 
@@ -374,14 +424,14 @@ export default function Dashboard() {
 
                             <div
                                 key={report.id}
-                                className="px-5 py-4"
+                                className="px-6 py-5"
                             >
 
-                                <div className="mb-2 flex items-center justify-between">
+                                <div className="mb-3 flex items-center justify-between">
 
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-3">
 
-                                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">
+                                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 font-semibold text-white">
 
                                             {report.user.name
                                                 .charAt(0)
@@ -391,11 +441,11 @@ export default function Dashboard() {
 
                                         <div>
 
-                                            <p className="text-sm font-semibold text-white">
+                                            <p className="font-semibold text-slate-900 dark:text-white">
                                                 {report.user.name}
                                             </p>
 
-                                            <p className="text-xs text-slate-500">
+                                            <p className="text-xs text-slate-500 dark:text-slate-400">
                                                 {new Date(
                                                     report.createdAt
                                                 ).toLocaleTimeString(
@@ -411,13 +461,13 @@ export default function Dashboard() {
 
                                     </div>
 
-                                    <span className="rounded-full bg-emerald-500/15 px-2 py-1 text-[11px] font-semibold text-emerald-400">
+                                    <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400">
                                         Submitted
                                     </span>
 
                                 </div>
 
-                                <p className="whitespace-pre-wrap break-words text-sm leading-6 text-slate-300">
+                                <p className="whitespace-pre-wrap break-words text-sm leading-7 text-slate-700 dark:text-slate-300">
                                     {report.description}
                                 </p>
 
@@ -429,61 +479,71 @@ export default function Dashboard() {
 
                 </div>
 
-            </section>
+            </section>            {/* Daily Summary */}
 
-            {/* Daily Summary */}
+            <section className="card">
 
-            <section className="rounded-2xl border border-slate-800 bg-slate-900">
+                <div className="card-body">
 
-                <div className="flex flex-col gap-4 px-5 py-5 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
 
-                    <div>
+                        <div>
 
-                        <h2 className="text-lg font-semibold text-white">
-                            📄 Daily Team Summary
-                        </h2>
+                            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+                                📄 Daily Team Summary
+                            </h2>
 
-                        <p className="mt-1 text-sm text-slate-500">
-                            Ready to share with your team.
-                        </p>
+                            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                                Generate a formatted summary of today's reports
+                                and copy it to your clipboard for sharing with
+                                the team.
+                            </p>
+
+                        </div>
+
+                        <button
+                            onClick={handleSummary}
+                            disabled={summaryLoading}
+                            className="btn-primary min-w-[180px] disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                            {summaryLoading ? (
+                                <span className="flex items-center justify-center gap-2">
+
+                                    <svg
+                                        className="h-4 w-4 animate-spin"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                    >
+                                        <circle
+                                            cx="12"
+                                            cy="12"
+                                            r="10"
+                                            stroke="currentColor"
+                                            strokeWidth="4"
+                                            className="opacity-25"
+                                        />
+
+                                        <path
+                                            fill="currentColor"
+                                            className="opacity-75"
+                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                                        />
+                                    </svg>
+
+                                    Generating...
+
+                                </span>
+                            ) : (
+                                "📋 Copy Summary"
+                            )}
+                        </button>
 
                     </div>
 
-                    <button
-                        onClick={handleSummary}
-                        disabled={summaryLoading}
-                        className="w-full rounded-xl bg-indigo-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-                    >
-                        {summaryLoading ? (
-                            <span className="flex items-center justify-center gap-2">
-                                <svg
-                                    className="h-4 w-4 animate-spin"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                >
-                                    <circle
-                                        className="opacity-25"
-                                        cx="12"
-                                        cy="12"
-                                        r="10"
-                                        stroke="currentColor"
-                                        strokeWidth="4"
-                                    />
-                                    <path
-                                        className="opacity-75"
-                                        fill="currentColor"
-                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                                    />
-                                </svg>
-                                Generating...
-                            </span>
-                        ) : (
-                            "📋 Copy Summary"
-                        )}
-                    </button>
-
                 </div>
 
-            </section></div>
+            </section>
+
+        </div>
     );
 }

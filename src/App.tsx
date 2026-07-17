@@ -5,6 +5,7 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import DashboardLayout from "./layouts/DashboardLayout";
 import Dashboard from "./pages/Dashboard/Dashboard";
 import History from "./pages/History/History";
+import Settings from "./pages/Settings/Settings";
 
 function App() {
     return (
@@ -32,6 +33,17 @@ function App() {
                     <ProtectedRoute>
                         <DashboardLayout>
                             <History />
+                        </DashboardLayout>
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/settings"
+                element={
+                    <ProtectedRoute>
+                        <DashboardLayout>
+                            <Settings />
                         </DashboardLayout>
                     </ProtectedRoute>
                 }

@@ -9,47 +9,48 @@ import {
 import * as auth from "../services/auth";
 
 interface User {
-
-    id:string;
-
-    name:string;
-
-    email:string;
-
+    id: string;
+    name: string;
+    email: string;
+    createdAt?: string;
+    updatedAt?: string;
 }
 
-interface Context{
+interface Context {
+    user: User | null;
 
-    user:User|null;
+    login: (
+        email: string,
+        password: string
+    ) => Promise<void>;
 
-    login:(email:string,password:string)=>Promise<void>;
+    logout: () => Promise<void>;
 
-    logout:()=>Promise<void>;
+    updateUser: (user: User) => void;
 
     loading: boolean;
-
 }
 
-const AuthContext=createContext({} as Context);
+const AuthContext = createContext({} as Context);
 
 export function AuthProvider({
 
     children,
 
-}:{
+}: {
 
-    children:ReactNode
+    children: ReactNode
 
-}){
+}) {
 
-    const [user,setUser]=useState<User|null>(null);
+    const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         async function loadUser() {
             try {
-                const data = await auth.me();
-                setUser(data);
+                const response = await auth.me();
+                setUser(response.user);
             } catch (err) {
                 setUser(null);
             } finally {
@@ -61,13 +62,13 @@ export function AuthProvider({
 
     async function login(
 
-        email:string,
+        email: string,
 
-        password:string
+        password: string
 
-    ){
+    ) {
 
-        const response=await auth.login({
+        const response = await auth.login({
 
             email,
 
@@ -79,7 +80,7 @@ export function AuthProvider({
 
     }
 
-    async function logout(){
+    async function logout() {
 
         await auth.logout();
 
@@ -87,7 +88,11 @@ export function AuthProvider({
 
     }
 
-    return(
+    function updateUser(user: User) {
+        setUser(user);
+    }
+
+    return (
 
         <AuthContext.Provider
 
@@ -98,6 +103,8 @@ export function AuthProvider({
                 login,
 
                 logout,
+
+                updateUser,
 
                 loading,
 
@@ -113,7 +120,7 @@ export function AuthProvider({
 
 }
 
-export function useAuth(){
+export function useAuth() {
 
     return useContext(AuthContext);
 

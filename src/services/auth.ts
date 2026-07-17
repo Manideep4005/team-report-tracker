@@ -9,9 +9,17 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface LoginResponse {
+  success: boolean;
+  message: string;
+  user: User;
+}
+
+export interface MeResponse {
   success: boolean;
   user: User;
 }
@@ -30,7 +38,7 @@ export async function logout() {
 }
 
 export async function me() {
-  const { data } = await api.get<User>("/api/auth/me");
+  const { data } = await api.get<MeResponse>("/api/auth/me");
 
   return data;
 }
