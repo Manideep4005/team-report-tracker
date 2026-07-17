@@ -45,16 +45,16 @@ export default function Sidebar({
 
             <div
                 onClick={onClose}
-                className={`fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-200 lg:hidden ${open
-                    ? "visible opacity-100"
-                    : "invisible opacity-0"
+                className={`fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ease-in-out lg:hidden ${open
+                    ? "pointer-events-auto opacity-100"
+                    : "pointer-events-none opacity-0"
                     }`}
             />
 
             {/* Mobile Sidebar */}
 
             <aside
-                className={`fixed left-0 top-0 z-50 flex h-screen w-64 max-w-[80vw] flex-col border-r border-slate-200 bg-white transition-transform duration-300 dark:border-slate-800 dark:bg-slate-950 lg:hidden ${open
+                className={`fixed left-0 top-0 z-50 flex h-screen w-64 max-w-[80vw] flex-col border-r border-slate-200 bg-white shadow-2xl transition-transform duration-300 ease-in-out will-change-transform dark:border-slate-800 dark:bg-slate-950 lg:hidden ${open
                     ? "translate-x-0"
                     : "-translate-x-full"
                     }`}

@@ -195,7 +195,7 @@ export default function Settings() {
                                 type="email"
                                 value={profile?.email ?? ""}
                                 disabled
-                                className="input cursor-not-allowed opacity-70 bg-slate-100"
+                                className="input cursor-not-allowed opacity-60"
                             />
 
                         </div>
