@@ -13,10 +13,6 @@ body {
   overflow-x: hidden;
 
   @apply bg-slate-50 text-slate-900 antialiased dark:bg-slate-950 dark:text-white;
-
-  transition:
-    background-color .25s ease,
-    color .25s ease;
 }
 
 #root {
@@ -27,6 +23,31 @@ body {
 *::before,
 *::after {
   box-sizing: border-box;
+}
+
+/* ---------- Theme transition (global, consistent) ---------- */
+/* Every element transitions the SAME color properties at the SAME
+   speed, so nothing snaps ahead of anything else during a toggle. */
+
+*,
+*::before,
+*::after {
+  transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+  transition-timing-function: ease;
+  transition-duration: 0.2s;
+}
+
+/* Disable the transition on first load so the page doesn't "fade in"
+   from the wrong theme before JS/inline script settles it — the
+   inline script in index.html already sets the correct class
+   synchronously, so this class just prevents an unwanted animation
+   on that very first paint. Removed automatically after mount. */
+
+.no-theme-transition,
+.no-theme-transition *,
+.no-theme-transition *::before,
+.no-theme-transition *::after {
+  transition: none !important;
 }
 
 img,

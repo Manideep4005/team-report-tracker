@@ -1,9 +1,10 @@
 import {
     createContext,
     useContext,
-    useEffect,
+    useLayoutEffect,
     useMemo,
     useState,
+    useEffect,
     type ReactNode,
 } from "react";
 
@@ -21,20 +22,25 @@ interface ThemeProviderProps {
     children: ReactNode;
 }
 
+function getInitialTheme(): Theme {
+    const savedTheme = localStorage.getItem("theme") as Theme | null;
+
+    if (savedTheme === "light" || savedTheme === "dark") {
+        return savedTheme;
+    }
+
+    return window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light";
+}
+
 export function ThemeProvider({ children }: ThemeProviderProps) {
-    const [theme, setThemeState] = useState<Theme>(() => {
-        const savedTheme = localStorage.getItem("theme") as Theme | null;
+    const [theme, setThemeState] = useState<Theme>(getInitialTheme);
 
-        if (savedTheme === "light" || savedTheme === "dark") {
-            return savedTheme;
-        }
-
-        return window.matchMedia("(prefers-color-scheme: dark)").matches
-            ? "dark"
-            : "light";
-    });
-
-    useEffect(() => {
+    // useLayoutEffect runs synchronously before the browser paints,
+    // so the class is applied before the user sees anything —
+    // no flash of the wrong theme.
+    useLayoutEffect(() => {
         const root = document.documentElement;
 
         if (theme === "dark") {
@@ -45,6 +51,18 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 
         localStorage.setItem("theme", theme);
     }, [theme]);
+
+    // Keep theme in sync if changed in another tab
+    useEffect(() => {
+        function handleStorage(e: StorageEvent) {
+            if (e.key === "theme" && (e.newValue === "light" || e.newValue === "dark")) {
+                setThemeState(e.newValue);
+            }
+        }
+
+        window.addEventListener("storage", handleStorage);
+        return () => window.removeEventListener("storage", handleStorage);
+    }, []);
 
     function toggleTheme() {
         setThemeState((prev) => (prev === "dark" ? "light" : "dark"));

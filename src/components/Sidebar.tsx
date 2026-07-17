@@ -54,19 +54,19 @@ export default function Sidebar({
             {/* Mobile Sidebar */}
 
             <aside
-                className={`fixed left-0 top-0 z-50 flex h-screen w-64 flex-col border-r border-slate-200 bg-white transition-transform duration-300 dark:border-slate-800 dark:bg-slate-950 lg:hidden ${open
+                className={`fixed left-0 top-0 z-50 flex h-screen w-64 max-w-[80vw] flex-col border-r border-slate-200 bg-white transition-transform duration-300 dark:border-slate-800 dark:bg-slate-950 lg:hidden ${open
                     ? "translate-x-0"
                     : "-translate-x-full"
                     }`}
             >
-                <div className="flex items-center justify-between border-b border-slate-200 px-5 py-5 dark:border-slate-800">
+                <div className="flex items-center justify-between border-b border-slate-200 px-4 py-4 dark:border-slate-800 sm:px-5 sm:py-5">
                     <div className="flex items-center gap-3">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-600/30">
-                            <HiOutlineUserGroup size={22} />
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-600/30 sm:h-11 sm:w-11">
+                            <HiOutlineUserGroup size={20} />
                         </div>
 
-                        <div>
-                            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+                        <div className="min-w-0">
+                            <h2 className="truncate text-base font-semibold text-slate-900 dark:text-white sm:text-lg">
                                 Team Work
                             </h2>
 
@@ -78,13 +78,13 @@ export default function Sidebar({
 
                     <button
                         onClick={onClose}
-                        className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800"
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800"
                     >
                         <HiOutlineXMark size={18} />
                     </button>
                 </div>
 
-                <nav className="flex-1 space-y-2 p-4">
+                <nav className="flex-1 space-y-2 p-3 sm:p-4">
                     <NavLink
                         to="/dashboard"
                         className={linkClass}
@@ -104,10 +104,10 @@ export default function Sidebar({
                     </NavLink>
                 </nav>
 
-                <div className="border-t border-slate-200 p-4 dark:border-slate-800">
-                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
+                <div className="border-t border-slate-200 p-3 dark:border-slate-800 sm:p-4">
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900 sm:p-4">
                         <div className="flex items-center gap-3">
-                            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-600 font-semibold text-white">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-600 font-semibold text-white sm:h-11 sm:w-11">
                                 {user?.name
                                     ?.charAt(0)
                                     .toUpperCase()}

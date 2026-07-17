@@ -151,20 +151,8 @@ export default function Dashboard() {
             );
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-6 md:space-y-8">
 
-            <div>
-                <h1 className="page-title">
-                    Dashboard
-                </h1>
-
-                <p className="page-description">
-                    Track today's progress,
-                    manage your report and
-                    monitor your team's
-                    submissions.
-                </p>
-            </div>
 
             {/* Today's Progress */}
 
@@ -172,11 +160,11 @@ export default function Dashboard() {
 
                 <div className="card-body">
 
-                    <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between lg:gap-6">
 
                         <div>
 
-                            <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+                            <h2 className="text-lg font-semibold text-slate-900 dark:text-white sm:text-xl">
                                 Today's Progress
                             </h2>
 
@@ -225,57 +213,59 @@ export default function Dashboard() {
 
             {/* Stats */}
 
-            <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <section className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
 
                 <div className="card">
-                    <div className="card-body">
-                        <p className="text-3xl font-bold text-emerald-500">
+                    <div className="card-body !p-4 sm:!p-6">
+                        <p className="text-2xl font-bold text-emerald-500 sm:text-3xl">
                             {data?.stats.submitted}
                         </p>
 
-                        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 sm:mt-2 sm:text-sm">
                             Submitted
                         </p>
                     </div>
                 </div>
 
                 <div className="card">
-                    <div className="card-body">
-                        <p className="text-3xl font-bold text-red-500">
+                    <div className="card-body !p-4 sm:!p-6">
+                        <p className="text-2xl font-bold text-red-500 sm:text-3xl">
                             {data?.stats.pending}
                         </p>
 
-                        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 sm:mt-2 sm:text-sm">
                             Pending
                         </p>
                     </div>
                 </div>
 
                 <div className="card">
-                    <div className="card-body">
-                        <p className="text-3xl font-bold text-cyan-500">
+                    <div className="card-body !p-4 sm:!p-6">
+                        <p className="text-2xl font-bold text-cyan-500 sm:text-3xl">
                             {data?.stats.totalMembers}
                         </p>
 
-                        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 sm:mt-2 sm:text-sm">
                             Members
                         </p>
                     </div>
                 </div>
 
                 <div className="card">
-                    <div className="card-body">
-                        <p className="text-3xl font-bold text-blue-500">
+                    <div className="card-body !p-4 sm:!p-6">
+                        <p className="text-2xl font-bold text-blue-500 sm:text-3xl">
                             {data?.stats.completion}%
                         </p>
 
-                        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 sm:mt-2 sm:text-sm">
                             Completion
                         </p>
                     </div>
                 </div>
 
-            </section>            {/* Today's Report */}
+            </section>
+
+            {/* Today's Report */}
 
             <section className="card">
 
@@ -300,15 +290,15 @@ export default function Dashboard() {
                             setDescription(e.target.value)
                         }
                         placeholder="Completed login page, fixed API bugs, deployed frontend..."
-                        className="input min-h-[180px] resize-none"
+                        className="input min-h-[140px] resize-none sm:min-h-[180px]"
                     />
 
-                    <div className="mt-5 flex justify-end">
+                    <div className="mt-4 flex justify-end sm:mt-5">
 
                         <button
                             onClick={handleSave}
                             disabled={reportMutation.isPending}
-                            className="btn-primary"
+                            className="btn-primary w-full sm:w-auto"
                         >
                             {reportMutation.isPending
                                 ? "Saving..."
@@ -323,7 +313,7 @@ export default function Dashboard() {
 
             {/* Team Status + Latest Reports */}
 
-            <section className="grid gap-6 xl:grid-cols-2">
+            <section className="grid gap-5 xl:grid-cols-2 xl:gap-6">
 
                 {/* Team Status */}
 
@@ -347,21 +337,21 @@ export default function Dashboard() {
 
                             <div
                                 key={member.id}
-                                className="flex items-center justify-between px-6 py-4"
+                                className="flex items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4"
                             >
 
-                                <div className="flex items-center gap-3">
+                                <div className="flex min-w-0 items-center gap-3">
 
                                     <div
-                                        className={`h-3 w-3 rounded-full ${member.submitted
+                                        className={`h-3 w-3 shrink-0 rounded-full ${member.submitted
                                             ? "bg-emerald-500"
                                             : "bg-red-500"
                                             }`}
                                     />
 
-                                    <div>
+                                    <div className="min-w-0">
 
-                                        <p className="font-medium text-slate-900 dark:text-white">
+                                        <p className="truncate font-medium text-slate-900 dark:text-white">
                                             {member.name}
                                         </p>
 
@@ -376,7 +366,7 @@ export default function Dashboard() {
                                 </div>
 
                                 <span
-                                    className={`rounded-full px-3 py-1 text-xs font-semibold ${member.submitted
+                                    className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${member.submitted
                                         ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400"
                                         : "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400"
                                         }`}
@@ -424,14 +414,14 @@ export default function Dashboard() {
 
                             <div
                                 key={report.id}
-                                className="px-6 py-5"
+                                className="px-4 py-4 sm:px-6 sm:py-5"
                             >
 
-                                <div className="mb-3 flex items-center justify-between">
+                                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
 
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex min-w-0 items-center gap-3">
 
-                                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 font-semibold text-white">
+                                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-600 text-sm font-semibold text-white sm:h-10 sm:w-10 sm:text-base">
 
                                             {report.user.name
                                                 .charAt(0)
@@ -439,9 +429,9 @@ export default function Dashboard() {
 
                                         </div>
 
-                                        <div>
+                                        <div className="min-w-0">
 
-                                            <p className="font-semibold text-slate-900 dark:text-white">
+                                            <p className="truncate font-semibold text-slate-900 dark:text-white">
                                                 {report.user.name}
                                             </p>
 
@@ -461,13 +451,13 @@ export default function Dashboard() {
 
                                     </div>
 
-                                    <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400">
+                                    <span className="shrink-0 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400">
                                         Submitted
                                     </span>
 
                                 </div>
 
-                                <p className="whitespace-pre-wrap break-words text-sm leading-7 text-slate-700 dark:text-slate-300">
+                                <p className="whitespace-pre-wrap break-words text-sm leading-6 text-slate-700 dark:text-slate-300 sm:leading-7">
                                     {report.description}
                                 </p>
 
@@ -479,13 +469,15 @@ export default function Dashboard() {
 
                 </div>
 
-            </section>            {/* Daily Summary */}
+            </section>
+
+            {/* Daily Summary */}
 
             <section className="card">
 
                 <div className="card-body">
 
-                    <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between lg:gap-5">
 
                         <div>
 
@@ -504,7 +496,7 @@ export default function Dashboard() {
                         <button
                             onClick={handleSummary}
                             disabled={summaryLoading}
-                            className="btn-primary min-w-[180px] disabled:cursor-not-allowed disabled:opacity-60"
+                            className="btn-primary w-full disabled:cursor-not-allowed disabled:opacity-60 lg:w-auto lg:min-w-[180px]"
                         >
                             {summaryLoading ? (
                                 <span className="flex items-center justify-center gap-2">

@@ -15,17 +15,8 @@ export default function History() {
     });
 
     return (
-        <div className="mx-auto max-w-5xl space-y-8">
+        <div className="mx-auto max-w-5xl space-y-6 md:space-y-8">
 
-            <div>
-                <h1 className="page-title">
-                    My Reports
-                </h1>
-
-                <p className="page-description">
-                    Browse and review your previously submitted daily reports.
-                </p>
-            </div>
 
             {/* Filter */}
 
@@ -75,7 +66,7 @@ export default function History() {
 
                         <button
                             onClick={() => setDate("")}
-                            className="btn-secondary"
+                            className="btn-secondary w-full md:w-auto"
                         >
                             Clear Filter
                         </button>
@@ -114,16 +105,16 @@ export default function History() {
 
                 ) : data?.length ? (
 
-                    <div className="space-y-5 p-6">
+                    <div className="space-y-4 p-4 sm:space-y-5 sm:p-6">
 
                         {data.map((report: any) => (
 
                             <div
                                 key={report.id}
-                                className="rounded-xl border border-slate-200 bg-slate-50 p-5 transition hover:border-blue-300 dark:border-slate-800 dark:bg-slate-900/40 dark:hover:border-slate-700"
+                                className="rounded-xl border border-slate-200 bg-slate-50 p-4 transition hover:border-blue-300 dark:border-slate-800 dark:bg-slate-900/40 dark:hover:border-slate-700 sm:p-5"
                             >
 
-                                <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                <div className="mb-3 flex flex-col gap-2 sm:mb-4 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
 
                                     <span className="w-fit rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-500/15 dark:text-blue-400">
                                         Daily Report
@@ -146,7 +137,7 @@ export default function History() {
 
                                 </div>
 
-                                <p className="whitespace-pre-wrap break-words text-sm leading-7 text-slate-700 dark:text-slate-300">
+                                <p className="whitespace-pre-wrap break-words text-sm leading-6 text-slate-700 dark:text-slate-300 sm:leading-7">
                                     {report.description}
                                 </p>
 
@@ -158,13 +149,13 @@ export default function History() {
 
                 ) : (
 
-                    <div className="flex h-72 flex-col items-center justify-center px-6 text-center">
+                    <div className="flex h-64 flex-col items-center justify-center px-4 text-center sm:h-72 sm:px-6">
 
-                        <div className="text-6xl">
+                        <div className="text-5xl sm:text-6xl">
                             📄
                         </div>
 
-                        <h3 className="mt-5 text-xl font-semibold text-slate-900 dark:text-white">
+                        <h3 className="mt-4 text-lg font-semibold text-slate-900 dark:text-white sm:mt-5 sm:text-xl">
                             No Reports Found
                         </h3>
 

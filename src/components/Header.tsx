@@ -104,25 +104,25 @@ export default function Header({
 
             {/* Left */}
 
-            <div className="flex items-center gap-3">
+            <div className="flex min-w-0 items-center gap-3">
 
                 <button
                     onClick={onMenuClick}
-                    className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white lg:hidden"
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white lg:hidden"
                 >
                     <HiOutlineBars3 size={22} />
                 </button>
 
-                <div>
+                <div className="min-w-0">
 
-                    <h1 className="text-lg font-semibold text-slate-900 dark:text-white sm:text-xl">
+                    <h1 className="truncate text-base font-semibold text-slate-900 dark:text-white sm:text-lg lg:text-xl">
                         👋 {greeting},{" "}
                         <span className="text-blue-600 dark:text-blue-400">
                             {user?.name?.split(" ")[0]}
                         </span>
                     </h1>
 
-                    <p className="text-xs text-slate-500 dark:text-slate-400 sm:text-sm">
+                    <p className="truncate text-xs text-slate-500 dark:text-slate-400 sm:text-sm">
                         {today}
                     </p>
 
@@ -134,17 +134,17 @@ export default function Header({
 
             <div
                 ref={dropdownRef}
-                className="relative"
+                className="relative shrink-0"
             >
 
                 <button
                     onClick={() =>
                         setOpen((p) => !p)
                     }
-                    className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-2 py-2 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700 dark:hover:bg-slate-800"
+                    className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-2 py-2 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700 dark:hover:bg-slate-800 sm:gap-3"
                 >
 
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-sm font-semibold text-white">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-600 text-sm font-semibold text-white sm:h-10 sm:w-10">
                         {user?.name
                             ?.charAt(0)
                             .toUpperCase()}
@@ -164,9 +164,9 @@ export default function Header({
 
                     <HiOutlineChevronDown
                         size={18}
-                        className={`text-slate-500 transition-transform ${open
-                                ? "rotate-180"
-                                : ""
+                        className={`hidden text-slate-500 transition-transform sm:block ${open
+                            ? "rotate-180"
+                            : ""
                             }`}
                     />
 
@@ -174,11 +174,11 @@ export default function Header({
 
                 {open && (
 
-                    <div className="absolute right-0 mt-3 w-80 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
+                    <div className="absolute right-0 mt-3 w-[calc(100vw-2rem)] max-w-80 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
 
-                        <div className="flex items-center gap-4 border-b border-slate-200 px-5 py-5 dark:border-slate-800">
+                        <div className="flex items-center gap-4 border-b border-slate-200 px-4 py-4 dark:border-slate-800 sm:px-5 sm:py-5">
 
-                            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-lg font-bold text-white">
+                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-600 text-lg font-bold text-white sm:h-14 sm:w-14">
                                 {user?.name
                                     ?.charAt(0)
                                     .toUpperCase()}
@@ -200,44 +200,32 @@ export default function Header({
 
                         <button
                             onClick={toggleTheme}
-                            className="flex w-full items-center justify-between px-5 py-4 text-sm text-slate-700 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                            className="flex w-full items-center justify-between px-5 py-4 text-sm text-slate-700 transition hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 dark:text-slate-300 dark:hover:bg-slate-800"
                         >
 
                             <div className="flex items-center gap-3">
 
-                                {theme ===
-                                    "dark" ? (
-                                    <HiOutlineMoon
-                                        size={20}
-                                    />
+                                {theme === "dark" ? (
+                                    <HiOutlineMoon size={20} />
                                 ) : (
-                                    <HiOutlineSun
-                                        size={20}
-                                    />
+                                    <HiOutlineSun size={20} />
                                 )}
 
-                                <span>
-                                    {theme ===
-                                        "dark"
-                                        ? "Dark Mode"
-                                        : "Light Mode"}
-                                </span>
+                                <span>Dark Mode</span>
 
                             </div>
 
                             <div
-                                className={`relative h-6 w-11 rounded-full ${theme ===
-                                        "dark"
-                                        ? "bg-blue-600"
-                                        : "bg-slate-300"
+                                className={`relative h-6 w-11 rounded-full transition-colors ${theme === "dark"
+                                    ? "bg-blue-600"
+                                    : "bg-slate-300"
                                     }`}
                             >
 
                                 <div
-                                    className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${theme ===
-                                            "dark"
-                                            ? "left-[22px]"
-                                            : "left-0.5"
+                                    className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${theme === "dark"
+                                        ? "left-[22px]"
+                                        : "left-0.5"
                                         }`}
                                 />
 
@@ -252,7 +240,7 @@ export default function Header({
                                     "/settings"
                                 );
                             }}
-                            className="flex w-full items-center gap-3 px-5 py-4 text-left text-sm text-slate-700 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                            className="flex w-full items-center gap-3 px-4 py-4 text-left text-sm text-slate-700 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 sm:px-5"
                         >
                             <HiOutlineCog6Tooth
                                 size={20}
@@ -262,7 +250,7 @@ export default function Header({
 
                         <button
                             onClick={handleLogout}
-                            className="flex w-full items-center gap-3 border-t border-slate-200 px-5 py-4 text-left text-sm text-red-600 transition hover:bg-red-600 hover:text-white dark:border-slate-800 dark:text-red-400"
+                            className="flex w-full items-center gap-3 border-t border-slate-200 px-4 py-4 text-left text-sm text-red-600 transition hover:bg-red-600 hover:text-white dark:border-slate-800 dark:text-red-400 sm:px-5"
                         >
                             <HiOutlineArrowRightOnRectangle
                                 size={20}

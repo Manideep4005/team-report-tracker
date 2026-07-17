@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="no-theme-transition">
 
 <head>
   <meta charset="UTF-8" />
@@ -10,6 +10,30 @@
 
 <body>
   <div id="root"></div>
+
+  <script>
+    (function () {
+      const saved = localStorage.getItem("theme");
+      const theme =
+        saved === "light" || saved === "dark"
+          ? saved
+          : window.matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : "light";
+
+      const root = document.documentElement;
+      root.classList.toggle("dark", theme === "dark");
+
+      // Let the browser paint once with transitions disabled,
+      // then re-enable them for all subsequent (user-triggered) toggles.
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          root.classList.remove("no-theme-transition");
+        });
+      });
+    })();
+  </script>
+
   <script type="module" src="/src/main.tsx"></script>
 </body>
 

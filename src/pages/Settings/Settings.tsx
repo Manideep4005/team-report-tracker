@@ -138,7 +138,7 @@ export default function Settings() {
     }
 
     return (
-        <div className="mx-auto max-w-5xl space-y-8">
+        <div className="mx-auto max-w-5xl space-y-6 px-4 sm:px-6 md:space-y-8 md:px-0">
 
             <div>
                 <h1 className="page-title">
@@ -166,7 +166,7 @@ export default function Settings() {
 
                 <div className="card-body">
 
-                    <div className="grid gap-6 md:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
 
                         <div>
 
@@ -195,19 +195,19 @@ export default function Settings() {
                                 type="email"
                                 value={profile?.email ?? ""}
                                 disabled
-                                className="input cursor-not-allowed opacity-70"
+                                className="input cursor-not-allowed opacity-70 bg-slate-100"
                             />
 
                         </div>
 
                     </div>
 
-                    <div className="mt-8 flex justify-end">
+                    <div className="mt-6 flex justify-end md:mt-8">
 
                         <button
                             onClick={handleProfileSave}
                             disabled={profileMutation.isPending}
-                            className="btn-primary"
+                            className="btn-primary w-full sm:w-auto"
                         >
                             {profileMutation.isPending
                                 ? "Saving..."
@@ -218,7 +218,9 @@ export default function Settings() {
 
                 </div>
 
-            </section>            {/* Change Password */}
+            </section>
+
+            {/* Change Password */}
 
             <section className="card">
 
@@ -236,7 +238,7 @@ export default function Settings() {
 
                 <div className="card-body">
 
-                    <div className="grid gap-6 md:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
 
                         <div className="md:col-span-2">
 
@@ -294,12 +296,12 @@ export default function Settings() {
 
                     </div>
 
-                    <div className="mt-8 flex justify-end">
+                    <div className="mt-6 flex justify-end md:mt-8">
 
                         <button
                             onClick={handlePasswordChange}
                             disabled={passwordMutation.isPending}
-                            className="btn-primary"
+                            className="btn-primary w-full sm:w-auto"
                         >
                             {passwordMutation.isPending
                                 ? "Updating..."
