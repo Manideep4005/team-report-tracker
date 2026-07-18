@@ -42,6 +42,11 @@ interface DashboardResponse {
     }[];
 }
 
+interface SummaryItem {
+    name: string;
+    description: string;
+}
+
 export default function Dashboard() {
     const queryClient = useQueryClient();
 
@@ -104,28 +109,30 @@ export default function Dashboard() {
         reportMutation.mutate(text);
     }
 
-    async function handleSummary() {
+    const handleSummary = async () => {
+        setSummaryLoading(true);
+
         try {
-            setSummaryLoading(true);
+            const response = await getSummary();
 
-            const response =
-                await getSummary();
+            const summary: SummaryItem[] = response.data;
 
-            await navigator.clipboard.writeText(
-                response.data
-            );
+            const text = summary
+                .map(
+                    (item) =>
+                        `${item.name}:\n${item.description}`
+                )
+                .join("\n\n");
 
-            toast.success(
-                "Team summary copied."
-            );
+            await navigator.clipboard.writeText(text);
+
+            toast.success("Summary copied successfully.");
         } catch {
-            toast.error(
-                "Unable to copy summary."
-            );
+            toast.error("Unable to generate summary.");
         } finally {
             setSummaryLoading(false);
         }
-    }
+    };
 
     if (isLoading) {
         return (

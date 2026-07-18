@@ -65,13 +65,27 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     }, []);
 
     function toggleTheme() {
+        const root = document.documentElement;
+
+        root.classList.add("theme-transition");
+
         setThemeState((prev) => (prev === "dark" ? "light" : "dark"));
-    }
 
+        window.setTimeout(() => {
+            root.classList.remove("theme-transition");
+        }, 200);
+    }
     function setTheme(theme: Theme) {
-        setThemeState(theme);
-    }
+        const root = document.documentElement;
 
+        root.classList.add("theme-transition");
+
+        setThemeState(theme);
+
+        window.setTimeout(() => {
+            root.classList.remove("theme-transition");
+        }, 200);
+    }
     const value = useMemo(
         () => ({
             theme,

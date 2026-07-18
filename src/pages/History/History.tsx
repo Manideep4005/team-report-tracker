@@ -15,69 +15,55 @@ export default function History() {
     });
 
     return (
-        <div className="mx-auto max-w-5xl space-y-6 md:space-y-8">
+        <div className="mx-auto max-w-5xl space-y-6 px-4 sm:px-6 lg:px-0">
 
 
             {/* Filter */}
 
-            <section className="card">
+            <section className="card p-5">
 
-                <div className="card-header">
+                <div className="flex flex-col gap-4 md:flex-row md:items-end">
 
-                    <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-                        Filter Reports
-                    </h2>
+                    <div className="flex-1">
 
-                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                        Select a specific date to view your report.
-                    </p>
+                        <label className="label">
+                            Report Date
+                        </label>
 
-                </div>
+                        <div className="relative">
 
-                <div className="card-body">
+                            <HiOutlineCalendarDays
+                                size={20}
+                                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                            />
 
-                    <div className="flex flex-col gap-4 md:flex-row md:items-end">
-
-                        <div className="flex-1">
-
-                            <label className="label">
-                                Report Date
-                            </label>
-
-                            <div className="relative">
-
-                                <HiOutlineCalendarDays
-                                    className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-                                    size={20}
-                                />
-
-                                <input
-                                    type="date"
-                                    value={date}
-                                    onChange={(e) =>
-                                        setDate(e.target.value)
-                                    }
-                                    className="input pl-12"
-                                />
-
-                            </div>
+                            <input
+                                type="date"
+                                value={date}
+                                onChange={(e) =>
+                                    setDate(e.target.value)
+                                }
+                                className="input pl-12"
+                            />
 
                         </div>
 
-                        <button
-                            onClick={() => setDate("")}
-                            className="btn-secondary w-full md:w-auto"
-                        >
-                            Clear Filter
-                        </button>
-
                     </div>
+
+                    <button
+                        onClick={() => setDate("")}
+                        disabled={!date}
+                        className="btn-secondary h-11 w-full md:w-auto disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        Clear
+                    </button>
 
                 </div>
 
             </section>
 
             {/* Reports */}
+
 
             <section className="card">
 
@@ -105,43 +91,48 @@ export default function History() {
 
                 ) : data?.length ? (
 
-                    <div className="space-y-4 p-4 sm:space-y-5 sm:p-6">
+                    <div className="space-y-5 p-4 sm:p-6">
 
                         {data.map((report: any) => (
 
-                            <div
+                            <article
                                 key={report.id}
-                                className="rounded-xl border border-slate-200 bg-slate-50 p-4 transition hover:border-blue-300 dark:border-slate-800 dark:bg-slate-900/40 dark:hover:border-slate-700 sm:p-5"
+                                className="rounded-2xl border border-slate-200 border-l-4 border-l-blue-600 bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md dark:border-slate-800 dark:border-l-blue-500 dark:bg-slate-900"
                             >
 
-                                <div className="mb-3 flex flex-col gap-2 sm:mb-4 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                                <div className="mb-4 flex items-center gap-2">
 
-                                    <span className="w-fit rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-500/15 dark:text-blue-400">
-                                        Daily Report
-                                    </span>
+                                    <HiOutlineCalendarDays
+                                        size={18}
+                                        className="text-blue-600 dark:text-blue-400"
+                                    />
 
-                                    <span className="text-sm text-slate-500 dark:text-slate-400">
-                                        {new Date(
-                                            report.reportDate
-                                        ).toLocaleDateString(
+                                    <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+
+                                        {new Date(report.reportDate).toLocaleDateString(
                                             "en-IN",
                                             {
-                                                timeZone:
-                                                    "Asia/Kolkata",
+                                                weekday: "long",
                                                 day: "numeric",
                                                 month: "long",
                                                 year: "numeric",
+                                                timeZone: "Asia/Kolkata",
                                             }
                                         )}
-                                    </span>
+
+                                    </h3>
 
                                 </div>
 
-                                <p className="whitespace-pre-wrap break-words text-sm leading-6 text-slate-700 dark:text-slate-300 sm:leading-7">
+                                <div className="h-px bg-slate-200 dark:bg-slate-800 mb-4" />
+
+                                <p className="whitespace-pre-wrap break-words text-[15px] leading-7 text-slate-700 dark:text-slate-300">
+
                                     {report.description}
+
                                 </p>
 
-                            </div>
+                            </article>
 
                         ))}
 

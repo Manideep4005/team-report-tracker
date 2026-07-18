@@ -29,12 +29,19 @@ body {
 /* Every element transitions the SAME color properties at the SAME
    speed, so nothing snaps ahead of anything else during a toggle. */
 
-*,
-*::before,
-*::after {
-  transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+html.theme-transition *,
+html.theme-transition *::before,
+html.theme-transition *::after {
+  transition-property:
+    background-color,
+    border-color,
+    color,
+    fill,
+    stroke,
+    box-shadow;
+
+  transition-duration: 200ms;
   transition-timing-function: ease;
-  transition-duration: 0.2s;
 }
 
 /* Disable the transition on first load so the page doesn't "fade in"
