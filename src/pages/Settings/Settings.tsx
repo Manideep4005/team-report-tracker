@@ -59,21 +59,10 @@ export default function Settings() {
             <div>
                 <h1 className="page-title">Change Password</h1>
 
-                <p className="page-description">
-                    Keep your account secure by updating your password regularly.
-                </p>
+
             </div>
 
             <section className="card">
-                <div className="card-header">
-                    <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-                        🔒 Change Password
-                    </h2>
-
-                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                        Enter your current password and choose a new one.
-                    </p>
-                </div>
 
                 <div className="card-body">
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
