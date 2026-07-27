@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
     useMutation,
     useQuery,
@@ -10,6 +10,14 @@ import {
     saveReport,
 } from "../../services/report";
 import { toast } from "sonner";
+import {
+    HiOutlineDocumentCheck,
+    HiOutlineClock,
+    HiOutlineUsers,
+    HiOutlineChartBarSquare,
+    HiOutlineClipboardDocument,
+    HiOutlineArrowPath,
+} from "react-icons/hi2";
 
 interface DashboardResponse {
     stats: {
@@ -67,6 +75,8 @@ export default function Dashboard() {
     const [summaryLoading, setSummaryLoading] =
         useState(false);
 
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+
     useEffect(() => {
         if (
             data?.myReport &&
@@ -77,6 +87,15 @@ export default function Dashboard() {
             );
         }
     }, [data, description]);
+
+    // Presentational only — autosizes the textarea to its content.
+    useEffect(() => {
+        const el = textareaRef.current;
+        if (el) {
+            el.style.height = "auto";
+            el.style.height = `${el.scrollHeight}px`;
+        }
+    }, [description]);
 
     const reportMutation = useMutation({
         mutationFn: saveReport,
@@ -136,9 +155,10 @@ export default function Dashboard() {
 
     if (isLoading) {
         return (
-            <div className="flex h-[60vh] items-center justify-center">
-                <p className="text-slate-500 dark:text-slate-400">
-                    Loading dashboard...
+            <div className="flex h-[60vh] flex-col items-center justify-center gap-3">
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-blue-600 dark:border-slate-700 dark:border-t-blue-500" />
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                    Loading dashboard…
                 </p>
             </div>
         );
@@ -158,318 +178,226 @@ export default function Dashboard() {
             );
 
     return (
-        <div className="space-y-6 md:space-y-8">
+        <div className="mx-auto max-w-6xl space-y-5 px-4 py-6 sm:px-6 sm:py-8 lg:space-y-6">
 
+            <style>{`
+                @keyframes dashFadeIn {
+                    from { opacity: 0; transform: translateY(4px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                @media (prefers-reduced-motion: reduce) {
+                    .dash-fade { animation: none !important; opacity: 1 !important; }
+                }
+            `}</style>
 
-            {/* Today's Progress */}
+            {/* Overview — progress + stats, one connected panel */}
+            <section className="rounded-2xl border border-slate-200/60 bg-gradient-to-br from-white to-slate-50/60 p-4 dark:border-slate-800/60 dark:from-slate-900/50 dark:to-slate-900/20 sm:p-6">
 
-            <section className="card">
-
-                <div className="card-body">
-
-                    <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between lg:gap-6">
-
-                        <div>
-
-                            <h2 className="text-lg font-semibold text-slate-900 dark:text-white sm:text-xl">
-                                Today's Progress
-                            </h2>
-
-                            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-                                {submitted} of {total}
-                                {" "}
-                                team members have
-                                submitted today's
-                                report.
-                            </p>
-
-                        </div>
-
-                        <div className="w-full lg:w-80">
-
-                            <div className="mb-2 flex items-center justify-between">
-
-                                <span className="text-sm text-slate-500 dark:text-slate-400">
-                                    Completion
-                                </span>
-
-                                <span className="font-semibold text-slate-900 dark:text-white">
-                                    {progress}%
-                                </span>
-
-                            </div>
-
-                            <div className="h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
-
-                                <div
-                                    style={{
-                                        width: `${progress}%`,
-                                    }}
-                                    className="h-full rounded-full bg-blue-600 transition-all duration-500"
-                                />
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </section>
-
-            {/* Stats */}
-
-            <section className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-
-                <div className="card">
-                    <div className="card-body !p-4 sm:!p-6">
-                        <p className="text-2xl font-bold text-emerald-500 sm:text-3xl">
-                            {data?.stats.submitted}
-                        </p>
-
-                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 sm:mt-2 sm:text-sm">
-                            Submitted
-                        </p>
-                    </div>
-                </div>
-
-                <div className="card">
-                    <div className="card-body !p-4 sm:!p-6">
-                        <p className="text-2xl font-bold text-red-500 sm:text-3xl">
-                            {data?.stats.pending}
-                        </p>
-
-                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 sm:mt-2 sm:text-sm">
-                            Pending
-                        </p>
-                    </div>
-                </div>
-
-                <div className="card">
-                    <div className="card-body !p-4 sm:!p-6">
-                        <p className="text-2xl font-bold text-cyan-500 sm:text-3xl">
-                            {data?.stats.totalMembers}
-                        </p>
-
-                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 sm:mt-2 sm:text-sm">
-                            Members
-                        </p>
-                    </div>
-                </div>
-
-                <div className="card">
-                    <div className="card-body !p-4 sm:!p-6">
-                        <p className="text-2xl font-bold text-blue-500 sm:text-3xl">
-                            {data?.stats.completion}%
-                        </p>
-
-                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 sm:mt-2 sm:text-sm">
-                            Completion
-                        </p>
-                    </div>
-                </div>
-
-            </section>
-
-            {/* Today's Report */}
-
-            <section className="card">
-
-                <div className="card-header">
-
-                    <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-                        📝 Today's Report
-                    </h2>
-
-                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                        Write what you've completed today.
+                <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                        {submitted} of {total} team members have submitted today
                     </p>
-
+                    <span className="text-sm font-semibold text-slate-900 dark:text-white">
+                        {progress}%
+                    </span>
                 </div>
 
-                <div className="card-body">
+                <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-slate-200/70 dark:bg-slate-800">
+                    <div
+                        style={{ width: `${progress}%` }}
+                        className="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-700 ease-out"
+                    />
+                </div>
 
-                    <textarea
-                        rows={7}
-                        value={description}
-                        onChange={(e) =>
-                            setDescription(e.target.value)
-                        }
-                        placeholder="Completed login page, fixed API bugs, deployed frontend..."
-                        className="input min-h-[140px] resize-none sm:min-h-[180px]"
+                <div className="mt-5 grid grid-cols-2 gap-3 sm:mt-6 lg:grid-cols-4 lg:gap-4">
+
+                    <StatWidget
+                        icon={<HiOutlineDocumentCheck className="h-4 w-4" />}
+                        label="Submitted"
+                        value={data?.stats.submitted}
+                        iconBg="bg-emerald-50 dark:bg-emerald-500/10"
+                        iconColor="text-emerald-600 dark:text-emerald-400"
                     />
 
-                    <div className="mt-4 flex justify-end sm:mt-5">
+                    <StatWidget
+                        icon={<HiOutlineClock className="h-4 w-4" />}
+                        label="Pending"
+                        value={data?.stats.pending}
+                        iconBg="bg-amber-50 dark:bg-amber-500/10"
+                        iconColor="text-amber-600 dark:text-amber-400"
+                    />
 
-                        <button
-                            onClick={handleSave}
-                            disabled={reportMutation.isPending}
-                            className="btn-primary w-full sm:w-auto"
-                        >
-                            {reportMutation.isPending
-                                ? "Saving..."
-                                : "Save Report"}
-                        </button>
+                    <StatWidget
+                        icon={<HiOutlineUsers className="h-4 w-4" />}
+                        label="Members"
+                        value={data?.stats.totalMembers}
+                        iconBg="bg-violet-50 dark:bg-violet-500/10"
+                        iconColor="text-violet-600 dark:text-violet-400"
+                    />
 
-                    </div>
+                    <StatWidget
+                        icon={<HiOutlineChartBarSquare className="h-4 w-4" />}
+                        label="Completion"
+                        value={`${data?.stats.completion}%`}
+                        iconBg="bg-blue-50 dark:bg-blue-500/10"
+                        iconColor="text-blue-600 dark:text-blue-400"
+                    />
 
                 </div>
 
             </section>
 
-            {/* Team Status + Latest Reports */}
+            {/* Report editor */}
+            <section className="rounded-2xl border border-slate-200/60 bg-white/70 p-4 shadow-sm backdrop-blur-sm dark:border-slate-800/60 dark:bg-slate-900/40 sm:p-6">
 
-            <section className="grid gap-5 xl:grid-cols-2 xl:gap-6">
+                <textarea
+                    ref={textareaRef}
+                    rows={5}
+                    value={description}
+                    onChange={(e) =>
+                        setDescription(e.target.value)
+                    }
+                    placeholder="What did you work on today?"
+                    className="w-full resize-none overflow-hidden border-0 bg-transparent text-[15px] leading-7 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-0 dark:text-slate-100 dark:placeholder:text-slate-600"
+                    style={{ minHeight: "140px" }}
+                />
 
-                {/* Team Status */}
+                <div className="mt-3 flex items-center justify-between gap-3 border-t border-slate-100 pt-3 dark:border-slate-800/70">
 
-                <div className="card">
+                    <span className="text-xs text-slate-400 dark:text-slate-500">
+                        {description.length} characters
+                    </span>
 
-                    <div className="card-header">
+                    <button
+                        onClick={handleSave}
+                        disabled={reportMutation.isPending}
+                        className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2 text-sm font-semibold text-white shadow-md shadow-blue-600/20 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-600/25 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+                    >
+                        {reportMutation.isPending ? (
+                            <>
+                                <HiOutlineArrowPath className="h-4 w-4 animate-spin" />
+                                Saving…
+                            </>
+                        ) : (
+                            "Save report"
+                        )}
+                    </button>
 
-                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-                            👥 Team Status
-                        </h2>
+                </div>
 
-                        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                            Today's submission status
-                        </p>
+            </section>
 
-                    </div>
+            {/* Team status + Activity feed */}
+            <section className="grid gap-5 lg:grid-cols-2 lg:gap-6">
 
-                    <div className="divide-y divide-slate-200 dark:divide-slate-800">
+                {/* Team status */}
+                <div className="rounded-2xl border border-slate-200/60 bg-white/70 backdrop-blur-sm dark:border-slate-800/60 dark:bg-slate-900/40">
 
-                        {data?.teamStatus.map((member) => (
+                    <p className="px-5 pt-5 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 sm:px-6">
+                        Team
+                    </p>
 
+                    <div className="mt-2 divide-y divide-slate-100 dark:divide-slate-800/60">
+
+                        {data?.teamStatus.map((member, idx) => (
                             <div
                                 key={member.id}
-                                className="flex items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4"
+                                className="dash-fade group flex items-center justify-between gap-3 px-5 py-3.5 opacity-0 transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/30 sm:px-6"
+                                style={{
+                                    animation: "dashFadeIn 0.4s ease-out forwards",
+                                    animationDelay: `${Math.min(idx, 8) * 35}ms`,
+                                }}
                             >
-
                                 <div className="flex min-w-0 items-center gap-3">
 
-                                    <div
-                                        className={`h-3 w-3 shrink-0 rounded-full ${member.submitted
-                                            ? "bg-emerald-500"
-                                            : "bg-red-500"
-                                            }`}
-                                    />
+                                    <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-slate-600 to-slate-800 text-xs font-semibold text-white dark:from-slate-500 dark:to-slate-700">
+                                        {member.name.charAt(0).toUpperCase()}
 
-                                    <div className="min-w-0">
-
-                                        <p className="truncate font-medium text-slate-900 dark:text-white">
-                                            {member.name}
-                                        </p>
-
-                                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                                            {member.submitted
-                                                ? "Submitted"
-                                                : "Pending"}
-                                        </p>
-
+                                        {member.submitted && (
+                                            <span className="absolute -right-0.5 -top-0.5 flex h-3 w-3">
+                                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                                                <span className="relative inline-flex h-3 w-3 rounded-full border-2 border-white bg-emerald-500 dark:border-slate-900" />
+                                            </span>
+                                        )}
                                     </div>
+
+                                    <p className="truncate text-sm font-medium text-slate-900 dark:text-white">
+                                        {member.name}
+                                    </p>
 
                                 </div>
 
                                 <span
-                                    className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${member.submitted
-                                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400"
-                                        : "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400"
+                                    className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${member.submitted
+                                        ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400"
+                                        : "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400"
                                         }`}
                                 >
-                                    {member.submitted
-                                        ? "Done"
-                                        : "Pending"}
+                                    {member.submitted ? "Submitted" : "Pending"}
                                 </span>
 
                             </div>
-
                         ))}
 
                     </div>
 
                 </div>
 
-                {/* Latest Reports */}
+                {/* Activity feed */}
+                <div className="rounded-2xl border border-slate-200/60 bg-white/70 backdrop-blur-sm dark:border-slate-800/60 dark:bg-slate-900/40">
 
-                <div className="card">
+                    <p className="px-5 pt-5 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 sm:px-6">
+                        Activity
+                    </p>
 
-                    <div className="card-header">
-
-                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-                            📋 Latest Reports
-                        </h2>
-
-                        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                            Today's submissions
-                        </p>
-
-                    </div>
-
-                    <div className="max-h-[500px] divide-y divide-slate-200 overflow-y-auto dark:divide-slate-800">
+                    <div className="mt-2 max-h-[420px] divide-y divide-slate-100 overflow-y-auto dark:divide-slate-800/60">
 
                         {data?.reports.length === 0 && (
-
-                            <div className="py-12 text-center text-slate-500 dark:text-slate-400">
+                            <div className="px-5 py-10 text-center text-sm text-slate-400 dark:text-slate-500 sm:px-6">
                                 No reports submitted today.
                             </div>
-
                         )}
 
-                        {data?.reports.map((report) => (
-
+                        {data?.reports.map((report, idx) => (
                             <div
                                 key={report.id}
-                                className="px-4 py-4 sm:px-6 sm:py-5"
+                                className="dash-fade group px-5 py-4 opacity-0 transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/30 sm:px-6"
+                                style={{
+                                    animation: "dashFadeIn 0.4s ease-out forwards",
+                                    animationDelay: `${Math.min(idx, 8) * 35}ms`,
+                                }}
                             >
+                                <div className="flex items-start gap-3">
 
-                                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-xs font-semibold text-white">
+                                        {report.user.name.charAt(0).toUpperCase()}
+                                    </div>
 
-                                    <div className="flex min-w-0 items-center gap-3">
+                                    <div className="min-w-0 flex-1">
 
-                                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-600 text-sm font-semibold text-white sm:h-10 sm:w-10 sm:text-base">
-
-                                            {report.user.name
-                                                .charAt(0)
-                                                .toUpperCase()}
-
-                                        </div>
-
-                                        <div className="min-w-0">
-
-                                            <p className="truncate font-semibold text-slate-900 dark:text-white">
+                                        <div className="flex flex-wrap items-baseline gap-x-2">
+                                            <span className="text-sm font-medium text-slate-900 dark:text-white">
                                                 {report.user.name}
-                                            </p>
-
-                                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                                            </span>
+                                            <span className="text-xs text-slate-400 dark:text-slate-500">
                                                 {new Date(
                                                     report.createdAt
-                                                ).toLocaleTimeString(
-                                                    "en-IN",
-                                                    {
-                                                        hour: "2-digit",
-                                                        minute: "2-digit",
-                                                    }
-                                                )}
-                                            </p>
-
+                                                ).toLocaleTimeString("en-IN", {
+                                                    hour: "2-digit",
+                                                    minute: "2-digit",
+                                                })}
+                                            </span>
                                         </div>
+
+                                        <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6 text-slate-600 dark:text-slate-300">
+                                            {report.description}
+                                        </p>
 
                                     </div>
 
-                                    <span className="shrink-0 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400">
-                                        Submitted
-                                    </span>
-
                                 </div>
 
-                                <p className="whitespace-pre-wrap break-words text-sm leading-6 text-slate-700 dark:text-slate-300 sm:leading-7">
-                                    {report.description}
-                                </p>
-
                             </div>
-
                         ))}
 
                     </div>
@@ -478,70 +406,64 @@ export default function Dashboard() {
 
             </section>
 
-            {/* Daily Summary */}
+            {/* Summary action panel */}
+            <section className="flex flex-col items-start justify-between gap-4 rounded-2xl border border-slate-200/60 bg-white/70 p-5 backdrop-blur-sm dark:border-slate-800/60 dark:bg-slate-900/40 sm:flex-row sm:items-center sm:p-6">
 
-            <section className="card">
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                    Copy a formatted summary of today's reports to share with the team.
+                </p>
 
-                <div className="card-body">
-
-                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between lg:gap-5">
-
-                        <div>
-
-                            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-                                📄 Daily Team Summary
-                            </h2>
-
-                            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                                Generate a formatted summary of today's reports
-                                and copy it to your clipboard for sharing with
-                                the team.
-                            </p>
-
-                        </div>
-
-                        <button
-                            onClick={handleSummary}
-                            disabled={summaryLoading}
-                            className="btn-primary w-full disabled:cursor-not-allowed disabled:opacity-60 lg:w-auto lg:min-w-[180px]"
-                        >
-                            {summaryLoading ? (
-                                <span className="flex items-center justify-center gap-2">
-
-                                    <svg
-                                        className="h-4 w-4 animate-spin"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                    >
-                                        <circle
-                                            cx="12"
-                                            cy="12"
-                                            r="10"
-                                            stroke="currentColor"
-                                            strokeWidth="4"
-                                            className="opacity-25"
-                                        />
-
-                                        <path
-                                            fill="currentColor"
-                                            className="opacity-75"
-                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                                        />
-                                    </svg>
-
-                                    Generating...
-
-                                </span>
-                            ) : (
-                                "📋 Copy Summary"
-                            )}
-                        </button>
-
-                    </div>
-
-                </div>
+                <button
+                    onClick={handleSummary}
+                    disabled={summaryLoading}
+                    className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-blue-600/20 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-600/25 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 sm:w-auto"
+                >
+                    {summaryLoading ? (
+                        <>
+                            <HiOutlineArrowPath className="h-4 w-4 animate-spin" />
+                            Generating…
+                        </>
+                    ) : (
+                        <>
+                            <HiOutlineClipboardDocument className="h-4 w-4" />
+                            Copy summary
+                        </>
+                    )}
+                </button>
 
             </section>
+
+        </div>
+    );
+}
+
+function StatWidget({
+    icon,
+    label,
+    value,
+    iconBg,
+    iconColor,
+}: {
+    icon: React.ReactNode;
+    label: string;
+    value: React.ReactNode;
+    iconBg: string;
+    iconColor: string;
+}) {
+    return (
+        <div className="group rounded-xl border border-slate-200/50 bg-white/60 p-3.5 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-200 hover:shadow-md hover:shadow-slate-200/60 dark:border-slate-800/50 dark:bg-slate-900/30 dark:hover:border-slate-700 dark:hover:shadow-none sm:p-4">
+
+            <div className={`inline-flex h-8 w-8 items-center justify-center rounded-lg ${iconBg} ${iconColor}`}>
+                {icon}
+            </div>
+
+            <p className="mt-3 text-2xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
+                {value}
+            </p>
+
+            <p className="mt-0.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+                {label}
+            </p>
 
         </div>
     );

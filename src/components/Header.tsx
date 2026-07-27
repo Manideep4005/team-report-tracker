@@ -150,22 +150,26 @@ export default function Header({
                 ref={dropdownRef}
                 className="relative shrink-0"
             >
-                <button
+                <div
                     onClick={() => setOpen((p) => !p)}
-                    className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-2 py-2 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700 dark:hover:bg-slate-800"
+                    className="flex cursor-pointer items-center gap-3"
                 >
                     <div
-                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${avatarColor} text-sm font-semibold text-white`}
+                        className={`flex h-10 w-10 items-center justify-center rounded-full ${avatarColor} text-sm font-semibold text-white`}
                     >
                         {initials}
                     </div>
+
+                    <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                        {user?.name}
+                    </span>
 
                     <HiOutlineChevronDown
                         size={18}
                         className={`text-slate-500 transition-transform ${open ? "rotate-180" : ""
                             }`}
                     />
-                </button>
+                </div>
 
                 {open && (
                     <div className="absolute right-0 mt-3 w-[calc(100vw-2rem)] max-w-80 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
