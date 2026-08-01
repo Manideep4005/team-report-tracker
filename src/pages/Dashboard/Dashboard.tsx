@@ -225,8 +225,8 @@ export default function Dashboard() {
         !data?.myReport &&
         now.getDay() !== 0 &&
         (
-            now.getHours() > 10 ||
-            (now.getHours() === 10 && now.getMinutes() >= 38)
+            now.getHours() > 13 ||
+            (now.getHours() === 13 && now.getMinutes() >= 0)
         );
 
     const submitted =
