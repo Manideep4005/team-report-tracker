@@ -6,6 +6,8 @@ import {
     HiOutlineDocumentMagnifyingGlass,
 } from "react-icons/hi2";
 import { getHistory } from "../../services/report";
+import { HiOutlineClipboardDocument } from "react-icons/hi2";
+import { toast } from "sonner";
 
 export default function History() {
     const [date, setDate] = useState("");
@@ -17,6 +19,7 @@ export default function History() {
             return response.data;
         },
     });
+
 
     return (
         <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
@@ -101,6 +104,14 @@ export default function History() {
 }
 
 function TimelineEntry({ report, index, isLast }) {
+    const handleCopyReport = async (text: string) => {
+        try {
+            await navigator.clipboard.writeText(text);
+            toast.success("Report copied successfully.");
+        } catch {
+            toast.error("Unable to copy report.");
+        }
+    };
     const parsed = new Date(report.reportDate);
 
     const day = parsed.toLocaleDateString("en-IN", {
@@ -141,17 +152,31 @@ function TimelineEntry({ report, index, isLast }) {
 
             {/* Entry card */}
             <div className="min-w-0 flex-1 rounded-2xl border border-slate-200/70 bg-white p-5 shadow-sm transition-all duration-200 group-hover:-translate-y-0.5 group-hover:border-blue-200 group-hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:group-hover:border-blue-900/60">
-                <div className="flex items-center gap-2">
-                    <span className="relative flex h-2 w-2 shrink-0">
-                        <span
-                            className="absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"
-                            style={{ animation: "historyPing 2s cubic-bezier(0,0,0.2,1) infinite" }}
-                        />
-                        <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-500" />
-                    </span>
-                    <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                        {full}
-                    </h3>
+                <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-2 min-w-0">
+                        <span className="relative flex h-2 w-2 shrink-0">
+                            <span
+                                className="absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"
+                                style={{
+                                    animation: "historyPing 2s cubic-bezier(0,0,0.2,1) infinite",
+                                }}
+                            />
+                            <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-500" />
+                        </span>
+
+                        <h3 className="truncate text-sm font-semibold text-slate-900 dark:text-white">
+                            {full}
+                        </h3>
+                    </div>
+
+                    <button
+                        onClick={() => handleCopyReport(report.description)}
+                        className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                        title="Copy report"
+                    >
+                        <HiOutlineClipboardDocument className="h-4 w-4" />
+                        Copy
+                    </button>
                 </div>
 
                 <p className="mt-3 whitespace-pre-wrap break-words text-[15px] leading-7 text-slate-600 dark:text-slate-300">

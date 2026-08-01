@@ -75,6 +75,8 @@ export default function Dashboard() {
     const [summaryLoading, setSummaryLoading] =
         useState(false);
 
+    const [now, setNow] = useState(new Date());
+
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     useEffect(() => {
@@ -96,6 +98,37 @@ export default function Dashboard() {
             el.style.height = `${el.scrollHeight}px`;
         }
     }, [description]);
+
+    useEffect(() => {
+        const updateTime = () => setNow(new Date());
+
+        // Initial update
+        updateTime();
+
+        // Milliseconds until the next :00 or :30
+        const now = new Date();
+        const seconds = now.getSeconds();
+        const milliseconds = now.getMilliseconds();
+
+        const delay =
+            seconds < 30
+                ? (30 - seconds) * 1000 - milliseconds
+                : (60 - seconds) * 1000 - milliseconds;
+
+        let interval: ReturnType<typeof setInterval>;
+
+        const timeout = setTimeout(() => {
+            updateTime();
+
+            // Update every 30 seconds exactly
+            interval = setInterval(updateTime, 30000);
+        }, delay);
+
+        return () => {
+            clearTimeout(timeout);
+            if (interval) clearInterval(interval);
+        };
+    }, []);
 
     const reportMutation = useMutation({
         mutationFn: saveReport,
@@ -126,6 +159,21 @@ export default function Dashboard() {
         }
 
         reportMutation.mutate(text);
+    }
+
+
+    const handleReportSummary = async () => {
+        try {
+            const summary = description;
+
+            navigator.clipboard.writeText(summary)
+
+            toast.success("Summary copied successfully.")
+
+
+        } catch (error) {
+            toast.error("Unable to copy summary.")
+        }
     }
 
     const handleSummary = async () => {
@@ -164,6 +212,11 @@ export default function Dashboard() {
         );
     }
 
+    const shouldShowReminder =
+        !data?.myReport &&
+        now.getDay() !== 0 &&
+        now.getHours() >= 10 && now.getMinutes() >= 38
+
     const submitted =
         data?.stats.submitted ?? 0;
 
@@ -179,7 +232,33 @@ export default function Dashboard() {
 
     return (
         <div className="mx-auto max-w-6xl space-y-5 px-4 py-6 sm:px-6 sm:py-8 lg:space-y-6">
+            {shouldShowReminder && (
+                <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 dark:border-red-800 dark:bg-red-950/30">
+                    <div className="flex items-center justify-between gap-4">
+                        <div>
+                            <h3 className="text-sm font-semibold text-red-600 dark:text-red-500">
+                                Daily Report Reminder
+                            </h3>
 
+                            <p className="mt-1 text-sm text-red-700 dark:text-red-400">
+                                Please submit today's work report before leaving.
+                            </p>
+                        </div>
+
+                        <button
+                            onClick={() =>
+                                textareaRef.current?.scrollIntoView({
+                                    behavior: "smooth",
+                                    block: "center",
+                                })
+                            }
+                            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2 text-sm font-semibold text-white shadow-md shadow-blue-600/20 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-600/25 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+                        >
+                            Write Report
+                        </button>
+                    </div>
+                </div>
+            )}
             <style>{`
                 @keyframes dashFadeIn {
                     from { opacity: 0; transform: translateY(4px); }
@@ -268,20 +347,33 @@ export default function Dashboard() {
                         {description.length} characters
                     </span>
 
-                    <button
-                        onClick={handleSave}
-                        disabled={reportMutation.isPending}
-                        className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2 text-sm font-semibold text-white shadow-md shadow-blue-600/20 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-600/25 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
-                    >
-                        {reportMutation.isPending ? (
-                            <>
-                                <HiOutlineArrowPath className="h-4 w-4 animate-spin" />
-                                Saving…
-                            </>
-                        ) : (
-                            "Save report"
-                        )}
-                    </button>
+                    <div className="flex items-center gap-2">
+
+                        <button
+                            onClick={handleReportSummary}
+                            disabled={!description.trim()}
+                            className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-medium text-slate-700 transition-all hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                        >
+                            <HiOutlineClipboardDocument className="h-4 w-4" />
+                            Copy report
+                        </button>
+
+                        <button
+                            onClick={handleSave}
+                            disabled={reportMutation.isPending}
+                            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2 text-sm font-semibold text-white shadow-md shadow-blue-600/20 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-600/25 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+                        >
+                            {reportMutation.isPending ? (
+                                <>
+                                    <HiOutlineArrowPath className="h-4 w-4 animate-spin" />
+                                    Saving…
+                                </>
+                            ) : (
+                                "Save report"
+                            )}
+                        </button>
+
+                    </div>
 
                 </div>
 
@@ -426,7 +518,7 @@ export default function Dashboard() {
                     ) : (
                         <>
                             <HiOutlineClipboardDocument className="h-4 w-4" />
-                            Copy summary
+                            Copy Team Report
                         </>
                     )}
                 </button>
