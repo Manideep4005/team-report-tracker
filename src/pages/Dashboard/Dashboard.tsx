@@ -134,17 +134,26 @@ export default function Dashboard() {
         mutationFn: saveReport,
 
         onSuccess: (response) => {
-            setDescription(
-                response.data.description
-            );
+            setDescription(response.data.description);
 
             queryClient.invalidateQueries({
                 queryKey: ["dashboard"],
             });
 
-            toast.success(
-                "Report saved successfully."
-            );
+            toast.success("Report saved successfully.");
+        },
+
+        onError: (error: any) => {
+            const response = error.response?.data;
+
+            if (response?.errors?.length) {
+                response.errors.forEach((err: { message: string }) => {
+                    toast.error(err.message);
+                });
+                return;
+            }
+
+            toast.error(response?.message || "Failed to save report.");
         },
     });
 
@@ -215,7 +224,10 @@ export default function Dashboard() {
     const shouldShowReminder =
         !data?.myReport &&
         now.getDay() !== 0 &&
-        now.getHours() >= 10 && now.getMinutes() >= 38
+        (
+            now.getHours() > 10 ||
+            (now.getHours() === 10 && now.getMinutes() >= 38)
+        );
 
     const submitted =
         data?.stats.submitted ?? 0;
