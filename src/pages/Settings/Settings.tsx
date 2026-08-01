@@ -55,17 +55,17 @@ export default function Settings() {
     }
 
     return (
-        <div className="mx-auto max-w-3xl space-y-6 px-4 sm:px-6 md:px-0">
+        <div className="mx-auto max-w-2xl space-y-6 py-2 sm:py-4">
             <div>
-                <h1 className="page-title">Change Password</h1>
-
-
+                <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-2xl">Change Password</h1>
+                <p className="mt-1 text-xs text-slate-500 dark:text-zinc-500">
+                    Update your password to keep your account secure.
+                </p>
             </div>
 
             <section className="card">
-
                 <div className="card-body">
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
+                    <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                         <div className="md:col-span-2">
                             <label className="label">
                                 Current Password
@@ -115,11 +115,11 @@ export default function Settings() {
                         </div>
                     </div>
 
-                    <div className="mt-6 flex justify-end md:mt-8">
+                    <div className="mt-6 flex justify-end">
                         <button
                             onClick={handlePasswordChange}
                             disabled={passwordMutation.isPending}
-                            className="btn-primary w-full sm:w-auto"
+                            className="btn-primary w-full sm:w-auto text-xs font-semibold py-2 px-4"
                         >
                             {passwordMutation.isPending
                                 ? "Updating..."

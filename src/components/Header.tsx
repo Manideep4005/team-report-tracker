@@ -119,127 +119,128 @@ export default function Header({
     }
 
     return (
-        <header className="sticky top-0 z-30 flex h-[72px] items-center justify-between border-b border-slate-200 bg-white/90 px-4 backdrop-blur-xl transition-colors dark:border-slate-800 dark:bg-slate-950/90 sm:px-6 lg:px-8">
+        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-slate-200/50 bg-white/70 px-4 backdrop-blur-md transition-all dark:border-zinc-800/40 dark:bg-zinc-950/70 sm:px-6 lg:px-8">
             {/* Left */}
-
             <div className="flex min-w-0 items-center gap-3">
                 <button
                     onClick={onMenuClick}
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white lg:hidden"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 lg:hidden"
                 >
-                    <HiOutlineBars3 size={22} />
+                    <HiOutlineBars3 size={20} />
                 </button>
 
                 <div className="min-w-0">
-                    <h1 className="truncate text-base font-semibold text-slate-900 dark:text-white sm:text-lg lg:text-xl">
+                    <h1 className="truncate text-sm font-semibold tracking-tight text-slate-900 dark:text-zinc-100 sm:text-base">
                         {greeting},{" "}
-                        <span className="text-blue-600 dark:text-blue-400">
+                        <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text font-bold text-transparent dark:from-blue-400 dark:to-indigo-400">
                             {user?.name?.split(" ")[0]}
                         </span>
                     </h1>
 
-                    <p className="truncate text-xs text-slate-500 dark:text-slate-400 sm:text-sm">
+                    <p className="truncate text-[11px] font-medium text-slate-400 dark:text-zinc-500 sm:text-xs">
                         {today}
                     </p>
                 </div>
             </div>
 
             {/* Right */}
-
             <div
                 ref={dropdownRef}
                 className="relative shrink-0"
             >
                 <div
                     onClick={() => setOpen((p) => !p)}
-                    className="flex cursor-pointer items-center gap-3"
+                    className="flex cursor-pointer items-center gap-2 rounded-full border border-slate-200/50 bg-slate-50/50 p-1 pr-3 transition hover:bg-slate-100/70 dark:border-zinc-800/50 dark:bg-zinc-900/30 dark:hover:bg-zinc-900/70"
                 >
                     <div
-                        className={`flex h-10 w-10 items-center justify-center rounded-full ${avatarColor} text-sm font-semibold text-white`}
+                        className={`flex h-7 w-7 items-center justify-center rounded-full ${avatarColor} text-xs font-bold text-white shadow-sm ring-1 ring-black/5 dark:ring-white/10`}
                     >
                         {initials}
                     </div>
 
-                    <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                    <span className="hidden text-xs font-semibold text-slate-700 dark:text-zinc-300 sm:block">
                         {user?.name}
                     </span>
 
                     <HiOutlineChevronDown
-                        size={18}
-                        className={`text-slate-500 transition-transform ${open ? "rotate-180" : ""
-                            }`}
+                        size={14}
+                        className={`text-slate-400 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
                     />
                 </div>
 
                 {open && (
-                    <div className="absolute right-0 mt-3 w-[calc(100vw-2rem)] max-w-80 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
-                        <div className="flex items-center gap-4 border-b border-slate-200 px-5 py-5 dark:border-slate-800">
+                    <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] max-w-72 overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-lg shadow-black/[0.04] transition-all dark:border-zinc-800/80 dark:bg-zinc-900">
+                        <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-4 dark:border-zinc-800/50">
                             <div
-                                className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full ${avatarColor} text-lg font-bold text-white`}
+                                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${avatarColor} text-sm font-bold text-white`}
                             >
                                 {initials}
                             </div>
 
                             <div className="min-w-0">
-                                <p className="truncate text-base font-semibold text-slate-900 dark:text-white">
+                                <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">
                                     {user?.name}
                                 </p>
 
-                                <p className="truncate text-sm text-slate-500 dark:text-slate-400">
+                                <p className="truncate text-xs text-slate-400 dark:text-zinc-500">
                                     {user?.email}
                                 </p>
                             </div>
                         </div>
 
-                        <button
-                            onClick={toggleTheme}
-                            className="flex w-full items-center justify-between px-5 py-4 text-sm text-slate-700 transition hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 dark:text-slate-300 dark:hover:bg-slate-800"
-                        >
-                            <div className="flex items-center gap-3">
-                                {theme === "dark" ? (
-                                    <HiOutlineMoon size={20} />
-                                ) : (
-                                    <HiOutlineSun size={20} />
-                                )}
-
-                                <span>Dark Mode</span>
-                            </div>
-
-                            <div
-                                className={`relative h-6 w-11 rounded-full transition-colors ${theme === "dark"
-                                    ? "bg-blue-600"
-                                    : "bg-slate-300"
-                                    }`}
+                        <div className="p-1.5">
+                            <button
+                                onClick={toggleTheme}
+                                className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-xs font-medium text-slate-600 transition hover:bg-slate-50 dark:text-zinc-300 dark:hover:bg-zinc-800/50"
                             >
+                                <div className="flex items-center gap-2.5">
+                                    {theme === "dark" ? (
+                                        <HiOutlineMoon size={16} className="text-zinc-400" />
+                                    ) : (
+                                        <HiOutlineSun size={16} className="text-zinc-400" />
+                                    )}
+
+                                    <span>Dark Mode</span>
+                                </div>
+
                                 <div
-                                    className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${theme === "dark"
-                                        ? "left-[22px]"
-                                        : "left-0.5"
+                                    className={`relative h-5 w-9 rounded-full transition-colors duration-200 ${theme === "dark"
+                                        ? "bg-zinc-950 ring-1 ring-zinc-800"
+                                        : "bg-slate-200"
                                         }`}
+                                >
+                                    <div
+                                        className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-all duration-200 ${theme === "dark"
+                                            ? "left-[18px] dark:bg-zinc-200"
+                                            : "left-0.5"
+                                            }`}
+                                    />
+                                </div>
+                            </button>
+
+                            <button
+                                onClick={() => {
+                                    setOpen(false);
+                                    navigate("/settings");
+                                }}
+                                className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-xs font-medium text-slate-600 transition hover:bg-slate-50 dark:text-zinc-300 dark:hover:bg-zinc-800/50"
+                            >
+                                <HiOutlineCog6Tooth size={16} className="text-zinc-400" />
+                                Change Password
+                            </button>
+
+                            <div className="my-1 border-t border-slate-100 dark:border-zinc-800/50" />
+
+                            <button
+                                onClick={handleLogout}
+                                className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-xs font-medium text-red-600 transition hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
+                            >
+                                <HiOutlineArrowRightOnRectangle
+                                    size={16}
                                 />
-                            </div>
-                        </button>
-
-                        <button
-                            onClick={() => {
-                                setOpen(false);
-                                navigate("/settings");
-                            }}
-                            className="flex w-full items-center gap-3 px-5 py-4 text-left text-sm text-slate-700 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-                        >
-                            <HiOutlineCog6Tooth size={20} />
-                            Change Password
-                        </button>
-
-                        <button
-                            onClick={handleLogout}
-                            className="flex w-full items-center gap-3 border-t border-slate-200 px-5 py-4 text-left text-sm text-red-600 transition hover:bg-red-600 hover:text-white dark:border-slate-800 dark:text-red-400"
-                        >
-                            <HiOutlineArrowRightOnRectangle
-                                size={20}
-                            />
-                            Logout
-                        </button>
+                                Logout
+                            </button>
+                        </div>
                     </div>
                 )}
             </div>

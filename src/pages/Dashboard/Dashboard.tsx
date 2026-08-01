@@ -175,7 +175,7 @@ export default function Dashboard() {
         try {
             const summary = description;
 
-            navigator.clipboard.writeText(summary)
+            await navigator.clipboard.writeText(summary)
 
             toast.success("Summary copied successfully.")
 
@@ -211,14 +211,7 @@ export default function Dashboard() {
     };
 
     if (isLoading) {
-        return (
-            <div className="flex h-[60vh] flex-col items-center justify-center gap-3">
-                <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-blue-600 dark:border-slate-700 dark:border-t-blue-500" />
-                <p className="text-sm text-slate-500 dark:text-slate-400">
-                    Loading dashboard…
-                </p>
-            </div>
-        );
+        return <DashboardSkeleton />;
     }
 
     const shouldShowReminder =
@@ -243,18 +236,24 @@ export default function Dashboard() {
             );
 
     return (
-        <div className="mx-auto max-w-6xl space-y-5 px-4 py-6 sm:px-6 sm:py-8 lg:space-y-6">
+        <div className="mx-auto max-w-5xl space-y-6 py-2 sm:py-4 lg:space-y-8 animate-[dashFadeIn_0.35s_ease-out]">
             {shouldShowReminder && (
-                <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 dark:border-red-800 dark:bg-red-950/30">
-                    <div className="flex items-center justify-between gap-4">
-                        <div>
-                            <h3 className="text-sm font-semibold text-red-600 dark:text-red-500">
-                                Daily Report Reminder
-                            </h3>
-
-                            <p className="mt-1 text-sm text-red-700 dark:text-red-400">
-                                Please submit today's work report before leaving.
-                            </p>
+                <div className="relative overflow-hidden rounded-2xl border border-rose-100 bg-rose-50/40 p-5 dark:border-rose-950/20 dark:bg-rose-950/10">
+                    <div className="absolute top-0 right-0 h-24 w-24 bg-rose-400/5 blur-2xl dark:bg-rose-400/2" />
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex items-start gap-3">
+                            <span className="relative flex h-2.5 w-2.5 mt-1.5 shrink-0">
+                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75" />
+                                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-rose-500" />
+                            </span>
+                            <div>
+                                <h3 className="text-xs font-semibold uppercase tracking-wider text-rose-800 dark:text-rose-400">
+                                    Daily Report Reminder
+                                </h3>
+                                <p className="mt-1 text-xs text-rose-600 dark:text-rose-500/80">
+                                    Please submit today's work report before leaving.
+                                </p>
+                            </div>
                         </div>
 
                         <button
@@ -264,16 +263,17 @@ export default function Dashboard() {
                                     block: "center",
                                 })
                             }
-                            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2 text-sm font-semibold text-white shadow-md shadow-blue-600/20 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-600/25 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+                            className="inline-flex h-8 items-center justify-center rounded-lg bg-rose-600 px-4 text-xs font-semibold text-white shadow-sm transition-all hover:bg-rose-700 active:scale-95"
                         >
                             Write Report
                         </button>
                     </div>
                 </div>
             )}
+            
             <style>{`
                 @keyframes dashFadeIn {
-                    from { opacity: 0; transform: translateY(4px); }
+                    from { opacity: 0; transform: translateY(6px); }
                     to { opacity: 1; transform: translateY(0); }
                 }
                 @media (prefers-reduced-motion: reduce) {
@@ -282,65 +282,56 @@ export default function Dashboard() {
             `}</style>
 
             {/* Overview — progress + stats, one connected panel */}
-            <section className="rounded-2xl border border-slate-200/60 bg-gradient-to-br from-white to-slate-50/60 p-4 dark:border-slate-800/60 dark:from-slate-900/50 dark:to-slate-900/20 sm:p-6">
-
+            <section className="card p-5 md:p-6">
                 <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                    <p className="text-xs font-semibold tracking-wide text-slate-500 dark:text-zinc-400">
                         {submitted} of {total} team members have submitted today
                     </p>
-                    <span className="text-sm font-semibold text-slate-900 dark:text-white">
+                    <span className="text-xs font-bold text-slate-900 dark:text-white">
                         {progress}%
                     </span>
                 </div>
 
-                <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-slate-200/70 dark:bg-slate-800">
+                <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-zinc-800">
                     <div
                         style={{ width: `${progress}%` }}
-                        className="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-700 ease-out"
+                        className="h-full rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 transition-all duration-700 ease-out dark:from-blue-500 dark:to-indigo-500"
                     />
                 </div>
 
-                <div className="mt-5 grid grid-cols-2 gap-3 sm:mt-6 lg:grid-cols-4 lg:gap-4">
-
+                <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
                     <StatWidget
                         icon={<HiOutlineDocumentCheck className="h-4 w-4" />}
                         label="Submitted"
                         value={data?.stats.submitted}
-                        iconBg="bg-emerald-50 dark:bg-emerald-500/10"
-                        iconColor="text-emerald-600 dark:text-emerald-400"
+                        iconBg="bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400"
                     />
 
                     <StatWidget
                         icon={<HiOutlineClock className="h-4 w-4" />}
                         label="Pending"
                         value={data?.stats.pending}
-                        iconBg="bg-amber-50 dark:bg-amber-500/10"
-                        iconColor="text-amber-600 dark:text-amber-400"
+                        iconBg="bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400"
                     />
 
                     <StatWidget
                         icon={<HiOutlineUsers className="h-4 w-4" />}
                         label="Members"
                         value={data?.stats.totalMembers}
-                        iconBg="bg-violet-50 dark:bg-violet-500/10"
-                        iconColor="text-violet-600 dark:text-violet-400"
+                        iconBg="bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-400"
                     />
 
                     <StatWidget
                         icon={<HiOutlineChartBarSquare className="h-4 w-4" />}
                         label="Completion"
                         value={`${data?.stats.completion}%`}
-                        iconBg="bg-blue-50 dark:bg-blue-500/10"
-                        iconColor="text-blue-600 dark:text-blue-400"
+                        iconBg="bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400"
                     />
-
                 </div>
-
             </section>
 
             {/* Report editor */}
-            <section className="rounded-2xl border border-slate-200/60 bg-white/70 p-4 shadow-sm backdrop-blur-sm dark:border-slate-800/60 dark:bg-slate-900/40 sm:p-6">
-
+            <section className="card p-5 relative overflow-hidden focus-within:border-slate-350 dark:focus-within:border-zinc-700">
                 <textarea
                     ref={textareaRef}
                     rows={5}
@@ -349,115 +340,104 @@ export default function Dashboard() {
                         setDescription(e.target.value)
                     }
                     placeholder="What did you work on today?"
-                    className="w-full resize-none overflow-hidden border-0 bg-transparent text-[15px] leading-7 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-0 dark:text-slate-100 dark:placeholder:text-slate-600"
+                    className="w-full resize-none overflow-hidden border-0 bg-transparent py-1 text-sm leading-relaxed text-slate-800 placeholder:text-slate-400 outline-none focus:ring-0 dark:text-zinc-100 dark:placeholder:text-zinc-650"
                     style={{ minHeight: "140px" }}
                 />
 
-                <div className="mt-3 flex items-center justify-between gap-3 border-t border-slate-100 pt-3 dark:border-slate-800/70">
-
-                    <span className="text-xs text-slate-400 dark:text-slate-500">
+                <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-100 pt-4 dark:border-zinc-800/60">
+                    <span className="text-xs text-slate-400 dark:text-zinc-500">
                         {description.length} characters
                     </span>
 
                     <div className="flex items-center gap-2">
-
                         <button
                             onClick={handleReportSummary}
                             disabled={!description.trim()}
-                            className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-medium text-slate-700 transition-all hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                            className="btn-secondary py-1.5 px-3.5 text-xs font-semibold"
                         >
-                            <HiOutlineClipboardDocument className="h-4 w-4" />
+                            <HiOutlineClipboardDocument className="mr-1.5 h-3.5 w-3.5" />
                             Copy report
                         </button>
 
                         <button
                             onClick={handleSave}
                             disabled={reportMutation.isPending}
-                            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2 text-sm font-semibold text-white shadow-md shadow-blue-600/20 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-600/25 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+                            className="btn-primary py-1.5 px-3.5 text-xs font-semibold"
                         >
                             {reportMutation.isPending ? (
                                 <>
-                                    <HiOutlineArrowPath className="h-4 w-4 animate-spin" />
+                                    <HiOutlineArrowPath className="mr-1.5 h-3.5 w-3.5 animate-spin" />
                                     Saving…
                                 </>
                             ) : (
                                 "Save report"
                             )}
                         </button>
-
                     </div>
-
                 </div>
-
             </section>
 
             {/* Team status + Activity feed */}
-            <section className="grid gap-5 lg:grid-cols-2 lg:gap-6">
-
+            <section className="grid gap-6 lg:grid-cols-2">
                 {/* Team status */}
-                <div className="rounded-2xl border border-slate-200/60 bg-white/70 backdrop-blur-sm dark:border-slate-800/60 dark:bg-slate-900/40">
+                <div className="card flex flex-col overflow-hidden">
+                    <div className="px-5 py-4 border-b border-slate-100 dark:border-zinc-800/50">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                            Team Status
+                        </p>
+                    </div>
 
-                    <p className="px-5 pt-5 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 sm:px-6">
-                        Team
-                    </p>
-
-                    <div className="mt-2 divide-y divide-slate-100 dark:divide-slate-800/60">
-
+                    <div className="divide-y divide-slate-100 overflow-y-auto dark:divide-zinc-800/40">
                         {data?.teamStatus.map((member, idx) => (
                             <div
                                 key={member.id}
-                                className="dash-fade group flex items-center justify-between gap-3 px-5 py-3.5 opacity-0 transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/30 sm:px-6"
+                                className="dash-fade group flex items-center justify-between gap-3 px-5 py-3.5 opacity-0 transition-colors hover:bg-slate-50/40 dark:hover:bg-zinc-900/20"
                                 style={{
-                                    animation: "dashFadeIn 0.4s ease-out forwards",
-                                    animationDelay: `${Math.min(idx, 8) * 35}ms`,
+                                    animation: "dashFadeIn 0.3s ease-out forwards",
+                                    animationDelay: `${Math.min(idx, 8) * 30}ms`,
                                 }}
                             >
                                 <div className="flex min-w-0 items-center gap-3">
-
-                                    <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-slate-600 to-slate-800 text-xs font-semibold text-white dark:from-slate-500 dark:to-slate-700">
+                                    <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-150 text-[11px] font-semibold text-slate-700 dark:bg-zinc-800 dark:text-zinc-300 ring-1 ring-black/5 dark:ring-white/5">
                                         {member.name.charAt(0).toUpperCase()}
 
                                         {member.submitted && (
-                                            <span className="absolute -right-0.5 -top-0.5 flex h-3 w-3">
+                                            <span className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5">
                                                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                                                <span className="relative inline-flex h-3 w-3 rounded-full border-2 border-white bg-emerald-500 dark:border-slate-900" />
+                                                <span className="relative inline-flex h-2.5 w-2.5 rounded-full border border-white bg-emerald-500 dark:border-[#09090b]" />
                                             </span>
                                         )}
                                     </div>
 
-                                    <p className="truncate text-sm font-medium text-slate-900 dark:text-white">
+                                    <p className="truncate text-xs font-semibold text-slate-800 dark:text-zinc-200">
                                         {member.name}
                                     </p>
-
                                 </div>
 
                                 <span
-                                    className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${member.submitted
-                                        ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400"
-                                        : "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400"
+                                    className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${member.submitted
+                                        ? "badge-success"
+                                        : "badge"
                                         }`}
                                 >
                                     {member.submitted ? "Submitted" : "Pending"}
                                 </span>
-
                             </div>
                         ))}
-
                     </div>
-
                 </div>
 
                 {/* Activity feed */}
-                <div className="rounded-2xl border border-slate-200/60 bg-white/70 backdrop-blur-sm dark:border-slate-800/60 dark:bg-slate-900/40">
+                <div className="card flex flex-col overflow-hidden">
+                    <div className="px-5 py-4 border-b border-slate-100 dark:border-zinc-800/50">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                            Activity Feed
+                        </p>
+                    </div>
 
-                    <p className="px-5 pt-5 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 sm:px-6">
-                        Activity
-                    </p>
-
-                    <div className="mt-2 max-h-[420px] divide-y divide-slate-100 overflow-y-auto dark:divide-slate-800/60">
-
+                    <div className="max-h-[420px] divide-y divide-slate-100 overflow-y-auto dark:divide-zinc-800/40">
                         {data?.reports.length === 0 && (
-                            <div className="px-5 py-10 text-center text-sm text-slate-400 dark:text-slate-500 sm:px-6">
+                            <div className="px-5 py-12 text-center text-xs font-medium text-slate-400 dark:text-zinc-500">
                                 No reports submitted today.
                             </div>
                         )}
@@ -465,25 +445,23 @@ export default function Dashboard() {
                         {data?.reports.map((report, idx) => (
                             <div
                                 key={report.id}
-                                className="dash-fade group px-5 py-4 opacity-0 transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/30 sm:px-6"
+                                className="dash-fade group px-5 py-4 opacity-0 transition-colors hover:bg-slate-50/40 dark:hover:bg-zinc-900/20"
                                 style={{
-                                    animation: "dashFadeIn 0.4s ease-out forwards",
-                                    animationDelay: `${Math.min(idx, 8) * 35}ms`,
+                                    animation: "dashFadeIn 0.3s ease-out forwards",
+                                    animationDelay: `${Math.min(idx, 8) * 30}ms`,
                                 }}
                             >
                                 <div className="flex items-start gap-3">
-
-                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-xs font-semibold text-white">
+                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[11px] font-semibold text-slate-700 dark:bg-zinc-800 dark:text-zinc-300 ring-1 ring-black/5 dark:ring-white/5">
                                         {report.user.name.charAt(0).toUpperCase()}
                                     </div>
 
                                     <div className="min-w-0 flex-1">
-
-                                        <div className="flex flex-wrap items-baseline gap-x-2">
-                                            <span className="text-sm font-medium text-slate-900 dark:text-white">
+                                        <div className="flex items-baseline justify-between gap-2">
+                                            <span className="text-xs font-bold text-slate-800 dark:text-zinc-200">
                                                 {report.user.name}
                                             </span>
-                                            <span className="text-xs text-slate-400 dark:text-slate-500">
+                                            <span className="text-[10px] font-semibold text-slate-400 dark:text-zinc-500">
                                                 {new Date(
                                                     report.createdAt
                                                 ).toLocaleTimeString("en-IN", {
@@ -493,50 +471,41 @@ export default function Dashboard() {
                                             </span>
                                         </div>
 
-                                        <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6 text-slate-600 dark:text-slate-300">
+                                        <p className="mt-2 whitespace-pre-wrap break-words text-xs leading-relaxed text-slate-650 dark:text-zinc-350">
                                             {report.description}
                                         </p>
-
                                     </div>
-
                                 </div>
-
                             </div>
                         ))}
-
                     </div>
-
                 </div>
-
             </section>
 
             {/* Summary action panel */}
-            <section className="flex flex-col items-start justify-between gap-4 rounded-2xl border border-slate-200/60 bg-white/70 p-5 backdrop-blur-sm dark:border-slate-800/60 dark:bg-slate-900/40 sm:flex-row sm:items-center sm:p-6">
-
-                <p className="text-sm text-slate-500 dark:text-slate-400">
+            <section className="card flex flex-col items-start justify-between gap-4 p-5 sm:flex-row sm:items-center">
+                <p className="text-xs font-medium text-slate-500 dark:text-zinc-400">
                     Copy a formatted summary of today's reports to share with the team.
                 </p>
 
                 <button
                     onClick={handleSummary}
                     disabled={summaryLoading}
-                    className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-blue-600/20 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-600/25 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 sm:w-auto"
+                    className="btn-primary w-full py-2 px-4 text-xs font-semibold sm:w-auto"
                 >
                     {summaryLoading ? (
                         <>
-                            <HiOutlineArrowPath className="h-4 w-4 animate-spin" />
+                            <HiOutlineArrowPath className="mr-1.5 h-3.5 w-3.5 animate-spin" />
                             Generating…
                         </>
                     ) : (
                         <>
-                            <HiOutlineClipboardDocument className="h-4 w-4" />
+                            <HiOutlineClipboardDocument className="mr-1.5 h-3.5 w-3.5" />
                             Copy Team Report
                         </>
                     )}
                 </button>
-
             </section>
-
         </div>
     );
 }
@@ -546,29 +515,99 @@ function StatWidget({
     label,
     value,
     iconBg,
-    iconColor,
 }: {
     icon: React.ReactNode;
     label: string;
     value: React.ReactNode;
     iconBg: string;
-    iconColor: string;
 }) {
     return (
-        <div className="group rounded-xl border border-slate-200/50 bg-white/60 p-3.5 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-200 hover:shadow-md hover:shadow-slate-200/60 dark:border-slate-800/50 dark:bg-slate-900/30 dark:hover:border-slate-700 dark:hover:shadow-none sm:p-4">
-
-            <div className={`inline-flex h-8 w-8 items-center justify-center rounded-lg ${iconBg} ${iconColor}`}>
+        <div className="group rounded-xl border border-slate-100 bg-slate-50/20 p-4 transition-all duration-200 hover:border-slate-200 dark:border-zinc-800/40 dark:bg-zinc-900/10">
+            <div className={`inline-flex h-8 w-8 items-center justify-center rounded-lg ${iconBg} shadow-sm`}>
                 {icon}
             </div>
 
-            <p className="mt-3 text-2xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
+            <p className="mt-3 text-lg font-bold tracking-tight text-slate-900 dark:text-white sm:text-xl md:text-2xl">
                 {value}
             </p>
 
-            <p className="mt-0.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+            <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
                 {label}
             </p>
+        </div>
+    );
+}
 
+function DashboardSkeleton() {
+    return (
+        <div className="mx-auto max-w-5xl space-y-6 py-2 sm:py-4 lg:space-y-8 animate-pulse">
+            {/* Overview Skeleton */}
+            <div className="card p-5 md:p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                    <div className="h-3 w-64 rounded bg-slate-200 dark:bg-zinc-800" />
+                    <div className="h-3 w-10 rounded bg-slate-200 dark:bg-zinc-800" />
+                </div>
+                <div className="h-1.5 rounded-full bg-slate-100 dark:bg-zinc-900" />
+                <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 pt-2">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                        <div key={i} className="rounded-xl border border-slate-100 bg-slate-50/20 p-4 dark:border-zinc-800/40 dark:bg-zinc-900/10 space-y-2">
+                            <div className="h-8 w-8 rounded bg-slate-250 dark:bg-zinc-800" />
+                            <div className="h-6 w-12 rounded bg-slate-250 dark:bg-zinc-800" />
+                            <div className="h-3 w-16 rounded bg-slate-200 dark:bg-zinc-900" />
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* Editor Skeleton */}
+            <div className="card p-5 space-y-6">
+                <div className="space-y-2">
+                    <div className="h-3.5 w-full rounded bg-slate-200 dark:bg-zinc-800" />
+                    <div className="h-3.5 w-5/6 rounded bg-slate-200 dark:bg-zinc-800" />
+                    <div className="h-3.5 w-2/3 rounded bg-slate-200 dark:bg-zinc-800" />
+                </div>
+                <div className="flex justify-between items-center border-t border-slate-100 pt-4 dark:border-zinc-800/60">
+                    <div className="h-3 w-20 rounded bg-slate-100 dark:bg-zinc-900" />
+                    <div className="flex gap-2">
+                        <div className="h-8 w-24 rounded-lg bg-slate-200 dark:bg-zinc-800" />
+                        <div className="h-8 w-24 rounded-lg bg-slate-200 dark:bg-zinc-800" />
+                    </div>
+                </div>
+            </div>
+
+            {/* Grid Skeleton */}
+            <div className="grid gap-6 lg:grid-cols-2">
+                <div className="card p-5 space-y-4">
+                    <div className="h-3.5 w-24 rounded bg-slate-250 dark:bg-zinc-800" />
+                    <div className="space-y-3 pt-2">
+                        {Array.from({ length: 4 }).map((_, i) => (
+                            <div key={i} className="flex justify-between items-center py-1">
+                                <div className="flex items-center gap-3">
+                                    <div className="h-7 w-7 rounded-full bg-slate-200 dark:bg-zinc-800" />
+                                    <div className="h-3 w-28 rounded bg-slate-200 dark:bg-zinc-800" />
+                                </div>
+                                <div className="h-5 w-16 rounded-full bg-slate-200 dark:bg-zinc-800" />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="card p-5 space-y-4">
+                    <div className="h-3.5 w-24 rounded bg-slate-250 dark:bg-zinc-800" />
+                    <div className="space-y-4 pt-2">
+                        {Array.from({ length: 3 }).map((_, i) => (
+                            <div key={i} className="space-y-2">
+                                <div className="flex justify-between">
+                                    <div className="h-3.5 w-20 rounded bg-slate-200 dark:bg-zinc-800" />
+                                    <div className="h-2.5 w-10 rounded bg-slate-100 dark:bg-zinc-900" />
+                                </div>
+                                <div className="h-3 w-full rounded bg-slate-100 dark:bg-zinc-900" />
+                                <div className="h-3 w-5/6 rounded bg-slate-100 dark:bg-zinc-900" />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }
