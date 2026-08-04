@@ -169,7 +169,7 @@ export default function Header({
                 </div>
 
                 {open && (
-                    <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] max-w-72 overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-lg shadow-black/[0.04] transition-all dark:border-zinc-800/80 dark:bg-zinc-900">
+                    <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] max-w-72 z-50 overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-lg shadow-black/[0.04] transition-all dark:border-zinc-800/80 dark:bg-zinc-900">
                         <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-4 dark:border-zinc-800/50">
                             <div
                                 className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${avatarColor} text-sm font-bold text-white`}

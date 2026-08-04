@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-    HiOutlineCalendarDays,
     HiOutlineXMark,
     HiOutlineDocumentMagnifyingGlass,
+    HiOutlineClipboardDocument,
 } from "react-icons/hi2";
+import { format } from "date-fns";
 import { getHistory } from "../../services/report";
-import { HiOutlineClipboardDocument } from "react-icons/hi2";
 import { toast } from "sonner";
+import DayPickerInput from "../../components/DayPickerInput";
 
 interface ReportItem {
     id: string;
@@ -16,16 +17,17 @@ interface ReportItem {
 }
 
 export default function History() {
-    const [date, setDate] = useState("");
+    const [date, setDate] = useState<Date | null>(null);
+
+    const dateParam = date ? format(date, "yyyy-MM-dd") : "";
 
     const { data, isLoading } = useQuery<ReportItem[]>({
-        queryKey: ["history", date],
+        queryKey: ["history", dateParam],
         queryFn: async () => {
-            const response = await getHistory(date || undefined);
+            const response = await getHistory(dateParam || undefined);
             return response.data;
         },
     });
-
 
     return (
         <div className="mx-auto max-w-3xl py-2 sm:py-4">
@@ -62,21 +64,14 @@ export default function History() {
                         </span>
                     ) : null}
 
-                    <div className="relative">
-                        <HiOutlineCalendarDays
-                            size={14}
-                            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500"
-                        />
-                        <input
-                            type="date"
-                            value={date}
-                            onChange={(e) => setDate(e.target.value)}
-                            className="h-9 rounded-xl border border-slate-200 bg-white/50 pl-9 pr-3 text-xs font-semibold text-slate-700 outline-none transition-all focus:border-zinc-400 focus:ring-2 focus:ring-zinc-500/5 dark:border-zinc-800 dark:bg-zinc-900/55 dark:text-zinc-200 dark:[color-scheme:dark]"
-                        />
-                    </div>
+                    <DayPickerInput
+                        value={date}
+                        onChange={setDate}
+                        placeholder="Filter by date"
+                    />
 
                     <button
-                        onClick={() => setDate("")}
+                        onClick={() => setDate(null)}
                         disabled={!date}
                         className="inline-flex h-9 items-center gap-1 rounded-xl border border-slate-200 bg-white/50 px-3 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-800 dark:bg-zinc-900/55 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
                     >
@@ -109,7 +104,15 @@ export default function History() {
     );
 }
 
-function TimelineEntry({ report, index, isLast }: { report: ReportItem; index: number; isLast: boolean }) {
+function TimelineEntry({
+    report,
+    index,
+    isLast,
+}: {
+    report: ReportItem;
+    index: number;
+    isLast: boolean;
+}) {
     const handleCopyReport = async (text: string) => {
         try {
             await navigator.clipboard.writeText(text);

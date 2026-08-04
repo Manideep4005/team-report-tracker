@@ -7,6 +7,7 @@ import Dashboard from "./pages/Dashboard/Dashboard";
 import History from "./pages/History/History";
 import Settings from "./pages/Settings/Settings";
 
+
 function App() {
     return (
         <Routes>
