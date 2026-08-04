@@ -145,7 +145,10 @@ export default function Dashboard() {
             setDescription(response.data.description);
 
             queryClient.invalidateQueries({
-                queryKey: ["dashboard"],
+                queryKey: [
+                    "dashboard",
+                    format(selectedDate, "yyyy-MM-dd"),
+                ],
             });
 
             toast.success("Report saved successfully.");
@@ -176,7 +179,13 @@ export default function Dashboard() {
             return;
         }
 
-        reportMutation.mutate(text);
+        reportMutation.mutate({
+            description: text,
+            reportDate: format(
+                selectedDate,
+                "yyyy-MM-dd"
+            ),
+        });
     }
 
 

@@ -11,10 +11,18 @@ export async function getDashboard(
 
   return data;
 }
-export async function saveReport(description: string) {
-  const { data } = await api.post("/api/reports", {
-    description,
-  });
+export interface SaveReportRequest {
+  description: string;
+  reportDate: string;
+}
+
+export async function saveReport(
+  payload: SaveReportRequest
+) {
+  const { data } = await api.post(
+    "/api/reports",
+    payload
+  );
 
   return data;
 }
