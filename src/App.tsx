@@ -10,7 +10,8 @@ import Users from "./pages/Users/Users";
 import Roles from "./pages/Roles/Roles";
 import Reports from "./pages/Reports/Reports";
 import LoginHistory from "./pages/LoginHistory/LoginHistory";
-
+import Permissions
+    from "./pages/Permissions/Permissions";
 
 function App() {
     return (
@@ -94,6 +95,17 @@ function App() {
                     <ProtectedRoute>
                         <DashboardLayout>
                             <Roles />
+                        </DashboardLayout>
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/permissions"
+                element={
+                    <ProtectedRoute>
+                        <DashboardLayout>
+                            <Permissions />
                         </DashboardLayout>
                     </ProtectedRoute>
                 }

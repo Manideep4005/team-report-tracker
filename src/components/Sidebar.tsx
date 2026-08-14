@@ -7,6 +7,7 @@ import {
     HiOutlineShieldCheck,
     HiOutlineDocumentText,
     HiOutlineArrowRightOnRectangle,
+    HiOutlineKey,
 } from "react-icons/hi2";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -198,6 +199,17 @@ export default function Sidebar({
                             </NavLink>
                         )}
 
+                        {hasPermission("PERMISSION_VIEW") && (
+                            <NavLink
+                                to="/permissions"
+                                className={linkClass}
+                                onClick={onClose}
+                            >
+                                <HiOutlineKey size={16} />
+                                Permissions
+                            </NavLink>
+                        )}
+
                         {hasPermission("LOGIN_HISTORY_VIEW") && (
                             <NavLink
                                 to="/login-history"
@@ -326,6 +338,17 @@ export default function Sidebar({
                         >
                             <HiOutlineShieldCheck size={16} />
                             Roles
+                        </NavLink>
+                    )}
+
+                    {hasPermission("PERMISSION_VIEW") && (
+                        <NavLink
+                            to="/permissions"
+                            className={linkClass}
+                            onClick={onClose}
+                        >
+                            <HiOutlineKey size={16} />
+                            Permissions
                         </NavLink>
                     )}
 
