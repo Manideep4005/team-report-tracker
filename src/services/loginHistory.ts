@@ -22,11 +22,19 @@ export interface LoginHistoryResponse {
     data: LoginHistoryItem[];
 }
 
-export async function getLoginHistory() {
-    const { data } =
-        await api.get<LoginHistoryResponse>(
-            "/api/login-history"
-        );
+export async function getLoginHistory(
+    page = 1,
+    limit = 10
+) {
+    const { data } = await api.get(
+        "/api/login-history",
+        {
+            params: {
+                page,
+                limit,
+            },
+        }
+    );
 
     return data;
 }
