@@ -131,7 +131,7 @@ export default function Permissions() {
     }
 
     return (
-        <div className="mx-auto max-w-6xl py-2 sm:py-4">
+        <div className="mx-auto w-full max-w-6xl px-4 py-2 sm:px-6 sm:py-4">
 
             {/* Header */}
 
@@ -139,11 +139,11 @@ export default function Permissions() {
 
                 <div className="flex items-center gap-2">
 
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600 dark:bg-zinc-900 dark:text-zinc-300">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 dark:bg-zinc-900 dark:text-zinc-300">
                         <HiOutlineShieldCheck size={18} />
                     </div>
 
-                    <div>
+                    <div className="min-w-0">
 
                         <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-2xl">
                             Permissions
@@ -160,7 +160,7 @@ export default function Permissions() {
                 {hasPermission("PERMISSION_CREATE") && (
                     <button
                         onClick={openCreate}
-                        className="btn-primary flex items-center justify-center gap-2"
+                        className="btn-primary flex w-full items-center justify-center gap-2 sm:w-auto"
                     >
                         <HiOutlinePlus size={16} />
                         Add Permission
@@ -206,131 +206,150 @@ export default function Permissions() {
 
                 ) : (
 
-                    <div className="card overflow-hidden">
+                    <>
+                        {/* Desktop / tablet table */}
+                        <div className="card hidden overflow-hidden sm:block">
 
-                        <div className="overflow-x-auto">
+                            <div className="overflow-x-auto">
 
-                            <table className="w-full">
+                                <table className="w-full min-w-[640px]">
 
-                                <thead>
-                                    <tr className="border-b border-slate-200/70 dark:border-zinc-800">
+                                    <thead>
+                                        <tr className="border-b border-slate-200/70 dark:border-zinc-800">
 
-                                        <th className="px-5 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-600">
-                                            Permission
-                                        </th>
+                                            <th className="px-5 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-600">
+                                                Permission
+                                            </th>
 
-                                        <th className="px-5 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-600">
-                                            Description
-                                        </th>
+                                            <th className="px-5 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-600">
+                                                Description
+                                            </th>
 
-                                        <th className="px-5 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-600">
-                                            Roles
-                                        </th>
+                                            <th className="px-5 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-600">
+                                                Roles
+                                            </th>
 
-                                        <th className="px-5 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-600">
-                                            Actions
-                                        </th>
+                                            <th className="px-5 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-600">
+                                                Actions
+                                            </th>
 
-                                    </tr>
-                                </thead>
+                                        </tr>
+                                    </thead>
 
-                                <tbody>
+                                    <tbody>
 
-                                    {permissions.map(
-                                        (permission) => (
-                                            <tr
-                                                key={permission.id}
-                                                className="border-b border-slate-100 last:border-0 dark:border-zinc-800/60"
-                                            >
+                                        {permissions.map(
+                                            (permission) => (
+                                                <tr
+                                                    key={permission.id}
+                                                    className="border-b border-slate-100 last:border-0 dark:border-zinc-800/60"
+                                                >
 
-                                                <td className="px-5 py-4">
+                                                    <td className="px-5 py-4">
 
-                                                    <div>
+                                                        <div>
 
-                                                        <p className="text-sm font-semibold text-slate-800 dark:text-zinc-200">
-                                                            {permission.name}
+                                                            <p className="text-sm font-semibold text-slate-800 dark:text-zinc-200">
+                                                                {permission.name}
+                                                            </p>
+
+                                                            <code className="mt-1 inline-block rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-zinc-900 dark:text-zinc-500">
+                                                                {permission.code}
+                                                            </code>
+
+                                                        </div>
+
+                                                    </td>
+
+                                                    <td className="max-w-sm px-5 py-4">
+
+                                                        <p className="truncate text-xs text-slate-500 dark:text-zinc-500">
+                                                            {permission.description ||
+                                                                "No description"}
                                                         </p>
 
-                                                        <code className="mt-1 inline-block rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-zinc-900 dark:text-zinc-500">
-                                                            {permission.code}
-                                                        </code>
+                                                    </td>
 
-                                                    </div>
+                                                    <td className="px-5 py-4 text-center">
 
-                                                </td>
+                                                        <span className="badge-primary">
+                                                            {permission._count?.roles ?? 0}
+                                                        </span>
 
-                                                <td className="max-w-sm px-5 py-4">
+                                                    </td>
 
-                                                    <p className="truncate text-xs text-slate-500 dark:text-zinc-500">
-                                                        {permission.description ||
-                                                            "No description"}
-                                                    </p>
+                                                    <td className="px-5 py-4">
 
-                                                </td>
+                                                        <div className="flex justify-end gap-2">
 
-                                                <td className="px-5 py-4 text-center">
+                                                            {hasPermission(
+                                                                "PERMISSION_UPDATE"
+                                                            ) && (
+                                                                    <button
+                                                                        onClick={() =>
+                                                                            openEdit(
+                                                                                permission
+                                                                            )
+                                                                        }
+                                                                        className="icon-btn"
+                                                                        title="Edit permission"
+                                                                    >
+                                                                        <HiOutlinePencilSquare
+                                                                            size={16}
+                                                                        />
+                                                                    </button>
+                                                                )}
 
-                                                    <span className="badge-primary">
-                                                        {permission._count?.roles ?? 0}
-                                                    </span>
+                                                            {hasPermission(
+                                                                "PERMISSION_DELETE"
+                                                            ) && (
+                                                                    <button
+                                                                        onClick={() =>
+                                                                            setDeleteTarget(
+                                                                                permission
+                                                                            )
+                                                                        }
+                                                                        className="icon-btn-danger"
+                                                                        title="Delete permission"
+                                                                    >
+                                                                        <HiOutlineTrash
+                                                                            size={16}
+                                                                        />
+                                                                    </button>
+                                                                )}
 
-                                                </td>
+                                                        </div>
 
-                                                <td className="px-5 py-4">
+                                                    </td>
 
-                                                    <div className="flex justify-end gap-2">
+                                                </tr>
+                                            )
+                                        )}
 
-                                                        {hasPermission(
-                                                            "PERMISSION_UPDATE"
-                                                        ) && (
-                                                                <button
-                                                                    onClick={() =>
-                                                                        openEdit(
-                                                                            permission
-                                                                        )
-                                                                    }
-                                                                    className="icon-btn"
-                                                                    title="Edit permission"
-                                                                >
-                                                                    <HiOutlinePencilSquare
-                                                                        size={16}
-                                                                    />
-                                                                </button>
-                                                            )}
+                                    </tbody>
 
-                                                        {hasPermission(
-                                                            "PERMISSION_DELETE"
-                                                        ) && (
-                                                                <button
-                                                                    onClick={() =>
-                                                                        setDeleteTarget(
-                                                                            permission
-                                                                        )
-                                                                    }
-                                                                    className="icon-btn-danger"
-                                                                    title="Delete permission"
-                                                                >
-                                                                    <HiOutlineTrash
-                                                                        size={16}
-                                                                    />
-                                                                </button>
-                                                            )}
+                                </table>
 
-                                                    </div>
-
-                                                </td>
-
-                                            </tr>
-                                        )
-                                    )}
-
-                                </tbody>
-
-                            </table>
+                            </div>
 
                         </div>
 
-                    </div>
+                        {/* Mobile card list */}
+                        <div className="flex flex-col gap-3 sm:hidden">
+
+                            {permissions.map((permission) => (
+                                <PermissionCard
+                                    key={permission.id}
+                                    permission={permission}
+                                    canUpdate={hasPermission("PERMISSION_UPDATE")}
+                                    canDelete={hasPermission("PERMISSION_DELETE")}
+                                    onEdit={openEdit}
+                                    onDelete={setDeleteTarget}
+                                />
+                            ))}
+
+                        </div>
+                    </>
 
                 )}
 
@@ -355,6 +374,75 @@ export default function Permissions() {
                     }
                     onConfirm={handleDelete}
                 />
+            )}
+
+        </div>
+    );
+}
+
+function PermissionCard({
+    permission,
+    canUpdate,
+    canDelete,
+    onEdit,
+    onDelete,
+}: {
+    permission: Permission;
+    canUpdate: boolean;
+    canDelete: boolean;
+    onEdit: (permission: Permission) => void;
+    onDelete: (permission: Permission) => void;
+}) {
+    return (
+        <div className="card flex flex-col gap-3 p-4">
+
+            <div className="flex items-start justify-between gap-3">
+
+                <div className="min-w-0">
+                    <p className="text-sm font-semibold text-slate-800 dark:text-zinc-200">
+                        {permission.name}
+                    </p>
+
+                    <code className="mt-1 inline-block rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-zinc-900 dark:text-zinc-500">
+                        {permission.code}
+                    </code>
+                </div>
+
+                <span className="badge-primary shrink-0">
+                    {permission._count?.roles ?? 0}{" "}
+                    {permission._count?.roles === 1 ? "role" : "roles"}
+                </span>
+
+            </div>
+
+            <p className="text-xs text-slate-500 dark:text-zinc-500">
+                {permission.description || "No description"}
+            </p>
+
+            {(canUpdate || canDelete) && (
+                <div className="flex justify-end gap-2 border-t border-slate-100 pt-3 dark:border-zinc-800">
+
+                    {canUpdate && (
+                        <button
+                            onClick={() => onEdit(permission)}
+                            className="btn-secondary h-8 flex-1 gap-1.5 text-[11px]"
+                        >
+                            <HiOutlinePencilSquare size={13} />
+                            Edit
+                        </button>
+                    )}
+
+                    {canDelete && (
+                        <button
+                            onClick={() => onDelete(permission)}
+                            className="inline-flex h-8 flex-1 items-center justify-center gap-1.5 rounded-xl border border-red-100 bg-red-50 text-[11px] font-semibold text-red-500 transition-colors hover:bg-red-100 dark:border-red-900/30 dark:bg-red-950/20 dark:text-red-400 dark:hover:bg-red-950/40"
+                        >
+                            <HiOutlineTrash size={13} />
+                            Delete
+                        </button>
+                    )}
+
+                </div>
             )}
 
         </div>
@@ -434,9 +522,9 @@ function PermissionModal({
     }
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
 
-            <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-950">
+            <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-950">
 
                 <div className="border-b border-slate-100 px-5 py-4 dark:border-zinc-800">
 
@@ -530,7 +618,7 @@ function PermissionModal({
                         </p>
                     )}
 
-                    <div className="flex justify-end gap-2 pt-2">
+                    <div className="flex flex-col-reverse justify-end gap-2 pt-2 sm:flex-row">
 
                         <button
                             type="button"
@@ -594,7 +682,7 @@ function DeletePermissionModal({
         permission._count?.roles ?? 0;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
 
             <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-zinc-800 dark:bg-zinc-950">
 
@@ -648,7 +736,7 @@ function DeletePermissionModal({
 
                 )}
 
-                <div className="mt-5 flex justify-end gap-2">
+                <div className="mt-5 flex flex-col-reverse justify-end gap-2 sm:flex-row">
 
                     <button
                         onClick={onClose}
@@ -681,46 +769,70 @@ function DeletePermissionModal({
 
 function PermissionSkeleton() {
     return (
-        <div className="card overflow-hidden">
-            <div className="animate-pulse">
+        <div className="space-y-3 sm:space-y-0">
 
-                {/* Header skeleton */}
-                <div className="flex items-center border-b border-slate-200/70 px-5 py-3 dark:border-zinc-800">
-                    <div className="h-2.5 w-24 rounded bg-slate-200 dark:bg-zinc-800" />
-                    <div className="ml-auto h-2.5 w-16 rounded bg-slate-200 dark:bg-zinc-800" />
+            {/* Desktop skeleton */}
+            <div className="card hidden overflow-hidden sm:block">
+                <div className="animate-pulse">
+
+                    {/* Header skeleton */}
+                    <div className="flex items-center border-b border-slate-200/70 px-5 py-3 dark:border-zinc-800">
+                        <div className="h-2.5 w-24 rounded bg-slate-200 dark:bg-zinc-800" />
+                        <div className="ml-auto h-2.5 w-16 rounded bg-slate-200 dark:bg-zinc-800" />
+                    </div>
+
+                    {/* Rows */}
+                    {Array.from({ length: 6 }).map((_, index) => (
+                        <div
+                            key={index}
+                            className="flex items-center border-b border-slate-100 px-5 py-4 last:border-0 dark:border-zinc-800/60"
+                        >
+                            {/* Permission */}
+                            <div className="w-1/4 space-y-2">
+                                <div className="h-3 w-28 rounded bg-slate-200 dark:bg-zinc-800" />
+                                <div className="h-4 w-24 rounded bg-slate-200 dark:bg-zinc-800" />
+                            </div>
+
+                            {/* Description */}
+                            <div className="w-1/3">
+                                <div className="h-3 w-40 rounded bg-slate-200 dark:bg-zinc-800" />
+                            </div>
+
+                            {/* Roles */}
+                            <div className="flex w-1/5 justify-center">
+                                <div className="h-5 w-8 rounded-full bg-slate-200 dark:bg-zinc-800" />
+                            </div>
+
+                            {/* Actions */}
+                            <div className="flex flex-1 justify-end gap-2">
+                                <div className="h-8 w-8 rounded-lg bg-slate-200 dark:bg-zinc-800" />
+                                <div className="h-8 w-8 rounded-lg bg-slate-200 dark:bg-zinc-800" />
+                            </div>
+                        </div>
+                    ))}
+
                 </div>
+            </div>
 
-                {/* Rows */}
-                {Array.from({ length: 6 }).map((_, index) => (
+            {/* Mobile skeleton */}
+            <div className="flex flex-col gap-3 sm:hidden">
+                {Array.from({ length: 4 }).map((_, index) => (
                     <div
                         key={index}
-                        className="flex items-center border-b border-slate-100 px-5 py-4 last:border-0 dark:border-zinc-800/60"
+                        className="card animate-pulse space-y-3 p-4"
                     >
-                        {/* Permission */}
-                        <div className="w-1/4 space-y-2">
-                            <div className="h-3 w-28 rounded bg-slate-200 dark:bg-zinc-800" />
-                            <div className="h-4 w-24 rounded bg-slate-200 dark:bg-zinc-800" />
+                        <div className="flex items-start justify-between gap-3">
+                            <div className="space-y-2">
+                                <div className="h-3 w-28 rounded bg-slate-200 dark:bg-zinc-800" />
+                                <div className="h-4 w-20 rounded bg-slate-200 dark:bg-zinc-800" />
+                            </div>
+                            <div className="h-5 w-12 shrink-0 rounded-full bg-slate-200 dark:bg-zinc-800" />
                         </div>
-
-                        {/* Description */}
-                        <div className="w-1/3">
-                            <div className="h-3 w-40 rounded bg-slate-200 dark:bg-zinc-800" />
-                        </div>
-
-                        {/* Roles */}
-                        <div className="flex w-1/5 justify-center">
-                            <div className="h-5 w-8 rounded-full bg-slate-200 dark:bg-zinc-800" />
-                        </div>
-
-                        {/* Actions */}
-                        <div className="flex flex-1 justify-end gap-2">
-                            <div className="h-8 w-8 rounded-lg bg-slate-200 dark:bg-zinc-800" />
-                            <div className="h-8 w-8 rounded-lg bg-slate-200 dark:bg-zinc-800" />
-                        </div>
+                        <div className="h-2.5 w-4/5 rounded bg-slate-100 dark:bg-zinc-900" />
                     </div>
                 ))}
-
             </div>
+
         </div>
     );
 }

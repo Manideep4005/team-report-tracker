@@ -107,8 +107,6 @@ export default function Users() {
         },
     });
 
-
-
     const users = data ?? [];
 
     function handleDelete(user: ManagedUser) {
@@ -116,7 +114,7 @@ export default function Users() {
     }
 
     return (
-        <div className="mx-auto max-w-6xl py-2 sm:py-4">
+        <div className="mx-auto w-full max-w-6xl px-4 py-2 sm:px-6 sm:py-4">
 
             {/* Header */}
 
@@ -124,11 +122,11 @@ export default function Users() {
 
                 <div>
                     <div className="flex items-center gap-2">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600 dark:bg-zinc-900 dark:text-zinc-300">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 dark:bg-zinc-900 dark:text-zinc-300">
                             <HiOutlineUsers size={18} />
                         </div>
 
-                        <div>
+                        <div className="min-w-0">
                             <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-2xl">
                                 Users
                             </h1>
@@ -143,7 +141,7 @@ export default function Users() {
                 {hasPermission("USER_CREATE") && (
                     <button
                         onClick={() => setCreateOpen(true)}
-                        className="btn-primary gap-2 text-xs font-semibold"
+                        className="btn-primary w-full justify-center gap-2 text-xs font-semibold sm:w-auto"
                     >
                         <HiOutlineUserPlus size={15} />
                         Add User
@@ -166,52 +164,69 @@ export default function Users() {
                 ) : users.length === 0 ? (
                     <EmptyUsers />
                 ) : (
-                    <div className="card overflow-hidden">
+                    <>
+                        {/* Desktop / tablet table */}
+                        <div className="card hidden overflow-hidden sm:block">
 
-                        <div className="overflow-x-auto">
+                            <div className="overflow-x-auto">
 
-                            <table className="w-full min-w-[700px]">
+                                <table className="w-full min-w-[640px]">
 
-                                <thead>
-                                    <tr className="border-b border-slate-200/70 dark:border-zinc-800/70">
-                                        <th className="px-5 py-3.5 text-left text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
-                                            User
-                                        </th>
+                                    <thead>
+                                        <tr className="border-b border-slate-200/70 dark:border-zinc-800/70">
+                                            <th className="px-5 py-3.5 text-left text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                                                User
+                                            </th>
 
-                                        <th className="px-5 py-3.5 text-left text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
-                                            Email
-                                        </th>
+                                            <th className="px-5 py-3.5 text-left text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                                                Email
+                                            </th>
 
-                                        <th className="px-5 py-3.5 text-left text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
-                                            Role
-                                        </th>
+                                            <th className="px-5 py-3.5 text-left text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                                                Role
+                                            </th>
 
-                                        <th className="px-5 py-3.5 text-right text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
-                                            Actions
-                                        </th>
-                                    </tr>
-                                </thead>
+                                            <th className="px-5 py-3.5 text-right text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                                                Actions
+                                            </th>
+                                        </tr>
+                                    </thead>
 
-                                <tbody>
+                                    <tbody>
 
-                                    {users.map((user) => (
-                                        <UserRow
-                                            key={user.id}
-                                            user={user}
-                                            canUpdate={hasPermission("USER_UPDATE")}
-                                            canDelete={hasPermission("USER_DELETE")}
-                                            onEdit={setEditUser}
-                                            onDelete={handleDelete}
-                                        />
-                                    ))}
+                                        {users.map((user) => (
+                                            <UserRow
+                                                key={user.id}
+                                                user={user}
+                                                canUpdate={hasPermission("USER_UPDATE")}
+                                                canDelete={hasPermission("USER_DELETE")}
+                                                onEdit={setEditUser}
+                                                onDelete={handleDelete}
+                                            />
+                                        ))}
 
-                                </tbody>
+                                    </tbody>
 
-                            </table>
+                                </table>
+
+                            </div>
 
                         </div>
 
-                    </div>
+                        {/* Mobile card list */}
+                        <div className="flex flex-col gap-3 sm:hidden">
+                            {users.map((user) => (
+                                <UserCard
+                                    key={user.id}
+                                    user={user}
+                                    canUpdate={hasPermission("USER_UPDATE")}
+                                    canDelete={hasPermission("USER_DELETE")}
+                                    onEdit={setEditUser}
+                                    onDelete={handleDelete}
+                                />
+                            ))}
+                        </div>
+                    </>
                 )}
 
             </div>
@@ -269,6 +284,16 @@ export default function Users() {
     );
 }
 
+function getInitials(name: string) {
+    return name
+        .trim()
+        .split(/\s+/)
+        .slice(0, 2)
+        .map((part) => part[0])
+        .join("")
+        .toUpperCase();
+}
+
 function UserRow({
     user,
     canUpdate,
@@ -282,13 +307,7 @@ function UserRow({
     onEdit: (user: ManagedUser) => void;
     onDelete: (user: ManagedUser) => void;
 }) {
-    const initials = user.name
-        .trim()
-        .split(/\s+/)
-        .slice(0, 2)
-        .map((part) => part[0])
-        .join("")
-        .toUpperCase();
+    const initials = getInitials(user.name);
 
     return (
         <tr className="border-b border-slate-100 transition-colors last:border-0 hover:bg-slate-50/60 dark:border-zinc-800/60 dark:hover:bg-zinc-900/40">
@@ -360,6 +379,83 @@ function UserRow({
     );
 }
 
+function UserCard({
+    user,
+    canUpdate,
+    canDelete,
+    onEdit,
+    onDelete,
+}: {
+    user: ManagedUser;
+    canUpdate: boolean;
+    canDelete: boolean;
+    onEdit: (user: ManagedUser) => void;
+    onDelete: (user: ManagedUser) => void;
+}) {
+    const initials = getInitials(user.name);
+
+    return (
+        <div className="card flex flex-col gap-3 p-4">
+
+            <div className="flex items-start gap-3">
+
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-600 text-[11px] font-bold text-white">
+                    {initials}
+                </div>
+
+                <div className="min-w-0 flex-1">
+                    <p className="truncate text-xs font-bold text-slate-800 dark:text-zinc-200">
+                        {user.name}
+                    </p>
+
+                    <p className="mt-0.5 truncate text-[11px] text-slate-500 dark:text-zinc-400">
+                        {user.email}
+                    </p>
+
+                    <p className="mt-0.5 text-[10px] text-slate-400 dark:text-zinc-500">
+                        Joined{" "}
+                        {new Date(
+                            user.createdAt
+                        ).toLocaleDateString("en-IN")}
+                    </p>
+                </div>
+
+                <span className="badge-primary shrink-0">
+                    {user.role.name}
+                </span>
+
+            </div>
+
+            {(canUpdate || canDelete) && (
+                <div className="flex justify-end gap-2 border-t border-slate-100 pt-3 dark:border-zinc-800">
+
+                    {canUpdate && (
+                        <button
+                            onClick={() => onEdit(user)}
+                            className="btn-secondary h-8 flex-1 gap-1.5 text-[11px]"
+                        >
+                            <HiOutlinePencilSquare size={13} />
+                            Edit
+                        </button>
+                    )}
+
+                    {canDelete && (
+                        <button
+                            onClick={() => onDelete(user)}
+                            className="inline-flex h-8 flex-1 items-center justify-center gap-1.5 rounded-xl border border-red-100 bg-red-50 text-[11px] font-semibold text-red-500 transition-colors hover:bg-red-100 dark:border-red-900/30 dark:bg-red-950/20 dark:text-red-400 dark:hover:bg-red-950/40"
+                        >
+                            <HiOutlineTrash size={13} />
+                            Delete
+                        </button>
+                    )}
+
+                </div>
+            )}
+
+        </div>
+    );
+}
+
 function EmptyUsers() {
     return (
         <div className="card flex flex-col items-center justify-center px-6 py-16 text-center">
@@ -382,26 +478,46 @@ function EmptyUsers() {
 
 function UsersSkeleton() {
     return (
-        <div className="card overflow-hidden">
+        <div className="space-y-3 sm:space-y-0">
 
-            <div className="space-y-0">
+            {/* Desktop skeleton */}
+            <div className="card hidden overflow-hidden sm:block">
+                <div className="space-y-0">
+                    {Array.from({ length: 5 }).map((_, index) => (
+                        <div
+                            key={index}
+                            className="flex animate-pulse items-center gap-4 border-b border-slate-100 px-5 py-4 last:border-0 dark:border-zinc-800"
+                        >
+                            <div className="h-9 w-9 rounded-full bg-slate-200 dark:bg-zinc-800" />
 
-                {Array.from({ length: 5 }).map((_, index) => (
+                            <div className="flex-1 space-y-2">
+                                <div className="h-3 w-32 rounded bg-slate-200 dark:bg-zinc-800" />
+                                <div className="h-2.5 w-48 rounded bg-slate-100 dark:bg-zinc-900" />
+                            </div>
+
+                            <div className="h-6 w-20 rounded-full bg-slate-200 dark:bg-zinc-800" />
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* Mobile skeleton */}
+            <div className="flex flex-col gap-3 sm:hidden">
+                {Array.from({ length: 4 }).map((_, index) => (
                     <div
                         key={index}
-                        className="flex animate-pulse items-center gap-4 border-b border-slate-100 px-5 py-4 last:border-0 dark:border-zinc-800"
+                        className="card flex animate-pulse items-center gap-3 p-4"
                     >
-                        <div className="h-9 w-9 rounded-full bg-slate-200 dark:bg-zinc-800" />
+                        <div className="h-9 w-9 shrink-0 rounded-full bg-slate-200 dark:bg-zinc-800" />
 
                         <div className="flex-1 space-y-2">
-                            <div className="h-3 w-32 rounded bg-slate-200 dark:bg-zinc-800" />
-                            <div className="h-2.5 w-48 rounded bg-slate-100 dark:bg-zinc-900" />
+                            <div className="h-3 w-28 rounded bg-slate-200 dark:bg-zinc-800" />
+                            <div className="h-2.5 w-36 rounded bg-slate-100 dark:bg-zinc-900" />
                         </div>
 
-                        <div className="h-6 w-20 rounded-full bg-slate-200 dark:bg-zinc-800" />
+                        <div className="h-6 w-16 shrink-0 rounded-full bg-slate-200 dark:bg-zinc-800" />
                     </div>
                 ))}
-
             </div>
 
         </div>
@@ -465,9 +581,9 @@ function CreateUserModal({
     }
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/20 px-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/20 p-4 backdrop-blur-sm">
 
-            <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-950">
+            <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-950">
 
                 <div className="border-b border-slate-200 px-5 py-4 dark:border-zinc-800">
                     <h2 className="text-sm font-bold text-slate-900 dark:text-white">
@@ -558,7 +674,7 @@ function CreateUserModal({
                         </select>
                     </div>
 
-                    <div className="flex justify-end gap-2 pt-3">
+                    <div className="flex flex-col-reverse justify-end gap-2 pt-3 sm:flex-row">
 
                         <button
                             type="button"
@@ -684,9 +800,9 @@ function EditUserModal({
     }
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/20 px-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/20 p-4 backdrop-blur-sm">
 
-            <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-950">
+            <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-950">
 
                 <div className="border-b border-slate-200 px-5 py-4 dark:border-zinc-800">
                     <h2 className="text-sm font-bold text-slate-900 dark:text-white">
@@ -758,7 +874,7 @@ function EditUserModal({
                         </select>
                     </div>
 
-                    <div className="flex justify-end gap-2 pt-3">
+                    <div className="flex flex-col-reverse justify-end gap-2 pt-3 sm:flex-row">
                         <button
                             type="button"
                             onClick={onClose}
@@ -809,7 +925,7 @@ function DeleteUserModal({
 
     return (
         <div
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/20 px-4 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/20 p-4 backdrop-blur-sm"
             onMouseDown={(e) => {
                 if (e.target === e.currentTarget) {
                     onClose();
@@ -848,7 +964,7 @@ function DeleteUserModal({
 
                 {/* Actions */}
 
-                <div className="flex justify-end gap-2 border-t border-slate-200 px-5 py-4 dark:border-zinc-800">
+                <div className="flex flex-col-reverse justify-end gap-2 border-t border-slate-200 px-5 py-4 dark:border-zinc-800 sm:flex-row">
 
                     <button
                         type="button"
