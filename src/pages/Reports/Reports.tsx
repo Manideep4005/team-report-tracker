@@ -85,7 +85,7 @@ export default function Reports() {
     const totalReports = data?.length ?? 0;
 
     return (
-        <div className="mx-auto max-w-4xl py-2 sm:py-4">
+        <div className="mx-auto w-full max-w-4xl px-4 py-2 sm:px-6 sm:py-4">
 
             {/* Header */}
 
@@ -180,47 +180,67 @@ function DateSection({
         }
     );
 
+    const dayText = reports
+        .map(
+            (report) =>
+                `${report.user.name}\n${report.description}`
+        )
+        .join("\n\n");
+
     return (
         <section>
 
             {/* Date Header */}
 
-            <div className="mb-5 flex items-center gap-3">
+            <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-3">
 
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-xs font-bold text-white shadow-sm dark:bg-white dark:text-zinc-900">
-                    {parsedDate.toLocaleDateString("en-IN", {
-                        day: "2-digit",
-                        timeZone: "Asia/Kolkata",
-                    })}
+                <div className="flex min-w-0 items-center gap-3">
+
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-xs font-bold text-white shadow-sm dark:bg-white dark:text-zinc-900">
+                        {parsedDate.toLocaleDateString("en-IN", {
+                            day: "2-digit",
+                            timeZone: "Asia/Kolkata",
+                        })}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                        <h2 className="truncate text-sm font-bold text-slate-900 dark:text-white">
+                            {formattedDate}
+                        </h2>
+
+                        <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                            {reports.length}{" "}
+                            {reports.length === 1
+                                ? "report"
+                                : "reports"}{" "}
+                            submitted
+                        </p>
+                    </div>
+
                 </div>
 
-                <div className="min-w-0">
-                    <h2 className="text-sm font-bold text-slate-900 dark:text-white">
-                        {formattedDate}
-                    </h2>
+                <div className="hidden h-px flex-1 bg-slate-200/70 dark:bg-zinc-800/70 sm:block" />
 
-                    <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
-                        {reports.length}{" "}
-                        {reports.length === 1
-                            ? "report"
-                            : "reports"}{" "}
-                        submitted
-                    </p>
-                </div>
-
-                <div className="h-px flex-1 bg-slate-200/70 dark:bg-zinc-800/70" />
+                <button
+                    onClick={() => onCopy(dayText)}
+                    className="btn-secondary shrink-0 self-start px-2.5 py-1.5 text-[10px] font-semibold sm:self-auto"
+                >
+                    <HiOutlineClipboardDocument
+                        className="mr-1 h-3.5 w-3.5"
+                    />
+                    Copy
+                </button>
 
             </div>
 
             {/* Reports */}
 
-            <div className="relative ml-5 space-y-4 border-l border-slate-200 pl-7 dark:border-zinc-800">
+            <div className="relative ml-3 space-y-4 border-l border-slate-200 pl-5 dark:border-zinc-800 sm:ml-5 sm:pl-7">
 
                 {reports.map((report) => (
                     <ReportCard
                         key={report.id}
                         report={report}
-                        onCopy={onCopy}
                     />
                 ))}
 
@@ -232,10 +252,8 @@ function DateSection({
 
 function ReportCard({
     report,
-    onCopy,
 }: {
     report: ReportItem;
-    onCopy: (text: string) => void;
 }) {
     const initials = report.user.name
         .trim()
@@ -250,43 +268,27 @@ function ReportCard({
 
             {/* Timeline dot */}
 
-            <span className="absolute -left-[35px] top-5 h-2.5 w-2.5 rounded-full border-2 border-white bg-blue-500 dark:border-zinc-950 dark:bg-blue-400" />
+            <span className="absolute -left-[23px] top-5 h-2.5 w-2.5 rounded-full border-2 border-white bg-blue-500 dark:border-zinc-950 dark:bg-blue-400 sm:-left-[35px]" />
 
             <div className="card overflow-hidden">
 
                 {/* User */}
 
-                <div className="flex items-center justify-between gap-3 border-b border-slate-200/50 px-4 py-3 dark:border-zinc-800/60 sm:px-5">
+                <div className="flex items-center gap-3 border-b border-slate-200/50 px-4 py-3 dark:border-zinc-800/60 sm:px-5">
 
-                    <div className="flex min-w-0 items-center gap-3">
-
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-[10px] font-bold text-white shadow-sm">
-                            {initials}
-                        </div>
-
-                        <div className="min-w-0">
-                            <p className="truncate text-xs font-bold text-slate-900 dark:text-white">
-                                {report.user.name}
-                            </p>
-
-                            <p className="truncate text-[10px] text-slate-400 dark:text-zinc-500">
-                                {report.user.email}
-                            </p>
-                        </div>
-
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-[10px] font-bold text-white shadow-sm">
+                        {initials}
                     </div>
 
-                    <button
-                        onClick={() =>
-                            onCopy(report.description)
-                        }
-                        className="btn-secondary shrink-0 px-2.5 py-1.5 text-[10px] font-semibold"
-                    >
-                        <HiOutlineClipboardDocument
-                            className="mr-1 h-3.5 w-3.5"
-                        />
-                        Copy
-                    </button>
+                    <div className="min-w-0">
+                        <p className="truncate text-xs font-bold text-slate-900 dark:text-white">
+                            {report.user.name}
+                        </p>
+
+                        <p className="truncate text-[10px] text-slate-400 dark:text-zinc-500">
+                            {report.user.email}
+                        </p>
+                    </div>
 
                 </div>
 
@@ -313,7 +315,7 @@ function SkeletonList() {
                 <div key={sectionIndex}>
 
                     <div className="mb-5 flex items-center gap-3">
-                        <div className="h-10 w-10 animate-pulse rounded-xl bg-slate-200 dark:bg-zinc-800" />
+                        <div className="h-10 w-10 shrink-0 animate-pulse rounded-xl bg-slate-200 dark:bg-zinc-800" />
 
                         <div className="space-y-2">
                             <div className="h-3 w-36 animate-pulse rounded bg-slate-200 dark:bg-zinc-800" />
@@ -321,7 +323,7 @@ function SkeletonList() {
                         </div>
                     </div>
 
-                    <div className="ml-5 space-y-4 border-l border-slate-200 pl-7 dark:border-zinc-800">
+                    <div className="ml-3 space-y-4 border-l border-slate-200 pl-5 dark:border-zinc-800 sm:ml-5 sm:pl-7">
 
                         {[1, 2].map((item) => (
                             <div
@@ -329,7 +331,7 @@ function SkeletonList() {
                                 className="card animate-pulse p-5"
                             >
                                 <div className="flex items-center gap-3">
-                                    <div className="h-9 w-9 rounded-full bg-slate-200 dark:bg-zinc-800" />
+                                    <div className="h-9 w-9 shrink-0 rounded-full bg-slate-200 dark:bg-zinc-800" />
 
                                     <div className="space-y-2">
                                         <div className="h-3 w-24 rounded bg-slate-200 dark:bg-zinc-800" />
