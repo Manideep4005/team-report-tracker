@@ -3,10 +3,15 @@ import {
     HiOutlineClock,
     HiOutlineXMark,
     HiOutlineUserGroup,
+    HiOutlineUsers,
+    HiOutlineShieldCheck,
+    HiOutlineDocumentText,
+    HiOutlineArrowRightOnRectangle,
 } from "react-icons/hi2";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useEffect } from "react";
+
 
 interface SidebarProps {
     open: boolean;
@@ -51,7 +56,10 @@ export default function Sidebar({
     open,
     onClose,
 }: SidebarProps) {
-    const { user } = useAuth();
+    const {
+        user,
+        hasPermission,
+    } = useAuth();
 
     const initials = getInitials(user?.name);
     const avatarColor = getAvatarColor(user?.name);
@@ -157,6 +165,50 @@ export default function Sidebar({
                             My Reports
                         </NavLink>
 
+                        {hasPermission("REPORT_VIEW_ALL") && (
+                            <NavLink
+                                to="/reports"
+                                className={linkClass}
+                                onClick={onClose}
+                            >
+                                <HiOutlineDocumentText size={16} />
+                                All Reports
+                            </NavLink>
+                        )}
+
+                        {hasPermission("USER_VIEW") && (
+                            <NavLink
+                                to="/users"
+                                className={linkClass}
+                                onClick={onClose}
+                            >
+                                <HiOutlineUsers size={16} />
+                                Users
+                            </NavLink>
+                        )}
+
+                        {hasPermission("ROLE_VIEW") && (
+                            <NavLink
+                                to="/roles"
+                                className={linkClass}
+                                onClick={onClose}
+                            >
+                                <HiOutlineShieldCheck size={16} />
+                                Roles
+                            </NavLink>
+                        )}
+
+                        {hasPermission("LOGIN_HISTORY_VIEW") && (
+                            <NavLink
+                                to="/login-history"
+                                className={linkClass}
+                                onClick={onClose}
+                            >
+                                <HiOutlineArrowRightOnRectangle size={16} />
+                                Login History
+                            </NavLink>
+                        )}
+
                     </nav>
 
                     <div
@@ -242,6 +294,51 @@ export default function Sidebar({
                         <HiOutlineClock size={16} />
                         My Reports
                     </NavLink>
+
+                    {hasPermission("REPORT_VIEW_ALL") && (
+                        <NavLink
+                            to="/reports"
+                            className={linkClass}
+                            onClick={onClose}
+                        >
+                            <HiOutlineDocumentText size={16} />
+                            All Reports
+                        </NavLink>
+                    )}
+
+                    {hasPermission("USER_VIEW") && (
+                        <NavLink
+                            to="/users"
+                            className={linkClass}
+                            onClick={onClose}
+                        >
+                            <HiOutlineUsers size={16} />
+                            Users
+                        </NavLink>
+                    )}
+
+
+                    {hasPermission("ROLE_VIEW") && (
+                        <NavLink
+                            to="/roles"
+                            className={linkClass}
+                            onClick={onClose}
+                        >
+                            <HiOutlineShieldCheck size={16} />
+                            Roles
+                        </NavLink>
+                    )}
+
+                    {hasPermission("LOGIN_HISTORY_VIEW") && (
+                        <NavLink
+                            to="/login-history"
+                            className={linkClass}
+                            onClick={onClose}
+                        >
+                            <HiOutlineArrowRightOnRectangle size={16} />
+                            Login History
+                        </NavLink>
+                    )}
 
                 </nav>
 

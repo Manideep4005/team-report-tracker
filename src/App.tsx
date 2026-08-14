@@ -6,6 +6,10 @@ import DashboardLayout from "./layouts/DashboardLayout";
 import Dashboard from "./pages/Dashboard/Dashboard";
 import History from "./pages/History/History";
 import Settings from "./pages/Settings/Settings";
+import Users from "./pages/Users/Users";
+import Roles from "./pages/Roles/Roles";
+import Reports from "./pages/Reports/Reports";
+import LoginHistory from "./pages/LoginHistory/LoginHistory";
 
 
 function App() {
@@ -49,7 +53,54 @@ function App() {
                     </ProtectedRoute>
                 }
             />
+
+            <Route
+                path="/users"
+                element={
+                    <ProtectedRoute>
+                        <DashboardLayout>
+                            <Users />
+                        </DashboardLayout>
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/reports"
+                element={
+                    <ProtectedRoute>
+                        <DashboardLayout>
+                            <Reports />
+                        </DashboardLayout>
+                    </ProtectedRoute>
+                }
+            />
+
+
+            <Route
+                path="/login-history"
+                element={
+                    <ProtectedRoute>
+                        <DashboardLayout>
+                            <LoginHistory />
+                        </DashboardLayout>
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/roles"
+                element={
+                    <ProtectedRoute>
+                        <DashboardLayout>
+                            <Roles />
+                        </DashboardLayout>
+                    </ProtectedRoute>
+                }
+            />
         </Routes>
+
+
     );
 }
 

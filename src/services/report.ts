@@ -50,7 +50,13 @@ export async function getTeamReports() {
   const { data } = await api.get("/api/team");
   return data;
 }
+export async function getAllReports(date?: string) {
+  const { data } = await api.get("/api/reports/all", {
+    params: date ? { date } : {},
+  });
 
+  return data;
+}
 // export async function getSummaryByDate(date: string) {
 //   const { data } = await api.get("/api/summary/by-date", {
 //     params: { date },

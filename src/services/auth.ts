@@ -1,16 +1,29 @@
 import api from "./api";
 
-export interface LoginRequest {
-  email: string;
-  password: string;
+export interface Permission {
+  code: string;
+}
+
+export interface Role {
+  id: string;
+  name: string;
+  permissions: Permission[];
 }
 
 export interface User {
   id: string;
   name: string;
   email: string;
+
+  role: Role;
+
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
 }
 
 export interface LoginResponse {
@@ -24,11 +37,14 @@ export interface MeResponse {
   user: User;
 }
 
-export async function login(payload: LoginRequest) {
-  const { data } = await api.post<LoginResponse>(
-    "/api/auth/login",
-    payload
-  );
+export async function login(
+  payload: LoginRequest
+) {
+  const { data } =
+    await api.post<LoginResponse>(
+      "/api/auth/login",
+      payload
+    );
 
   return data;
 }
@@ -38,7 +54,10 @@ export async function logout() {
 }
 
 export async function me() {
-  const { data } = await api.get<MeResponse>("/api/auth/me");
+  const { data } =
+    await api.get<MeResponse>(
+      "/api/auth/me"
+    );
 
   return data;
 }

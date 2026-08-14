@@ -7,14 +7,13 @@ import {
 } from "react";
 
 import * as auth from "../services/auth";
+import {
+    hasPermission,
+    hasAnyPermission,
+    hasAllPermissions,
+} from "../utils/permissions";
+import type { User } from "../services/auth";
 
-interface User {
-    id: string;
-    name: string;
-    email: string;
-    createdAt?: string;
-    updatedAt?: string;
-}
 
 interface Context {
     user: User | null;
@@ -27,6 +26,18 @@ interface Context {
     logout: () => Promise<void>;
 
     updateUser: (user: User) => void;
+
+    hasPermission: (
+        permission: string
+    ) => boolean;
+
+    hasAnyPermission: (
+        permissions: string[]
+    ) => boolean;
+
+    hasAllPermissions: (
+        permissions: string[]
+    ) => boolean;
 
     loading: boolean;
 }
@@ -92,28 +103,48 @@ export function AuthProvider({
         setUser(user);
     }
 
+    function checkPermission(
+        permission: string
+    ) {
+        return hasPermission(
+            user,
+            permission
+        );
+    }
+
+    function checkAnyPermission(
+        permissions: string[]
+    ) {
+        return hasAnyPermission(
+            user,
+            permissions
+        );
+    }
+
+    function checkAllPermissions(
+        permissions: string[]
+    ) {
+        return hasAllPermissions(
+            user,
+            permissions
+        );
+    }
+
     return (
 
         <AuthContext.Provider
-
             value={{
-
                 user,
-
                 login,
-
                 logout,
-
                 updateUser,
-
+                hasPermission: checkPermission,
+                hasAnyPermission: checkAnyPermission,
+                hasAllPermissions: checkAllPermissions,
                 loading,
-
             }}
-
         >
-
             {children}
-
         </AuthContext.Provider>
 
     )
