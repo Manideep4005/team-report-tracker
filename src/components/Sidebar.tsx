@@ -157,14 +157,16 @@ export default function Sidebar({
                             Dashboard
                         </NavLink>
 
-                        <NavLink
-                            to="/history"
-                            className={linkClass}
-                            onClick={onClose}
-                        >
-                            <HiOutlineClock size={16} />
-                            My Reports
-                        </NavLink>
+                        {hasPermission("REPORT_VIEW_OWN") && (
+                            <NavLink
+                                to="/history"
+                                className={linkClass}
+                                onClick={onClose}
+                            >
+                                <HiOutlineClock size={16} />
+                                My Reports
+                            </NavLink>
+                        )}
 
                         {hasPermission("REPORT_VIEW_ALL") && (
                             <NavLink
@@ -299,13 +301,16 @@ export default function Sidebar({
                         Dashboard
                     </NavLink>
 
-                    <NavLink
-                        to="/history"
-                        className={linkClass}
-                    >
-                        <HiOutlineClock size={16} />
-                        My Reports
-                    </NavLink>
+                    {hasPermission("REPORT_VIEW_OWN") && (
+                        <NavLink
+                            to="/history"
+                            className={linkClass}
+                            onClick={onClose}
+                        >
+                            <HiOutlineClock size={16} />
+                            My Reports
+                        </NavLink>
+                    )}
 
                     {hasPermission("REPORT_VIEW_ALL") && (
                         <NavLink
