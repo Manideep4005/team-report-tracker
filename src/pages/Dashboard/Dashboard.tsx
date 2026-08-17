@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useAuth } from "../../context/AuthContext";
 import {
     useMutation,
     useQuery,
@@ -14,10 +15,11 @@ import {
     HiOutlineDocumentCheck,
     HiOutlineClock,
     HiOutlineUsers,
-    HiOutlineChartBarSquare,
     HiOutlineClipboardDocument,
     HiOutlineArrowPath,
-    HiOutlineCalendarDays,
+    HiOutlinePencilSquare,
+    HiOutlineUserGroup,
+    HiOutlineBolt,
 } from "react-icons/hi2";
 import { format } from "date-fns";
 import DayPickerInput from "../../components/DayPickerInput";
@@ -53,10 +55,34 @@ interface DashboardResponse {
     }[];
 }
 
+// Deterministic, varied avatar treatment — same person always gets the same pair.
+const AVATAR_PALETTE = [
+    "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400",
+    "bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:text-violet-400",
+    "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400",
+    "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400",
+    "bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400",
+    "bg-cyan-50 text-cyan-700 dark:bg-cyan-500/10 dark:text-cyan-400",
+];
 
+function avatarClasses(name: string) {
+    const sum = name
+        .split("")
+        .reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+    return AVATAR_PALETTE[sum % AVATAR_PALETTE.length];
+}
+
+const RING_RADIUS = 42;
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
 export default function Dashboard() {
     const queryClient = useQueryClient();
+
+    const { hasPermission } = useAuth();
+
+    const canViewAllReports =
+        hasPermission("REPORT_VIEW_ALL");
+
 
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
@@ -97,6 +123,12 @@ export default function Dashboard() {
             setDescription("");
         }
     }, [data?.myReport]);
+
+    useEffect(() => {
+        if (!canViewAllReports) {
+            setSelectedDate(new Date());
+        }
+    }, [canViewAllReports]);
 
     // Presentational only — autosizes the textarea to its content.
     useEffect(() => {
@@ -223,7 +255,7 @@ ${report.description}`
     };
 
     if (isLoading) {
-        return <DashboardSkeleton />;
+        return <DashboardSkeleton canViewAllReports={canViewAllReports} />;
     }
 
     const shouldShowReminder =
@@ -248,12 +280,65 @@ ${report.description}`
                 (submitted / total) * 100
             );
 
+    const ringOffset =
+        RING_CIRCUMFERENCE * (1 - progress / 100);
+
     return (
-        <div className="mx-auto max-w-5xl space-y-6 py-2 sm:py-4 lg:space-y-8 animate-[dashFadeIn_0.35s_ease-out]">
+        <div className="mx-auto max-w-5xl space-y-5 px-3 py-2 sm:space-y-6 sm:px-4 sm:py-4 lg:space-y-8 lg:px-0 animate-[dashFadeIn_0.35s_ease-out]">
+            <style>{`
+                @keyframes dashFadeIn {
+                    from { opacity: 0; transform: translateY(6px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                @media (prefers-reduced-motion: reduce) {
+                    .dash-fade { animation: none !important; opacity: 1 !important; }
+                }
+            `}</style>
+
+            {/* Page context — greeting/date already live in the app header,
+                so this only carries what the header can't: page identity
+                and (when relevant) which date's data is on screen. */}
+            <div className="flex flex-col gap-3.5 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
+                <div className="min-w-0">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400 sm:text-[11px]">
+                        Overview
+                    </p>
+                    <h1 className="mt-1.5 text-xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-2xl md:text-[28px]">
+                        {canViewAllReports
+                            ? isToday
+                                ? "Team activity"
+                                : format(selectedDate, "EEEE, d MMMM")
+                            : "Your workspace"}
+                    </h1>
+                    <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-zinc-500 sm:text-xs">
+                        <span className="relative flex h-1.5 w-1.5 shrink-0">
+                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75" />
+                            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-blue-500" />
+                        </span>
+                        {canViewAllReports
+                            ? isToday
+                                ? `${submitted} of ${total} submitted so far`
+                                : `Viewing reports for ${format(selectedDate, "dd MMM yyyy")}`
+                            : data?.myReport
+                                ? "Your report is submitted"
+                                : "Your report is pending"}
+                    </p>
+                </div>
+
+                {canViewAllReports && (
+                    <div className="w-full sm:w-auto">
+                        <DayPickerInput
+                            value={selectedDate}
+                            onChange={setSelectedDate}
+                        />
+                    </div>
+                )}
+            </div>
+
             {shouldShowReminder && (
-                <div className="relative overflow-hidden rounded-2xl border border-rose-100 bg-rose-50/40 p-5 dark:border-rose-950/20 dark:bg-rose-950/10">
+                <div className="relative overflow-hidden rounded-2xl border border-rose-100 bg-rose-50/40 p-4 dark:border-rose-950/20 dark:bg-rose-950/10 sm:p-5">
                     <div className="absolute top-0 right-0 h-24 w-24 bg-rose-400/5 blur-2xl dark:bg-rose-400/2 pointer-events-none" />
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-col gap-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                         <div className="flex items-start gap-3">
                             <span className="relative flex h-2.5 w-2.5 mt-1.5 shrink-0">
                                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75" />
@@ -277,7 +362,7 @@ ${report.description}`
                                 });
                                 setTimeout(() => textareaRef.current?.focus(), 400);
                             }}
-                            className="inline-flex h-8 items-center justify-center rounded-lg bg-rose-600 px-4 text-xs font-semibold text-white shadow-sm transition-all hover:bg-rose-700 active:scale-95 relative z-10"
+                            className="inline-flex h-8 w-full items-center justify-center rounded-lg bg-rose-600 px-4 text-xs font-semibold text-white shadow-sm transition-all hover:bg-rose-700 active:scale-95 relative z-10 sm:w-auto"
                         >
                             Write Report
                         </button>
@@ -285,106 +370,128 @@ ${report.description}`
                 </div>
             )}
 
-            <style>{`
-                @keyframes dashFadeIn {
-                    from { opacity: 0; transform: translateY(6px); }
-                    to { opacity: 1; transform: translateY(0); }
-                }
-                @media (prefers-reduced-motion: reduce) {
-                    .dash-fade { animation: none !important; opacity: 1 !important; }
-                }
-            `}</style>
+            {/* Overview — circular progress as the page's signature element,
+                paired with a quiet, divided stat row. Team-wide, so only
+                visible to people who can see everyone's reports. */}
+            {canViewAllReports && (
+                <section className="card p-5 sm:p-6 md:p-8">
+                    <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:gap-8">
+                        <div className="relative mx-auto flex h-28 w-28 shrink-0 items-center justify-center sm:mx-0 sm:h-32 sm:w-32 md:h-36 md:w-36">
+                            <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
+                                <circle
+                                    cx="50"
+                                    cy="50"
+                                    r={RING_RADIUS}
+                                    fill="none"
+                                    strokeWidth="8"
+                                    className="stroke-slate-100 dark:stroke-zinc-800"
+                                />
+                                <circle
+                                    cx="50"
+                                    cy="50"
+                                    r={RING_RADIUS}
+                                    fill="none"
+                                    stroke="url(#dashProgressGradient)"
+                                    strokeWidth="8"
+                                    strokeLinecap="round"
+                                    strokeDasharray={RING_CIRCUMFERENCE}
+                                    strokeDashoffset={ringOffset}
+                                    className="transition-[stroke-dashoffset] duration-700 ease-out"
+                                />
+                                <defs>
+                                    <linearGradient
+                                        id="dashProgressGradient"
+                                        x1="0%"
+                                        y1="0%"
+                                        x2="100%"
+                                        y2="100%"
+                                    >
+                                        <stop offset="0%" stopColor="#2563eb" />
+                                        <stop offset="100%" stopColor="#4f46e5" />
+                                    </linearGradient>
+                                </defs>
+                            </svg>
 
-            {/* Global dashboard date filter — single source of truth for the whole page */}
-            <section className="card relative z-20 overflow-visible flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between md:p-6">
-                <div className="flex items-center gap-3">
-                    <div className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">
-                        <HiOutlineCalendarDays className="h-4.5 w-4.5" />
+                            <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                <span className="text-xl font-bold tabular-nums tracking-tight text-slate-900 dark:text-white sm:text-2xl">
+                                    {progress}%
+                                </span>
+                                <span className="mt-0.5 text-[8px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500 sm:text-[9px]">
+                                    Complete
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="grid flex-1 grid-cols-3 gap-x-2 gap-y-5 sm:gap-x-6 sm:divide-x sm:divide-slate-100 sm:dark:divide-zinc-800/60">
+                            <StatWidget
+                                icon={<HiOutlineDocumentCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
+                                label="Submitted"
+                                value={data?.stats.submitted}
+                                iconBg="bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400"
+                                first
+                            />
+
+                            <StatWidget
+                                icon={<HiOutlineClock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
+                                label="Pending"
+                                value={data?.stats.pending}
+                                iconBg="bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400"
+                            />
+
+                            <StatWidget
+                                icon={<HiOutlineUsers className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
+                                label="Members"
+                                value={data?.stats.totalMembers}
+                                iconBg="bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-400"
+                            />
+                        </div>
                     </div>
-                    <div>
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
-                            Dashboard Date
-                        </p>
-                        <p className="mt-0.5 text-xs text-slate-500 dark:text-zinc-400">
-                            {isToday
-                                ? "Viewing today's activity"
-                                : `Viewing reports for ${format(selectedDate, "dd MMM yyyy")}`}
-                        </p>
+                </section>
+            )}
+
+            {/* Report editor — the page's primary action, given a proper header */}
+            <section className="card relative overflow-hidden p-4 sm:p-5 md:p-6">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4 dark:border-zinc-800/60">
+                    <div className="flex min-w-0 items-center gap-3">
+                        <div className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">
+                            <HiOutlinePencilSquare className="h-4.5 w-4.5" />
+                        </div>
+                        <div className="min-w-0">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                                Your Report
+                            </p>
+                            <p className="mt-0.5 truncate text-xs text-slate-500 dark:text-zinc-400">
+                                {isToday
+                                    ? "Editable until you sign off for the day"
+                                    : "Read-only snapshot for this date"}
+                            </p>
+                        </div>
                     </div>
+
+                    {data?.myReport && (
+                        <span className="badge-success shrink-0 font-semibold">
+                            Submitted
+                        </span>
+                    )}
                 </div>
 
-                <DayPickerInput
-                    value={selectedDate}
-                    onChange={setSelectedDate}
-                />
-            </section>
-
-            {/* Overview — progress + stats, one connected panel */}
-            <section className="card p-5 md:p-6">
-                <div className="flex items-center justify-between gap-3">
-                    <p className="text-xs font-semibold tracking-wide text-slate-500 dark:text-zinc-400">
-                        {submitted} of {total} team members have submitted
-                    </p>
-                    <span className="text-xs font-bold text-slate-900 dark:text-white">
-                        {progress}%
-                    </span>
-                </div>
-
-                <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-zinc-800">
-                    <div
-                        style={{ width: `${progress}%` }}
-                        className="h-full rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 transition-all duration-700 ease-out dark:from-blue-500 dark:to-indigo-500"
+                <div className="mt-4 rounded-xl border border-transparent bg-slate-50/60 p-3 transition-colors focus-within:border-blue-200 focus-within:bg-white dark:bg-zinc-900/40 dark:focus-within:border-blue-900/50 dark:focus-within:bg-zinc-900/70 sm:p-4">
+                    <textarea
+                        ref={textareaRef}
+                        rows={5}
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        placeholder={
+                            isToday
+                                ? "What did you work on today?"
+                                : "No report submitted for this date."
+                        }
+                        className="w-full resize-none overflow-hidden border-0 bg-transparent p-0 text-sm leading-relaxed text-slate-800 placeholder:text-slate-400 shadow-none outline-none ring-0 focus:outline-none focus:ring-0 focus:shadow-none focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60 dark:text-zinc-100 dark:placeholder:text-zinc-650"
+                        style={{ minHeight: "120px", outline: "none", boxShadow: "none" }}
                     />
                 </div>
 
-                <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-                    <StatWidget
-                        icon={<HiOutlineDocumentCheck className="h-4 w-4" />}
-                        label="Submitted"
-                        value={data?.stats.submitted}
-                        iconBg="bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400"
-                    />
-
-                    <StatWidget
-                        icon={<HiOutlineClock className="h-4 w-4" />}
-                        label="Pending"
-                        value={data?.stats.pending}
-                        iconBg="bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400"
-                    />
-
-                    <StatWidget
-                        icon={<HiOutlineUsers className="h-4 w-4" />}
-                        label="Members"
-                        value={data?.stats.totalMembers}
-                        iconBg="bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-400"
-                    />
-
-                    <StatWidget
-                        icon={<HiOutlineChartBarSquare className="h-4 w-4" />}
-                        label="Completion"
-                        value={`${data?.stats.completion}%`}
-                        iconBg="bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400"
-                    />
-                </div>
-            </section>
-
-            {/* Report editor */}
-            <section className="card p-5 relative overflow-hidden transition-colors focus-within:border-slate-300 dark:focus-within:border-zinc-700">
-                <textarea
-                    ref={textareaRef}
-                    rows={5}
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder={
-                        isToday
-                            ? "What did you work on today?"
-                            : "No report submitted for this date."
-                    }
-                    className="w-full resize-none overflow-hidden border-0 bg-transparent p-0 text-sm leading-relaxed text-slate-800 placeholder:text-slate-400 shadow-none outline-none ring-0 focus:outline-none focus:ring-0 focus:shadow-none focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60 dark:text-zinc-100 dark:placeholder:text-zinc-650"
-                    style={{ minHeight: "140px", outline: "none", boxShadow: "none" }}
-                />
-
-                <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-100 pt-4 dark:border-zinc-800/60">
+                <div className="mt-4 flex flex-col-reverse gap-3 border-t border-slate-100 pt-4 dark:border-zinc-800/60 sm:flex-row sm:items-center sm:justify-between">
                     <span className="text-xs text-slate-400 dark:text-zinc-500 tabular-nums">
                         {description.length} characters
                     </span>
@@ -393,7 +500,7 @@ ${report.description}`
                         <button
                             onClick={handleReportSummary}
                             disabled={!description.trim()}
-                            className="btn-secondary py-1.5 px-3.5 text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="btn-secondary flex-1 py-1.5 px-3.5 text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed sm:flex-none"
                         >
                             <HiOutlineClipboardDocument className="mr-1.5 h-3.5 w-3.5" />
                             Copy report
@@ -402,7 +509,7 @@ ${report.description}`
                         <button
                             onClick={handleSave}
                             disabled={reportMutation.isPending}
-                            className="btn-primary py-1.5 px-3.5 text-xs font-semibold disabled:opacity-60 disabled:cursor-not-allowed"
+                            className="btn-primary flex-1 py-1.5 px-3.5 text-xs font-semibold disabled:opacity-60 disabled:cursor-not-allowed sm:flex-none"
                         >
                             {reportMutation.isPending ? (
                                 <>
@@ -418,27 +525,39 @@ ${report.description}`
             </section>
 
             {/* Team status + Activity feed */}
-            <section className="grid gap-6 lg:grid-cols-2">
+            <section className="grid gap-5 sm:gap-6 lg:grid-cols-2">
                 {/* Team status */}
                 <div className="card flex flex-col overflow-hidden">
-                    <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-zinc-800/50">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
-                            Team Status
-                        </p>
+                    <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-3.5 dark:border-zinc-800/50 sm:px-5 sm:py-4">
+                        <div className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-400">
+                            <HiOutlineUserGroup className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                                Team Status
+                            </p>
+                            <p className="mt-0.5 text-[11px] text-slate-400 dark:text-zinc-500">
+                                {submitted} of {total} checked in
+                            </p>
+                        </div>
                     </div>
 
                     <div className="divide-y divide-slate-100 overflow-y-auto dark:divide-zinc-800/40">
                         {data?.teamStatus.map((member, idx) => (
                             <div
                                 key={member.id}
-                                className="dash-fade group flex items-center justify-between gap-3 px-5 py-3.5 opacity-0 transition-colors hover:bg-slate-50/40 dark:hover:bg-zinc-900/20"
+                                className="dash-fade group flex items-center justify-between gap-3 px-4 py-3 opacity-0 transition-colors hover:bg-slate-50/40 dark:hover:bg-zinc-900/20 sm:px-5 sm:py-3.5"
                                 style={{
                                     animation: "dashFadeIn 0.3s ease-out forwards",
                                     animationDelay: `${Math.min(idx, 8) * 30}ms`,
                                 }}
                             >
                                 <div className="flex min-w-0 items-center gap-3">
-                                    <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-150 text-[11px] font-semibold text-slate-700 dark:bg-zinc-800 dark:text-zinc-300 ring-1 ring-black/5 dark:ring-white/5">
+                                    <div
+                                        className={`relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ring-1 ring-black/5 dark:ring-white/5 ${avatarClasses(
+                                            member.name
+                                        )}`}
+                                    >
                                         {member.name.charAt(0).toUpperCase()}
 
                                         {member.submitted && (
@@ -469,21 +588,26 @@ ${report.description}`
 
                 {/* Activity feed */}
                 <div className="card flex flex-col overflow-hidden">
-                    <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-zinc-800/50">
-                        <div className="flex items-center gap-2">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
-                                Activity Feed
-                            </p>
-                            {data?.reports && data.reports.length > 0 && (
-                                <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-500 dark:bg-zinc-800 dark:text-zinc-400">
-                                    {data.reports.length}
-                                </span>
-                            )}
+                    <div className="flex flex-wrap items-center justify-between gap-2.5 border-b border-slate-100 px-4 py-3.5 dark:border-zinc-800/50 sm:px-5 sm:py-4">
+                        <div className="flex items-center gap-3">
+                            <div className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400">
+                                <HiOutlineBolt className="h-4 w-4" />
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                                    Activity Feed
+                                </p>
+                                {data?.reports && data.reports.length > 0 && (
+                                    <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-500 dark:bg-zinc-800 dark:text-zinc-400">
+                                        {data.reports.length}
+                                    </span>
+                                )}
+                            </div>
                         </div>
 
                         <button
                             onClick={handleCopyReports}
-                            className="btn-secondary py-1.5 px-3 text-xs font-semibold"
+                            className="btn-secondary shrink-0 py-1.5 px-3 text-xs font-semibold"
                         >
                             <HiOutlineClipboardDocument className="mr-1.5 h-3.5 w-3.5" />
                             Copy Reports
@@ -492,7 +616,7 @@ ${report.description}`
 
                     <div className="max-h-[420px] divide-y divide-slate-100 overflow-y-auto dark:divide-zinc-800/40">
                         {data?.reports.length === 0 && (
-                            <div className="px-5 py-12 text-center text-xs font-medium text-slate-400 dark:text-zinc-500">
+                            <div className="px-4 py-10 text-center text-xs font-medium text-slate-400 dark:text-zinc-500 sm:px-5 sm:py-12">
                                 No reports found for {format(selectedDate, "dd MMM yyyy")}.
                             </div>
                         )}
@@ -500,23 +624,27 @@ ${report.description}`
                         {data?.reports.map((report, idx) => (
                             <div
                                 key={report.id}
-                                className="dash-fade group px-5 py-4 opacity-0 transition-colors hover:bg-slate-50/40 dark:hover:bg-zinc-900/20"
+                                className="dash-fade group px-4 py-3.5 opacity-0 transition-colors hover:bg-slate-50/40 dark:hover:bg-zinc-900/20 sm:px-5 sm:py-4"
                                 style={{
                                     animation: "dashFadeIn 0.3s ease-out forwards",
                                     animationDelay: `${Math.min(idx, 8) * 30}ms`,
                                 }}
                             >
                                 <div className="flex items-start gap-3">
-                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[11px] font-semibold text-slate-700 dark:bg-zinc-800 dark:text-zinc-300 ring-1 ring-black/5 dark:ring-white/5">
+                                    <div
+                                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ring-1 ring-black/5 dark:ring-white/5 ${avatarClasses(
+                                            report.user.name
+                                        )}`}
+                                    >
                                         {report.user.name.charAt(0).toUpperCase()}
                                     </div>
 
                                     <div className="min-w-0 flex-1">
-                                        <div className="flex items-baseline justify-between gap-2">
-                                            <span className="text-xs font-bold text-slate-800 dark:text-zinc-200">
+                                        <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5">
+                                            <span className="truncate text-xs font-bold text-slate-800 dark:text-zinc-200">
                                                 {report.user.name}
                                             </span>
-                                            <span className="text-[10px] font-semibold text-slate-400 dark:text-zinc-500">
+                                            <span className="shrink-0 text-[10px] font-semibold text-slate-400 dark:text-zinc-500">
                                                 {new Date(
                                                     report.createdAt
                                                 ).toLocaleTimeString("en-IN", {
@@ -536,8 +664,6 @@ ${report.description}`
                     </div>
                 </div>
             </section>
-
-
         </div>
     );
 }
@@ -547,97 +673,117 @@ function StatWidget({
     label,
     value,
     iconBg,
+    first,
 }: {
     icon: React.ReactNode;
     label: string;
     value: React.ReactNode;
     iconBg: string;
+    first?: boolean;
 }) {
     return (
-        <div className="group rounded-xl border border-slate-100 bg-slate-50/20 p-4 transition-all duration-200 hover:border-slate-200 dark:border-zinc-800/40 dark:bg-zinc-900/10">
-            <div className={`inline-flex h-8 w-8 items-center justify-center rounded-lg ${iconBg} shadow-sm`}>
+        <div className={`flex min-w-0 items-start gap-2 sm:gap-3 ${first ? "" : "sm:pl-6"}`}>
+            <div className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${iconBg} sm:h-9 sm:w-9`}>
                 {icon}
             </div>
 
-            <p className="mt-3 text-lg font-bold tracking-tight text-slate-900 dark:text-white sm:text-xl md:text-2xl">
-                {value}
-            </p>
-
-            <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
-                {label}
-            </p>
+            <div className="min-w-0">
+                <p className="text-base font-bold leading-none tracking-tight text-slate-900 dark:text-white tabular-nums sm:text-lg md:text-xl">
+                    {value}
+                </p>
+                <p className="mt-1.5 truncate text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500 sm:text-[10px]">
+                    {label}
+                </p>
+            </div>
         </div>
     );
 }
 
-function DashboardSkeleton() {
+function DashboardSkeleton({
+    canViewAllReports,
+}: {
+    canViewAllReports: boolean;
+}) {
     return (
-        <div className="mx-auto max-w-5xl space-y-6 py-2 sm:py-4 lg:space-y-8 animate-pulse">
-            {/* Date filter Skeleton */}
-            <div className="card flex items-center justify-between p-5 md:p-6">
-                <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-lg bg-slate-200 dark:bg-zinc-800" />
-                    <div className="space-y-1.5">
-                        <div className="h-3 w-24 rounded bg-slate-200 dark:bg-zinc-800" />
-                        <div className="h-3 w-32 rounded bg-slate-100 dark:bg-zinc-900" />
+        <div className="mx-auto max-w-5xl space-y-5 px-3 py-2 sm:space-y-6 sm:px-4 sm:py-4 lg:space-y-8 lg:px-0 animate-pulse">
+            {/* Page context Skeleton */}
+            <div className="flex flex-col gap-3.5 sm:flex-row sm:items-end sm:justify-between">
+                <div className="space-y-2">
+                    <div className="h-2.5 w-20 rounded bg-slate-200 dark:bg-zinc-800" />
+                    <div className="h-6 w-40 rounded bg-slate-200 dark:bg-zinc-800 sm:h-7 sm:w-44" />
+                    <div className="h-3 w-32 rounded bg-slate-100 dark:bg-zinc-900 sm:w-36" />
+                </div>
+                <div className="h-9 w-full rounded-lg bg-slate-200 dark:bg-zinc-800 sm:w-32" />
+            </div>
+
+            {/* Overview Skeleton — only for admins, matches live gating */}
+            {canViewAllReports && (
+                <div className="card p-5 sm:p-6 md:p-8">
+                    <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:gap-8">
+                        <div className="mx-auto h-28 w-28 shrink-0 rounded-full bg-slate-100 dark:bg-zinc-900 sm:mx-0 sm:h-32 sm:w-32 md:h-36 md:w-36" />
+                        <div className="grid flex-1 grid-cols-3 gap-4 sm:gap-6">
+                            {Array.from({ length: 3 }).map((_, i) => (
+                                <div key={i} className="flex items-start gap-2 sm:gap-3">
+                                    <div className="h-7 w-7 shrink-0 rounded-lg bg-slate-200 dark:bg-zinc-800 sm:h-9 sm:w-9" />
+                                    <div className="min-w-0 space-y-2">
+                                        <div className="h-4 w-8 rounded bg-slate-250 dark:bg-zinc-800 sm:h-5 sm:w-10" />
+                                        <div className="h-2.5 w-12 rounded bg-slate-200 dark:bg-zinc-900 sm:w-14" />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
-                <div className="h-8 w-32 rounded-lg bg-slate-200 dark:bg-zinc-800" />
-            </div>
-
-            {/* Overview Skeleton */}
-            <div className="card p-5 md:p-6 space-y-4">
-                <div className="flex items-center justify-between">
-                    <div className="h-3 w-64 rounded bg-slate-200 dark:bg-zinc-800" />
-                    <div className="h-3 w-10 rounded bg-slate-200 dark:bg-zinc-800" />
-                </div>
-                <div className="h-1.5 rounded-full bg-slate-100 dark:bg-zinc-900" />
-                <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 pt-2">
-                    {Array.from({ length: 4 }).map((_, i) => (
-                        <div key={i} className="rounded-xl border border-slate-100 bg-slate-50/20 p-4 dark:border-zinc-800/40 dark:bg-zinc-900/10 space-y-2">
-                            <div className="h-8 w-8 rounded bg-slate-250 dark:bg-zinc-800" />
-                            <div className="h-6 w-12 rounded bg-slate-250 dark:bg-zinc-800" />
-                            <div className="h-3 w-16 rounded bg-slate-200 dark:bg-zinc-900" />
-                        </div>
-                    ))}
-                </div>
-            </div>
+            )}
 
             {/* Editor Skeleton */}
-            <div className="card p-5 space-y-6">
-                <div className="space-y-2">
+            <div className="card p-4 sm:p-5 md:p-6 space-y-4">
+                <div className="flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-zinc-800/60">
+                    <div className="h-9 w-9 shrink-0 rounded-lg bg-slate-200 dark:bg-zinc-800" />
+                    <div className="min-w-0 space-y-1.5">
+                        <div className="h-2.5 w-20 rounded bg-slate-200 dark:bg-zinc-800" />
+                        <div className="h-2.5 w-32 rounded bg-slate-100 dark:bg-zinc-900" />
+                    </div>
+                </div>
+                <div className="space-y-2 rounded-xl bg-slate-50/60 p-3 dark:bg-zinc-900/40 sm:p-4">
                     <div className="h-3.5 w-full rounded bg-slate-200 dark:bg-zinc-800" />
                     <div className="h-3.5 w-5/6 rounded bg-slate-200 dark:bg-zinc-800" />
                     <div className="h-3.5 w-2/3 rounded bg-slate-200 dark:bg-zinc-800" />
                 </div>
-                <div className="flex justify-between items-center border-t border-slate-100 pt-4 dark:border-zinc-800/60">
+                <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-4 dark:border-zinc-800/60 sm:flex-row sm:items-center sm:justify-between">
                     <div className="h-3 w-20 rounded bg-slate-100 dark:bg-zinc-900" />
                     <div className="flex gap-2">
-                        <div className="h-8 w-24 rounded-lg bg-slate-200 dark:bg-zinc-800" />
-                        <div className="h-8 w-24 rounded-lg bg-slate-200 dark:bg-zinc-800" />
+                        <div className="h-8 flex-1 rounded-lg bg-slate-200 dark:bg-zinc-800 sm:w-24 sm:flex-none" />
+                        <div className="h-8 flex-1 rounded-lg bg-slate-200 dark:bg-zinc-800 sm:w-24 sm:flex-none" />
                     </div>
                 </div>
             </div>
 
             {/* Grid Skeleton */}
-            <div className="grid gap-6 lg:grid-cols-2">
-                <div className="card p-5 space-y-4">
-                    <div className="h-3.5 w-24 rounded bg-slate-250 dark:bg-zinc-800" />
+            <div className="grid gap-5 sm:gap-6 lg:grid-cols-2">
+                <div className="card p-4 sm:p-5 space-y-4">
+                    <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 shrink-0 rounded-lg bg-slate-200 dark:bg-zinc-800" />
+                        <div className="h-3 w-24 rounded bg-slate-250 dark:bg-zinc-800" />
+                    </div>
                     <div className="space-y-3 pt-2">
                         {Array.from({ length: 4 }).map((_, i) => (
                             <div key={i} className="flex justify-between items-center py-1">
-                                <div className="flex items-center gap-3">
-                                    <div className="h-7 w-7 rounded-full bg-slate-200 dark:bg-zinc-800" />
+                                <div className="flex min-w-0 items-center gap-3">
+                                    <div className="h-7 w-7 shrink-0 rounded-full bg-slate-200 dark:bg-zinc-800" />
                                     <div className="h-3 w-28 rounded bg-slate-200 dark:bg-zinc-800" />
                                 </div>
-                                <div className="h-5 w-16 rounded-full bg-slate-200 dark:bg-zinc-800" />
+                                <div className="h-5 w-16 shrink-0 rounded-full bg-slate-200 dark:bg-zinc-800" />
                             </div>
                         ))}
                     </div>
                 </div>
 
-                <div className="card p-5 space-y-4">
-                    <div className="h-3.5 w-24 rounded bg-slate-250 dark:bg-zinc-800" />
+                <div className="card p-4 sm:p-5 space-y-4">
+                    <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 shrink-0 rounded-lg bg-slate-200 dark:bg-zinc-800" />
+                        <div className="h-3 w-24 rounded bg-slate-250 dark:bg-zinc-800" />
+                    </div>
                     <div className="space-y-4 pt-2">
                         {Array.from({ length: 3 }).map((_, i) => (
                             <div key={i} className="space-y-2">
