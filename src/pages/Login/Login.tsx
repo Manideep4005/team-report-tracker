@@ -4,8 +4,10 @@ import {
   HiOutlineUserGroup,
   HiOutlineCheckCircle,
   HiOutlineClock,
-  HiOutlineArrowTrendingUp,
+  HiOutlineArrowRight,
+  HiOutlineShieldCheck,
 } from "react-icons/hi2";
+
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
@@ -44,10 +46,7 @@ export default function Login() {
    * ---------------------------------------------------------
    */
 
-  const {
-    data: previewResponse,
-    isLoading: previewLoading,
-  } = useQuery({
+  const { data: previewResponse, isLoading: previewLoading } = useQuery({
     queryKey: ["login-preview"],
     queryFn: getLoginPreview,
     staleTime: 60 * 1000,
@@ -57,14 +56,17 @@ export default function Login() {
   const preview: LoginPreview | null =
     previewResponse?.data ?? null;
 
+  const stats = preview?.stats;
+  const teamStatus = preview?.teamStatus ?? [];
+
   /*
    * ---------------------------------------------------------
    * LOGIN
    * ---------------------------------------------------------
    */
 
-  async function handleLogin(e?: React.FormEvent) {
-    e?.preventDefault();
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault();
 
     if (loading) return;
 
@@ -76,7 +78,7 @@ export default function Login() {
     try {
       setLoading(true);
 
-      await login(email, password);
+      await login(email.trim(), password);
 
       navigate("/dashboard");
     } catch {
@@ -98,739 +100,878 @@ export default function Login() {
     month: "long",
   });
 
-  /*
-   * ---------------------------------------------------------
-   * PREVIEW DATA
-   * ---------------------------------------------------------
-   */
-
-  const stats = preview?.stats;
-
-  const teamStatus = preview?.teamStatus ?? [];
-
   return (
-    <div className="flex min-h-screen w-full bg-white dark:bg-[#09090b]">
+    <div className="relative min-h-screen overflow-hidden bg-slate-50 text-slate-900 transition-colors duration-300 dark:bg-[#09090b] dark:text-zinc-100">
 
       {/* =====================================================
-          LEFT — REAL TEAM PREVIEW
+          AMBIENT BACKGROUND
       ===================================================== */}
 
-      <div
-        className="
-          relative hidden w-1/2 flex-col justify-between
-          overflow-hidden border-r border-zinc-900
-          bg-[#09090b] px-12 py-10
-          lg:flex xl:px-16
-        "
-      >
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
 
-        {/* Background grid */}
+        {/* Main blue glow */}
 
         <div
-          className="pointer-events-none absolute inset-0 opacity-[0.025]"
+          className="
+            absolute left-1/2 top-[-280px]
+            h-[600px] w-[600px]
+            -translate-x-1/2
+            rounded-full
+            bg-blue-500/[0.07]
+            blur-[120px]
+            dark:bg-blue-500/[0.09]
+          "
+        />
+
+        {/* Secondary glow */}
+
+        <div
+          className="
+            absolute
+            -bottom-[300px]
+            -right-[180px]
+            h-[550px] w-[550px]
+            rounded-full
+            bg-indigo-500/[0.05]
+            blur-[120px]
+            dark:bg-indigo-500/[0.06]
+          "
+        />
+
+        {/* Very subtle grid */}
+
+        <div
+          className="
+            absolute inset-0
+            opacity-[0.025]
+            dark:opacity-[0.035]
+          "
           style={{
             backgroundImage:
-              "linear-gradient(rgba(255,255,255,0.7) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.7) 1px, transparent 1px)",
+              "linear-gradient(currentColor 1px, transparent 1px), linear-gradient(90deg, currentColor 1px, transparent 1px)",
             backgroundSize: "44px 44px",
           }}
         />
 
-        {/* Blue ambient glow */}
+      </div>
 
-        <div
-          className="
-            pointer-events-none absolute
-            -right-40 -top-40
-            h-[500px] w-[500px]
-            rounded-full
-            opacity-20
-            blur-3xl
-          "
-          style={{
-            background:
-              "radial-gradient(circle, #2563EB 0%, transparent 70%)",
-          }}
-        />
+      {/* =====================================================
+          PAGE
+      ===================================================== */}
 
-        {/* =================================================
-            BRAND
-        ================================================= */}
+      <div className="relative z-10 flex min-h-screen flex-col">
 
-        <div className="relative flex items-center gap-2.5">
+        {/* ===================================================
+            TOP BAR
+        =================================================== */}
 
-          <div
-            className="
-              flex h-9 w-9 items-center justify-center
-              rounded-xl
-              bg-gradient-to-r from-blue-600 to-indigo-600
-              text-white
-              shadow-lg shadow-blue-500/20
-            "
-          >
-            <HiOutlineUserGroup size={17} />
-          </div>
+        <header className="flex items-center justify-between px-6 py-5 sm:px-8 lg:px-12">
 
-          <div>
-            <p className="text-xs font-bold tracking-tight text-white">
-              Team Work
-            </p>
+          {/* Brand */}
 
-            <p className="text-[9px] font-medium text-zinc-500">
-              Report Tracker
-            </p>
-          </div>
-
-        </div>
-
-        {/* =================================================
-            HERO
-        ================================================= */}
-
-        <div className="relative max-w-[500px]">
-
-          <div className="mb-7">
-
-            <div className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-white/[0.07] bg-white/[0.025] px-2.5 py-1">
-
-              <span className="relative flex h-1.5 w-1.5">
-                <span
-                  className="
-                    absolute inline-flex h-full w-full
-                    animate-ping rounded-full
-                    bg-emerald-400 opacity-60
-                  "
-                />
-
-                <span
-                  className="
-                    relative inline-flex h-1.5 w-1.5
-                    rounded-full bg-emerald-400
-                  "
-                />
-              </span>
-
-              <span className="text-[9px] font-semibold uppercase tracking-[0.12em] text-zinc-400">
-                Live team status
-              </span>
-
-            </div>
-
-
-            <p className="mt-3 max-w-sm text-xs leading-relaxed text-zinc-500">
-              Track today's work submissions across the team,
-              all in one place.
-            </p>
-
-          </div>
-
-          {/* =================================================
-              REAL DASHBOARD PREVIEW CARD
-          ================================================= */}
-
-          <div
-            className="
-              overflow-hidden rounded-2xl
-              border border-white/[0.07]
-              bg-white/[0.035]
-              shadow-2xl shadow-black/20
-              backdrop-blur-xl
-            "
-          >
-
-            {/* Card header */}
+          <div className="flex items-center gap-2.5">
 
             <div
               className="
-                flex items-center justify-between
-                border-b border-white/[0.06]
-                px-5 py-4
+                flex h-9 w-9
+                items-center justify-center
+                rounded-xl
+                bg-gradient-to-br
+                from-blue-600
+                to-indigo-600
+                text-white
+                shadow-lg
+                shadow-blue-500/20
+              "
+            >
+              <HiOutlineUserGroup size={17} />
+            </div>
+
+            <div>
+              <p className="text-xs font-bold tracking-tight text-slate-900 dark:text-white">
+                Team Work
+              </p>
+
+              <p className="text-[9px] font-medium text-slate-400 dark:text-zinc-500">
+                Report Tracker
+              </p>
+            </div>
+
+          </div>
+
+          {/* Status */}
+
+          <div
+            className="
+              hidden items-center gap-2
+              rounded-full
+              border border-slate-200
+              bg-white/70
+              px-3 py-1.5
+              text-[9px] font-semibold
+              text-slate-500
+              shadow-sm
+              backdrop-blur-md
+              sm:flex
+              dark:border-zinc-800
+              dark:bg-zinc-900/60
+              dark:text-zinc-400
+            "
+          >
+
+            <span className="relative flex h-1.5 w-1.5">
+
+              <span
+                className="
+                  absolute
+                  inline-flex
+                  h-full w-full
+                  animate-ping
+                  rounded-full
+                  bg-emerald-400
+                  opacity-50
+                "
+              />
+
+              <span className="relative h-1.5 w-1.5 rounded-full bg-emerald-500" />
+
+            </span>
+
+            Workspace operational
+
+          </div>
+
+        </header>
+
+        {/* ===================================================
+            MAIN
+        =================================================== */}
+
+        <main className="flex flex-1 items-center justify-center px-5 py-8 sm:px-8 sm:py-12">
+
+          <div
+            className="
+              grid w-full max-w-5xl
+              grid-cols-1
+              items-center
+              gap-12
+              lg:grid-cols-[1fr_420px]
+              lg:gap-20
+          "
+          >
+
+            {/* =================================================
+                LEFT INFORMATION
+            ================================================= */}
+
+            <section
+              className="
+                hidden
+                lg:block
+                animate-[loginContentIn_0.55s_ease-out]
               "
             >
 
-              <div>
-
-                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-zinc-500">
-                  Today
-                </p>
-
-                <p className="mt-0.5 text-xs font-semibold text-zinc-200">
-                  {today}
-                </p>
-
-              </div>
+              {/* Small label */}
 
               <div
                 className="
-                  flex h-8 w-8 items-center justify-center
-                  rounded-lg
-                  bg-blue-500/10
-                  text-blue-400
+                  mb-5 inline-flex
+                  items-center gap-2
+                  rounded-full
+                  border
+                  border-blue-200/70
+                  bg-blue-50/70
+                  px-3 py-1.5
+                  text-[9px]
+                  font-bold
+                  uppercase
+                  tracking-[0.14em]
+                  text-blue-600
+                  backdrop-blur-md
+                  dark:border-blue-500/20
+                  dark:bg-blue-500/[0.08]
+                  dark:text-blue-400
                 "
               >
-                <HiOutlineArrowTrendingUp size={16} />
+
+                <HiOutlineShieldCheck size={12} />
+
+                Secure team workspace
+
               </div>
 
-            </div>
 
-            {/* =================================================
-                PROGRESS
-            ================================================= */}
 
-            <div className="px-5 pt-5">
+              <p
+                className="
+                  mt-5
+                  max-w-md
+                  text-sm
+                  leading-relaxed
+                  text-slate-500
+                  dark:text-zinc-500
+                "
+              >
+                One workspace for daily reports, team progress,
+                and everything your team gets done.
+              </p>
 
-              <div className="flex items-end justify-between">
+              {/* =================================================
+                  LIVE TEAM SUMMARY
+              ================================================= */}
 
-                <div>
+              <div className="mt-10 max-w-md">
 
-                  <p className="text-[9px] font-semibold uppercase tracking-[0.1em] text-zinc-500">
-                    Team progress
-                  </p>
+                <div
+                  className="
+                    overflow-hidden
+                    rounded-2xl
+                    border
+                    border-slate-200/80
+                    bg-white/65
+                    shadow-[0_20px_60px_-30px_rgba(15,23,42,0.18)]
+                    backdrop-blur-xl
+                    dark:border-zinc-800/80
+                    dark:bg-zinc-900/45
+                    dark:shadow-[0_20px_60px_-30px_rgba(0,0,0,0.7)]
+                  "
+                >
 
-                  <div className="mt-1 flex items-baseline gap-1.5">
+                  {/* Preview header */}
+
+                  <div
+                    className="
+                      flex items-center justify-between
+                      border-b
+                      border-slate-200/70
+                      px-5 py-4
+                      dark:border-zinc-800/70
+                    "
+                  >
+
+                    <div>
+
+                      <p
+                        className="
+                          text-[9px]
+                          font-bold
+                          uppercase
+                          tracking-[0.14em]
+                          text-slate-400
+                          dark:text-zinc-500
+                        "
+                      >
+                        Today's activity
+                      </p>
+
+                      <p
+                        className="
+                          mt-1
+                          text-xs
+                          font-semibold
+                          text-slate-800
+                          dark:text-zinc-200
+                        "
+                      >
+                        {today}
+                      </p>
+
+                    </div>
+
+                    {/* Completion */}
+
+                    <div className="text-right">
+
+                      {previewLoading ? (
+
+                        <div className="h-6 w-12 animate-pulse rounded bg-slate-100 dark:bg-zinc-800" />
+
+                      ) : (
+
+                        <>
+
+                          <p className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+                            {stats?.completion ?? 0}%
+                          </p>
+
+                          <p className="text-[8px] font-semibold text-slate-400 dark:text-zinc-500">
+                            complete
+                          </p>
+
+                        </>
+
+                      )}
+
+                    </div>
+
+                  </div>
+
+                  {/* Progress */}
+
+                  <div className="px-5 pt-4">
+
+                    <div className="h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-zinc-800">
+
+                      <div
+                        className="
+                          h-full
+                          rounded-full
+                          bg-gradient-to-r
+                          from-blue-600
+                          to-indigo-500
+                          transition-all
+                          duration-700
+                        "
+                        style={{
+                          width: `${stats?.completion ?? 0}%`,
+                        }}
+                      />
+
+                    </div>
+
+                    <div className="mt-2 flex justify-between">
+
+                      <span className="text-[9px] font-medium text-slate-400 dark:text-zinc-600">
+                        Team progress
+                      </span>
+
+                      <span className="text-[9px] font-semibold text-slate-500 dark:text-zinc-500">
+                        {stats?.submitted ?? 0} /{" "}
+                        {stats?.totalMembers ?? 0} submitted
+                      </span>
+
+                    </div>
+
+                  </div>
+
+                  {/* Team */}
+
+                  <div className="space-y-1 px-3 py-4">
 
                     {previewLoading ? (
-                      <div className="h-7 w-12 animate-pulse rounded bg-white/[0.06]" />
+
+                      Array.from({ length: 4 }).map((_, index) => (
+
+                        <div
+                          key={index}
+                          className="flex items-center justify-between rounded-xl px-2 py-2"
+                        >
+
+                          <div className="flex items-center gap-2.5">
+
+                            <div className="h-7 w-7 animate-pulse rounded-lg bg-slate-100 dark:bg-zinc-800" />
+
+                            <div className="h-2.5 w-20 animate-pulse rounded bg-slate-100 dark:bg-zinc-800" />
+
+                          </div>
+
+                          <div className="h-4 w-12 animate-pulse rounded-full bg-slate-100 dark:bg-zinc-800" />
+
+                        </div>
+
+                      ))
+
                     ) : (
-                      <span className="text-2xl font-bold tracking-tight text-white">
-                        {stats?.completion ?? 0}%
-                      </span>
+
+                      teamStatus.map((member, index) => (
+
+                        <div
+                          key={`${member.name}-${index}`}
+                          className="
+                            flex items-center
+                            justify-between
+                            rounded-xl
+                            px-2
+                            py-2
+                            transition-colors
+                            hover:bg-slate-50
+                            dark:hover:bg-zinc-800/50
+                          "
+                        >
+
+                          <div className="flex min-w-0 items-center gap-2.5">
+
+                            <div
+                              className="
+                                flex h-7 w-7
+                                shrink-0
+                                items-center
+                                justify-center
+                                rounded-lg
+                                bg-slate-100
+                                text-[9px]
+                                font-bold
+                                text-slate-600
+                                dark:bg-zinc-800
+                                dark:text-zinc-300
+                              "
+                            >
+                              {getInitials(member.name)}
+                            </div>
+
+                            <span
+                              className="
+                                truncate
+                                text-[10px]
+                                font-semibold
+                                text-slate-700
+                                dark:text-zinc-300
+                              "
+                            >
+                              {member.name}
+                            </span>
+
+                          </div>
+
+                          {member.submitted ? (
+
+                            <span
+                              className="
+                                inline-flex
+                                items-center
+                                gap-1
+                                rounded-full
+                                bg-emerald-50
+                                px-2
+                                py-1
+                                text-[8px]
+                                font-bold
+                                text-emerald-600
+                                dark:bg-emerald-500/10
+                                dark:text-emerald-400
+                              "
+                            >
+                              <HiOutlineCheckCircle size={10} />
+                              Submitted
+                            </span>
+
+                          ) : (
+
+                            <span
+                              className="
+                                inline-flex
+                                items-center
+                                gap-1
+                                rounded-full
+                                bg-slate-100
+                                px-2
+                                py-1
+                                text-[8px]
+                                font-bold
+                                text-slate-400
+                                dark:bg-zinc-800
+                                dark:text-zinc-500
+                              "
+                            >
+                              <HiOutlineClock size={10} />
+                              Pending
+                            </span>
+
+                          )}
+
+                        </div>
+
+                      ))
+
                     )}
 
                   </div>
 
                 </div>
 
-                <div className="text-right">
-
-                  {previewLoading ? (
-                    <div className="h-4 w-16 animate-pulse rounded bg-white/[0.06]" />
-                  ) : (
-                    <p className="text-[10px] font-semibold text-zinc-500">
-                      {stats?.submitted ?? 0} of{" "}
-                      {stats?.totalMembers ?? 0} submitted
-                    </p>
-                  )}
-
-                </div>
-
               </div>
 
-              {/* Progress bar */}
+            </section>
 
-              <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
+            {/* =================================================
+                LOGIN
+            ================================================= */}
+
+            <section
+              className="
+                w-full
+                animate-[loginFormIn_0.5s_ease-out]
+              "
+            >
+
+              <div
+                className="
+                  relative
+                  overflow-hidden
+                  rounded-3xl
+                  border
+                  border-slate-200/80
+                  bg-white/75
+                  p-7
+                  shadow-[0_24px_80px_-35px_rgba(15,23,42,0.25)]
+                  backdrop-blur-2xl
+                  sm:p-9
+                  dark:border-zinc-800/80
+                  dark:bg-zinc-900/55
+                  dark:shadow-[0_24px_80px_-35px_rgba(0,0,0,0.8)]
+                "
+              >
+
+                {/* Top accent */}
 
                 <div
                   className="
-                    h-full rounded-full
+                    absolute left-0 right-0 top-0
+                    h-px
                     bg-gradient-to-r
-                    from-blue-600 to-cyan-400
-                    transition-all duration-700 ease-out
+                    from-transparent
+                    via-blue-500/50
+                    to-transparent
                   "
-                  style={{
-                    width: `${stats?.completion ?? 0}%`,
-                  }}
                 />
 
-              </div>
+                {/* Mobile logo */}
 
-            </div>
+                <div className="mb-8 flex items-center gap-2.5 lg:hidden">
 
-            {/* =================================================
-                TEAM MEMBERS
-            ================================================= */}
+                  <div
+                    className="
+                      flex h-9 w-9
+                      items-center justify-center
+                      rounded-xl
+                      bg-gradient-to-br
+                      from-blue-600
+                      to-indigo-600
+                      text-white
+                      shadow-md
+                      shadow-blue-500/20
+                    "
+                  >
+                    <HiOutlineUserGroup size={17} />
+                  </div>
 
-            <div className="px-5 py-4">
+                  <div>
 
-              <div className="space-y-1">
+                    <p className="text-xs font-bold text-slate-900 dark:text-white">
+                      Team Work
+                    </p>
 
-                {previewLoading ? (
-
-                  Array.from({ length: 4 }).map((_, index) => (
-                    <div
-                      key={index}
-                      className="
-                        flex items-center justify-between
-                        rounded-xl px-2.5 py-2
-                      "
-                    >
-
-                      <div className="flex items-center gap-2.5">
-
-                        <div
-                          className="
-                            h-7 w-7 animate-pulse
-                            rounded-lg bg-white/[0.06]
-                          "
-                        />
-
-                        <div
-                          className="
-                            h-3 w-24 animate-pulse
-                            rounded bg-white/[0.06]
-                          "
-                        />
-
-                      </div>
-
-                      <div
-                        className="
-                          h-4 w-12 animate-pulse
-                          rounded-full bg-white/[0.06]
-                        "
-                      />
-
-                    </div>
-                  ))
-
-                ) : teamStatus.length > 0 ? (
-
-                  teamStatus.map((member, index) => (
-
-                    <div
-                      key={`${member.name}-${index}`}
-                      className="
-                        group flex items-center justify-between
-                        rounded-xl px-2.5 py-2
-                        transition-colors
-                        hover:bg-white/[0.035]
-                      "
-                    >
-
-                      <div className="flex min-w-0 items-center gap-2.5">
-
-                        {/* Avatar */}
-
-                        <div
-                          className="
-                            flex h-7 w-7 shrink-0
-                            items-center justify-center
-                            rounded-lg
-                            bg-gradient-to-br
-                            from-zinc-700 to-zinc-800
-                            text-[9px] font-bold
-                            text-zinc-300
-                            ring-1 ring-white/[0.06]
-                          "
-                        >
-                          {getInitials(member.name)}
-                        </div>
-
-                        {/* Name */}
-
-                        <span
-                          className="
-                            truncate text-[11px]
-                            font-semibold text-zinc-300
-                            transition-colors
-                            group-hover:text-white
-                          "
-                        >
-                          {member.name}
-                        </span>
-
-                      </div>
-
-                      {/* Status */}
-
-                      {member.submitted ? (
-
-                        <span
-                          className="
-                            inline-flex items-center gap-1
-                            rounded-full
-                            bg-emerald-400/10
-                            px-2 py-1
-                            text-[8px] font-bold
-                            text-emerald-400
-                          "
-                        >
-                          <HiOutlineCheckCircle size={11} />
-                          Submitted
-                        </span>
-
-                      ) : (
-
-                        <span
-                          className="
-                            inline-flex items-center gap-1
-                            rounded-full
-                            bg-white/[0.05]
-                            px-2 py-1
-                            text-[8px] font-bold
-                            text-zinc-500
-                          "
-                        >
-                          <HiOutlineClock size={10} />
-                          Pending
-                        </span>
-
-                      )}
-
-                    </div>
-
-                  ))
-
-                ) : (
-
-                  <div className="py-5 text-center">
-
-                    <p className="text-[10px] font-medium text-zinc-600">
-                      No team data available
+                    <p className="text-[9px] font-medium text-slate-400 dark:text-zinc-500">
+                      Report Tracker
                     </p>
 
                   </div>
 
-                )}
+                </div>
 
-              </div>
+                {/* Heading */}
 
-            </div>
+                <div>
 
-            {/* =================================================
-                CARD FOOTER
-            ================================================= */}
+                  <p
+                    className="
+                      mb-2
+                      text-[9px]
+                      font-bold
+                      uppercase
+                      tracking-[0.16em]
+                      text-blue-600
+                      dark:text-blue-400
+                    "
+                  >
+                    Team workspace
+                  </p>
 
-            {!previewLoading && stats && (
+                  <h1
+                    className="
+                      text-2xl
+                      font-bold
+                      tracking-[-0.025em]
+                      text-slate-900
+                      dark:text-white
+                    "
+                  >
+                    Welcome back
+                  </h1>
 
-              <div
-                className="
-                  flex items-center justify-between
-                  border-t border-white/[0.06]
-                  bg-white/[0.015]
-                  px-5 py-3
-                "
-              >
-
-                <div className="flex items-center gap-2">
-
-                  <span className="h-1.5 w-1.5 rounded-full bg-blue-400" />
-
-                  <span className="text-[9px] font-medium text-zinc-500">
-                    {stats.pending === 0
-                      ? "Everyone has submitted"
-                      : `${stats.pending} ${stats.pending === 1
-                        ? "report"
-                        : "reports"
-                      } pending`}
-                  </span>
+                  <p
+                    className="
+                      mt-2
+                      text-xs
+                      leading-relaxed
+                      text-slate-500
+                      dark:text-zinc-500
+                    "
+                  >
+                    Sign in to continue to your workspace.
+                  </p>
 
                 </div>
 
-                <span className="text-[9px] font-bold text-zinc-600">
-                  LIVE
-                </span>
+                {/* =================================================
+                    FORM
+                ================================================= */}
 
-              </div>
-
-            )}
-
-          </div>
-
-        </div>
-
-        {/* =================================================
-            FOOTER
-        ================================================= */}
-
-        <div
-          className="
-            relative flex items-center
-            justify-between
-            border-t border-white/[0.05]
-            pt-5
-          "
-        >
-
-          <div>
-
-            <p className="text-[10px] font-semibold text-zinc-400">
-              Internal Team Workspace
-            </p>
-
-            <p className="mt-0.5 text-[9px] font-medium text-zinc-600">
-              Secure reporting portal
-            </p>
-
-          </div>
-
-          <div
-            className="
-              flex items-center gap-1.5
-              text-[9px] font-semibold
-              text-emerald-500/80
-            "
-          >
-
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-
-            Operational
-
-          </div>
-
-        </div>
-
-      </div>
-
-      {/* =====================================================
-          RIGHT — LOGIN
-      ===================================================== */}
-
-      <div
-        className="
-          flex w-full flex-col justify-center
-          px-8 sm:px-16
-          lg:w-1/2 lg:px-20
-          xl:px-24
-        "
-      >
-
-        <div
-          className="
-            w-full max-w-[340px]
-            animate-[loginFadeIn_0.4s_ease-out]
-          "
-        >
-
-          {/* Mobile brand */}
-
-          <div className="mb-10 flex items-center gap-2.5 lg:hidden">
-
-            <div
-              className="
-                flex h-8 w-8 items-center justify-center
-                rounded-xl
-                bg-gradient-to-r from-blue-600 to-indigo-600
-                text-white
-                shadow-md shadow-blue-500/20
-              "
-            >
-              <HiOutlineUserGroup size={16} />
-            </div>
-
-            <div>
-
-              <span className="text-xs font-bold tracking-tight text-slate-900 dark:text-white">
-                Team Work
-              </span>
-
-              <p className="text-[9px] font-medium text-slate-400 dark:text-zinc-500">
-                Report Tracker
-              </p>
-
-            </div>
-
-          </div>
-
-          {/* Heading */}
-
-          <div>
-
-            <p
-              className="
-                mb-2 text-[10px]
-                font-bold uppercase
-                tracking-[0.15em]
-                text-blue-600
-                dark:text-blue-400
-              "
-            >
-              Team Workspace
-            </p>
-
-            <h1
-              className="
-                text-xl font-bold
-                tracking-tight
-                text-slate-900
-                dark:text-white
-                sm:text-2xl
-              "
-            >
-              Welcome back
-            </h1>
-
-            <p
-              className="
-                mt-1.5 text-xs
-                font-medium
-                text-slate-500
-                dark:text-zinc-500
-              "
-            >
-              Sign in to log or review today&rsquo;s reports.
-            </p>
-
-          </div>
-
-          {/* Form */}
-
-          <form
-            onSubmit={handleLogin}
-            className="mt-8 space-y-4"
-          >
-
-            {/* Email */}
-
-            <div>
-
-              <label
-                htmlFor="email"
-                className="label"
-              >
-                Email address
-              </label>
-
-              <input
-                id="email"
-                type="email"
-                autoComplete="email"
-                placeholder="you@company.com"
-                value={email}
-                onChange={(e) =>
-                  setEmail(e.target.value)
-                }
-                className="input"
-              />
-
-            </div>
-
-            {/* Password */}
-
-            <div>
-
-              <label
-                htmlFor="password"
-                className="label"
-              >
-                Password
-              </label>
-
-              <div className="relative">
-
-                <input
-                  id="password"
-                  type={
-                    showPassword
-                      ? "text"
-                      : "password"
-                  }
-                  autoComplete="current-password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) =>
-                    setPassword(e.target.value)
-                  }
-                  className="input pr-10"
-                />
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setShowPassword(
-                      (prev) => !prev
-                    )
-                  }
-                  className="
-                    absolute right-2.5 top-1/2
-                    flex h-7 w-7
-                    -translate-y-1/2
-                    items-center justify-center
-                    rounded-lg
-                    text-slate-400
-                    transition-colors
-                    hover:bg-slate-100
-                    hover:text-slate-650
-                    dark:hover:bg-zinc-800
-                    dark:hover:text-zinc-300
-                  "
-                  aria-label={
-                    showPassword
-                      ? "Hide password"
-                      : "Show password"
-                  }
-                >
-                  {showPassword ? (
-                    <HiOutlineEyeSlash size={16} />
-                  ) : (
-                    <HiOutlineEye size={16} />
-                  )}
-                </button>
-
-              </div>
-
-            </div>
-
-            {/* Submit */}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="
-                btn-primary
-                !mt-6 w-full
-                py-2.5
-                text-xs font-semibold
-              "
-            >
-
-              {loading && (
-
-                <svg
-                  className="
-                    mr-1.5 h-3.5 w-3.5
-                    animate-spin
-                  "
-                  viewBox="0 0 24 24"
-                  fill="none"
+                <form
+                  onSubmit={handleLogin}
+                  className="mt-7 space-y-5"
                 >
 
-                  <circle
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                    className="opacity-25"
-                  />
+                  {/* Email */}
 
-                  <path
-                    fill="currentColor"
-                    className="opacity-75"
-                    d="
-                      M4 12a8 8 0 018-8V0C5.373
-                      0 0 5.373 0 12h4z
+                  <div>
+
+                    <label
+                      htmlFor="email"
+                      className="label"
+                    >
+                      Email address
+                    </label>
+
+                    <input
+                      id="email"
+                      type="email"
+                      autoComplete="email"
+                      placeholder="you@company.com"
+                      value={email}
+                      onChange={(e) =>
+                        setEmail(e.target.value)
+                      }
+                      disabled={loading}
+                      className="input"
+                    />
+
+                  </div>
+
+                  {/* Password */}
+
+                  <div>
+
+                    <div className="mb-2 flex items-center justify-between">
+
+                      <label
+                        htmlFor="password"
+                        className="label !mb-0"
+                      >
+                        Password
+                      </label>
+
+                    </div>
+
+                    <div className="relative">
+
+                      <input
+                        id="password"
+                        type={
+                          showPassword
+                            ? "text"
+                            : "password"
+                        }
+                        autoComplete="current-password"
+                        placeholder="Enter your password"
+                        value={password}
+                        onChange={(e) =>
+                          setPassword(e.target.value)
+                        }
+                        disabled={loading}
+                        className="input pr-11"
+                      />
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setShowPassword(
+                            (prev) => !prev
+                          )
+                        }
+                        disabled={loading}
+                        className="
+                          absolute
+                          right-2
+                          top-1/2
+                          flex h-8 w-8
+                          -translate-y-1/2
+                          items-center
+                          justify-center
+                          rounded-lg
+                          text-slate-400
+                          transition-colors
+                          hover:bg-slate-100
+                          hover:text-slate-700
+                          dark:text-zinc-500
+                          dark:hover:bg-zinc-800
+                          dark:hover:text-zinc-200
+                        "
+                        aria-label={
+                          showPassword
+                            ? "Hide password"
+                            : "Show password"
+                        }
+                      >
+                        {showPassword ? (
+                          <HiOutlineEyeSlash size={16} />
+                        ) : (
+                          <HiOutlineEye size={16} />
+                        )}
+                      </button>
+
+                    </div>
+
+                  </div>
+
+                  {/* Sign in */}
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="
+                      group
+                      inline-flex
+                      h-11
+                      w-full
+                      items-center
+                      justify-center
+                      gap-2
+                      rounded-xl
+                      bg-zinc-900
+                      text-xs
+                      font-semibold
+                      text-white
+                      shadow-sm
+                      transition-all
+                      duration-200
+                      hover:bg-zinc-800
+                      hover:shadow-lg
+                      active:scale-[0.99]
+                      disabled:cursor-not-allowed
+                      disabled:opacity-60
+                      dark:bg-white
+                      dark:text-zinc-900
+                      dark:hover:bg-zinc-100
                     "
-                  />
+                  >
 
-                </svg>
+                    {loading ? (
 
-              )}
+                      <>
+                        <svg
+                          className="h-3.5 w-3.5 animate-spin"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                        >
+                          <circle
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                            className="opacity-25"
+                          />
 
-              {loading
-                ? "Signing in..."
-                : "Sign in"}
+                          <path
+                            fill="currentColor"
+                            className="opacity-75"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                          />
+                        </svg>
 
-            </button>
+                        Signing in...
+                      </>
 
-          </form>
+                    ) : (
 
+                      <>
+                        Sign in
 
+                        <HiOutlineArrowRight
+                          className="
+                            h-4 w-4
+                            transition-transform
+                            duration-200
+                            group-hover:translate-x-1
+                          "
+                        />
+                      </>
 
+                    )}
 
+                  </button>
 
-        </div>
+                </form>
+
+                {/* Security footer */}
+
+                <div
+                  className="
+                    mt-7
+                    flex
+                    items-center
+                    justify-center
+                    gap-1.5
+                    border-t
+                    border-slate-100
+                    pt-5
+                    text-[9px]
+                    font-medium
+                    text-slate-400
+                    dark:border-zinc-800
+                    dark:text-zinc-600
+                  "
+                >
+
+                  <HiOutlineShieldCheck size={12} />
+
+                  Secure internal workspace
+
+                </div>
+
+              </div>
+
+            </section>
+
+          </div>
+
+        </main>
+
+        {/* ===================================================
+            FOOTER
+        =================================================== */}
+
+        <footer
+          className="
+            flex
+            items-center
+            justify-center
+            px-6
+            pb-5
+            text-[9px]
+            font-medium
+            text-slate-400
+            dark:text-zinc-600
+          "
+        >
+          © {new Date().getFullYear()} Team Work · Internal Team Portal
+        </footer>
 
       </div>
 
       {/* =====================================================
-          ANIMATION
+          ANIMATIONS
       ===================================================== */}
 
       <style>{`
-        @keyframes loginFadeIn {
+        @keyframes loginContentIn {
           from {
             opacity: 0;
-            transform: translateY(6px);
+            transform: translateX(-12px);
+          }
+
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+
+        @keyframes loginFormIn {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
           }
 
           to {
@@ -851,7 +992,6 @@ export default function Login() {
     </div>
   );
 }
-
 
 /*
  * =========================================================
