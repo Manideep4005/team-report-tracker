@@ -294,8 +294,27 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
    */
   const brand = (
     <div className="sidebar-brand">
-      <div className="sidebar-brand-mark">
-        <HiOutlineUserGroup size={20} />
+      <div
+        className="
+                flex
+                h-12
+                w-12
+                shrink-0
+                items-center
+                justify-center
+                overflow-hidden
+                rounded-xl
+            "
+      >
+        <img
+          src="/sidebar.gif"
+          alt="Team Work"
+          className="
+                    h-full
+                    w-full
+                    object-contain
+                "
+        />
       </div>
 
       <div className="min-w-0">

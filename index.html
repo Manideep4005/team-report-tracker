@@ -1,40 +1,38 @@
 <!doctype html>
 <html lang="en" class="no-theme-transition">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/group-of-people.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Team Report Tracking</title>
+  </head>
 
-<head>
-  <meta charset="UTF-8" />
-  <link rel="icon" type="image/png" href="/group-of-people.png" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Team Report Tracking</title>
-</head>
+  <body>
+    <div id="root"></div>
 
-<body>
-  <div id="root"></div>
+    <script>
+      (function () {
+        const saved = localStorage.getItem("theme");
+        const theme =
+          saved === "light" || saved === "dark"
+            ? saved
+            : window.matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "light";
 
-  <script>
-    (function () {
-      const saved = localStorage.getItem("theme");
-      const theme =
-        saved === "light" || saved === "dark"
-          ? saved
-          : window.matchMedia("(prefers-color-scheme: dark)").matches
-            ? "dark"
-            : "light";
+        const root = document.documentElement;
+        root.classList.toggle("dark", theme === "dark");
 
-      const root = document.documentElement;
-      root.classList.toggle("dark", theme === "dark");
-
-      // Let the browser paint once with transitions disabled,
-      // then re-enable them for all subsequent (user-triggered) toggles.
-      requestAnimationFrame(() => {
+        // Let the browser paint once with transitions disabled,
+        // then re-enable them for all subsequent (user-triggered) toggles.
         requestAnimationFrame(() => {
-          root.classList.remove("no-theme-transition");
+          requestAnimationFrame(() => {
+            root.classList.remove("no-theme-transition");
+          });
         });
-      });
-    })();
-  </script>
+      })();
+    </script>
 
-  <script type="module" src="/src/main.tsx"></script>
-</body>
-
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>
