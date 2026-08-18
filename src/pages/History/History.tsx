@@ -1,381 +1,1022 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
 import {
-    HiOutlineXMark,
-    HiOutlineDocumentMagnifyingGlass,
-    HiOutlineClipboardDocument,
-    HiOutlinePencilSquare,
-    HiOutlineArrowPath,
+  HiOutlineXMark,
+  HiOutlineDocumentMagnifyingGlass,
+  HiOutlineClipboardDocument,
+  HiOutlinePencilSquare,
+  HiOutlineArrowPath,
 } from "react-icons/hi2";
+
 import { format } from "date-fns";
-import { getHistory, saveReport } from "../../services/report";
 import { toast } from "sonner";
+
+import { getHistory, saveReport } from "../../services/report";
 import DayPickerInput from "../../components/DayPickerInput";
 
 interface ReportItem {
-    id: string;
-    reportDate: string;
-    description: string;
+  id: string;
+  reportDate: string;
+  description: string;
 }
 
 export default function History() {
-    const [date, setDate] = useState<Date | null>(null);
+  const [date, setDate] = useState<Date | null>(null);
 
-    const dateParam = date ? format(date, "yyyy-MM-dd") : "";
+  const dateParam = date ? format(date, "yyyy-MM-dd") : "";
 
-    const { data, isLoading } = useQuery<ReportItem[]>({
-        queryKey: ["history", dateParam],
-        queryFn: async () => {
-            const response = await getHistory(dateParam || undefined);
-            return response.data;
-        },
-    });
+  const { data, isLoading } = useQuery<ReportItem[]>({
+    queryKey: ["history", dateParam],
 
-    return (
-        <div className="mx-auto max-w-3xl px-3 py-2 sm:px-4 sm:py-4 lg:px-0">
-            {/* Local keyframes — Tailwind utility classes reference these by name */}
-            <style>{`
-                @keyframes historyFadeIn {
-                    from { opacity: 0; transform: translateY(6px); }
-                    to { opacity: 1; transform: translateY(0); }
+    queryFn: async () => {
+      const response = await getHistory(dateParam || undefined);
+
+      return response.data;
+    },
+  });
+
+  return (
+    <div className="mx-auto w-full max-w-[1040px] px-4 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-8">
+      {/* =====================================================
+                PAGE ANIMATIONS
+            ===================================================== */}
+
+      <style>{`
+                @keyframes historyReveal {
+                    from {
+                        opacity: 0;
+                        transform: translateY(8px);
+                    }
+
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
                 }
-                @keyframes historyPing {
-                    75%, 100% { transform: scale(2); opacity: 0; }
-                }
+
                 @media (prefers-reduced-motion: reduce) {
-                    .history-entry { animation: none !important; opacity: 1 !important; }
+                    .history-reveal {
+                        animation: none !important;
+                        opacity: 1 !important;
+                    }
                 }
             `}</style>
 
-            {/* Header */}
-            <div className="flex flex-col gap-3 border-b border-slate-200/50 pb-4 dark:border-zinc-800/50 sm:gap-4 sm:pb-5 md:flex-row md:items-end md:justify-between">
-                <div>
-                    <h1 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white sm:text-xl md:text-2xl">
-                        History
-                    </h1>
-                    <p className="mt-1 text-[11px] text-slate-500 dark:text-zinc-500 sm:text-xs">
-                        Browse your daily work reports.
-                    </p>
-                </div>
+      {/* =====================================================
+                PAGE HEADER
+            ===================================================== */}
 
-                {/* Toolbar */}
-                <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
-                    {!isLoading && data?.length ? (
-                        <span className="badge-primary shrink-0 font-semibold">
-                            {data.length} {data.length === 1 ? "Report" : "Reports"}
-                        </span>
-                    ) : null}
+      <div
+        className="
+                    flex
+                    flex-col
+                    gap-5
+                    border-b
+                    border-slate-200/80
+                    pb-5
+                    dark:border-zinc-800/80
+                    sm:gap-6
+                    sm:pb-6
+                    lg:flex-row
+                    lg:items-end
+                    lg:justify-between
+                "
+      >
+        {/* PAGE TITLE */}
 
-                    <div className="min-w-0 flex-1 sm:flex-none">
-                        <DayPickerInput
-                            value={date}
-                            onChange={setDate}
-                            placeholder="Filter by date"
-                        />
-                    </div>
+        <div className="min-w-0">
+          <div className="mb-3 flex items-center gap-2"></div>
 
-                    <button
-                        onClick={() => setDate(null)}
-                        disabled={!date}
-                        className="inline-flex h-9 shrink-0 items-center gap-1 rounded-xl border border-slate-200 bg-white/50 px-3 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-800 dark:bg-zinc-900/55 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
-                    >
-                        <HiOutlineXMark size={14} />
-                        Clear
-                    </button>
-                </div>
-            </div>
+          <h1
+            className="
+                            text-[26px]
+                            font-bold
+                            tracking-[-0.035em]
+                            text-slate-950
+                            dark:text-white
+                            sm:text-3xl
+                        "
+          >
+            History
+          </h1>
 
-            {/* Content */}
-            <div className="mt-5 sm:mt-6 md:mt-8">
-                {isLoading ? (
-                    <SkeletonList />
-                ) : data?.length ? (
-                    <ol className="relative space-y-1">
-                        {data.map((report, idx) => (
-                            <TimelineEntry
-                                key={report.id}
-                                report={report}
-                                index={idx}
-                                isLast={idx === data.length - 1}
-                            />
-                        ))}
-                    </ol>
-                ) : (
-                    <EmptyState hasDateFilter={!!date} />
-                )}
-            </div>
+          <p
+            className="
+                            mt-1.5
+                            text-sm
+                            text-slate-500
+                            dark:text-zinc-500
+                        "
+          >
+            Browse and manage your daily work reports.
+          </p>
         </div>
-    );
+
+        {/* =================================================
+                    FILTER TOOLBAR
+                ================================================= */}
+
+        <div
+          className="
+                        grid
+                        w-full
+                        grid-cols-1
+                        gap-2
+                        sm:flex
+                        sm:w-auto
+                        sm:flex-wrap
+                        sm:items-center
+                        sm:justify-end
+                    "
+        >
+          {/* REPORT COUNT */}
+
+          {!isLoading && data?.length ? (
+            <div
+              className="
+                                inline-flex
+                                h-10
+                                w-fit
+                                items-center
+                                rounded-xl
+                                border
+                                border-indigo-100
+                                bg-indigo-50
+                                px-3.5
+                                text-xs
+                                font-bold
+                                text-indigo-600
+                                dark:border-indigo-500/20
+                                dark:bg-indigo-500/10
+                                dark:text-indigo-400
+                            "
+            >
+              {data.length} {data.length === 1 ? "Report" : "Reports"}
+            </div>
+          ) : null}
+
+          {/* DATE PICKER */}
+
+          <div className="min-w-0 w-full sm:w-auto">
+            <div className="w-full min-w-0 sm:w-auto">
+              <DayPickerInput
+                value={date}
+                onChange={setDate}
+                placeholder="Filter by date"
+              />
+            </div>
+          </div>
+
+          {/* CLEAR */}
+
+          <button
+            type="button"
+            onClick={() => setDate(null)}
+            disabled={!date}
+            className="
+                            inline-flex
+                            h-10
+                            w-full
+                            items-center
+                            justify-center
+                            gap-1.5
+                            rounded-xl
+                            border
+                            border-slate-200
+                            bg-white
+                            px-3.5
+                            text-xs
+                            font-semibold
+                            text-slate-600
+                            shadow-sm
+                            transition
+                            hover:border-slate-300
+                            hover:bg-slate-50
+                            disabled:cursor-not-allowed
+                            disabled:opacity-35
+                            dark:border-zinc-800
+                            dark:bg-zinc-900
+                            dark:text-zinc-400
+                            dark:hover:border-zinc-700
+                            dark:hover:bg-zinc-800
+                            sm:w-auto
+                        "
+          >
+            <HiOutlineXMark className="h-4 w-4" />
+            Clear
+          </button>
+        </div>
+      </div>
+
+      {/* =====================================================
+                CONTENT
+            ===================================================== */}
+
+      <div className="mt-7 sm:mt-8">
+        {isLoading ? (
+          <SkeletonList />
+        ) : data?.length ? (
+          <ol className="relative">
+            {data.map((report, index) => (
+              <TimelineEntry
+                key={report.id}
+                report={report}
+                index={index}
+                isLast={index === data.length - 1}
+              />
+            ))}
+          </ol>
+        ) : (
+          <EmptyState hasDateFilter={!!date} />
+        )}
+      </div>
+    </div>
+  );
 }
+
+/* ================================================================
+   TIMELINE ENTRY
+================================================================ */
 
 function TimelineEntry({
-    report,
-    index,
-    isLast,
+  report,
+  index,
+  isLast,
 }: {
-    report: ReportItem;
-    index: number;
-    isLast: boolean;
+  report: ReportItem;
+  index: number;
+  isLast: boolean;
 }) {
-    const queryClient = useQueryClient();
+  const queryClient = useQueryClient();
 
-    const [isEditing, setIsEditing] = useState(false);
-    const [description, setDescription] = useState(report.description);
+  const [isEditing, setIsEditing] = useState(false);
 
-    const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [description, setDescription] = useState(report.description);
 
-    // Keep local draft in sync if the underlying report data changes
-    // (e.g. after a refetch) while not actively editing.
-    useEffect(() => {
-        if (!isEditing) {
-            setDescription(report.description);
-        }
-    }, [report.description, isEditing]);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-    // Autosize the textarea to its content, same as the dashboard editor.
-    useEffect(() => {
-        if (!isEditing) return;
-        const el = textareaRef.current;
-        if (el) {
-            el.style.height = "auto";
-            el.style.height = `${el.scrollHeight}px`;
-        }
-    }, [description, isEditing]);
+  /* =============================================================
+       SYNC DESCRIPTION
+    ============================================================= */
 
-    const reportMutation = useMutation({
-        mutationFn: saveReport,
+  useEffect(() => {
+    if (!isEditing) {
+      setDescription(report.description);
+    }
+  }, [report.description, isEditing]);
 
-        onSuccess: (response) => {
-            setDescription(response.data.description);
-            setIsEditing(false);
+  /* =============================================================
+       AUTO RESIZE TEXTAREA
+    ============================================================= */
 
-            // Refresh any history views (all date filters), since this
-            // report may appear under more than one cached query.
-            queryClient.invalidateQueries({ queryKey: ["history"] });
+  useEffect(() => {
+    if (!isEditing) {
+      return;
+    }
 
-            toast.success("Report updated successfully.");
-        },
+    const textarea = textareaRef.current;
 
-        onError: (error: any) => {
-            const response = error.response?.data;
+    if (textarea) {
+      textarea.style.height = "auto";
 
-            if (response?.errors?.length) {
-                response.errors.forEach((err: { message: string }) => {
-                    toast.error(err.message);
-                });
-                return;
-            }
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    }
+  }, [description, isEditing]);
 
-            toast.error(response?.message || "Failed to update report.");
-        },
-    });
+  /* =============================================================
+       SAVE MUTATION
+    ============================================================= */
 
-    const handleCopyReport = async (text: string) => {
-        try {
-            await navigator.clipboard.writeText(text);
-            toast.success("Report copied successfully.");
-        } catch {
-            toast.error("Unable to copy report.");
-        }
-    };
+  const reportMutation = useMutation({
+    mutationFn: saveReport,
 
-    const handleSave = () => {
-        const text = description.trim();
+    onSuccess: (response) => {
+      setDescription(response.data.description);
 
-        if (!text) {
-            toast.warning("Please enter a report.");
-            return;
-        }
+      setIsEditing(false);
 
-        reportMutation.mutate({
-            description: text,
-            reportDate: format(new Date(report.reportDate), "yyyy-MM-dd"),
+      queryClient.invalidateQueries({
+        queryKey: ["history"],
+      });
+
+      toast.success("Report updated successfully.");
+    },
+
+    onError: (error: any) => {
+      const response = error.response?.data;
+
+      if (response?.errors?.length) {
+        response.errors.forEach((err: { message: string }) => {
+          toast.error(err.message);
         });
-    };
 
-    const handleCancel = () => {
-        setDescription(report.description);
-        setIsEditing(false);
-    };
+        return;
+      }
 
-    const parsed = new Date(report.reportDate);
+      toast.error(response?.message || "Failed to update report.");
+    },
+  });
 
-    const day = parsed.toLocaleDateString("en-IN", {
-        day: "2-digit",
-        timeZone: "Asia/Kolkata",
+  /* =============================================================
+       COPY
+    ============================================================= */
+
+  const handleCopyReport = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+
+      toast.success("Report copied successfully.");
+    } catch {
+      toast.error("Unable to copy report.");
+    }
+  };
+
+  /* =============================================================
+       SAVE
+    ============================================================= */
+
+  const handleSave = () => {
+    const text = description.trim();
+
+    if (!text) {
+      toast.warning("Please enter a report.");
+
+      return;
+    }
+
+    reportMutation.mutate({
+      description: text,
+
+      reportDate: format(new Date(report.reportDate), "yyyy-MM-dd"),
     });
-    const month = parsed
-        .toLocaleDateString("en-IN", { month: "short", timeZone: "Asia/Kolkata" })
-        .toUpperCase();
-    const full = parsed.toLocaleDateString("en-IN", {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-        timeZone: "Asia/Kolkata",
-    });
-    const fullShort = parsed.toLocaleDateString("en-IN", {
-        weekday: "short",
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-        timeZone: "Asia/Kolkata",
-    });
+  };
 
-    return (
-        <li
-            className="history-entry group relative flex gap-3 pb-5 opacity-0 sm:gap-4 sm:pb-6"
-            style={{
-                animation: "historyFadeIn 0.35s ease-out forwards",
-                animationDelay: `${Math.min(index, 10) * 35}ms`,
-            }}
+  /* =============================================================
+       CANCEL
+    ============================================================= */
+
+  const handleCancel = () => {
+    setDescription(report.description);
+
+    setIsEditing(false);
+  };
+
+  /* =============================================================
+       DATE FORMATTING
+    ============================================================= */
+
+  const parsed = new Date(report.reportDate);
+
+  const day = parsed.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    timeZone: "Asia/Kolkata",
+  });
+
+  const month = parsed
+    .toLocaleDateString("en-IN", {
+      month: "short",
+      timeZone: "Asia/Kolkata",
+    })
+    .toUpperCase();
+
+  const fullDate = parsed.toLocaleDateString("en-IN", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "Asia/Kolkata",
+  });
+
+  const mobileDate = parsed.toLocaleDateString("en-IN", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "Asia/Kolkata",
+  });
+
+  return (
+    <li
+      className="
+                history-reveal
+                relative
+                grid
+                grid-cols-[52px_minmax(0,1fr)]
+                gap-3
+                pb-5
+                opacity-0
+                sm:grid-cols-[64px_minmax(0,1fr)]
+                sm:gap-4
+                sm:pb-6
+                lg:grid-cols-[68px_minmax(0,1fr)]
+            "
+      style={{
+        animation: "historyReveal 0.4s cubic-bezier(0.22,1,0.36,1) forwards",
+
+        animationDelay: `${Math.min(index, 12) * 40}ms`,
+      }}
+    >
+      {/* =================================================
+                CONNECTING LINE
+            ================================================= */}
+
+      {!isLast && (
+        <div
+          className="
+                        absolute
+                        bottom-0
+                        left-[25px]
+                        top-[50px]
+                        w-px
+                        bg-gradient-to-b
+                        from-slate-200
+                        via-slate-200
+                        to-transparent
+                        dark:from-zinc-800
+                        dark:via-zinc-800
+                        dark:to-transparent
+                        sm:left-[31px]
+                        sm:top-[56px]
+                        lg:left-[33px]
+                    "
+        />
+      )}
+
+      {/* =================================================
+                DATE MARKER
+            ================================================= */}
+
+      <div className="relative z-10 flex justify-center">
+        <div
+          className="
+                        flex
+                        h-[48px]
+                        w-[48px]
+                        flex-col
+                        items-center
+                        justify-center
+                        rounded-xl
+                        border
+                        border-slate-200
+                        bg-white
+                        shadow-[0_3px_12px_rgba(15,23,42,0.04)]
+                        transition-all
+                        duration-300
+                        dark:border-zinc-800
+                        dark:bg-zinc-950
+                        dark:shadow-none
+                        sm:h-[54px]
+                        sm:w-[54px]
+                        sm:rounded-2xl
+                    "
         >
-            {/* Connecting rail */}
-            {!isLast && (
-                <span className="absolute left-[19px] top-10 h-[calc(100%-1.5rem)] w-px bg-slate-200 transition-colors dark:bg-zinc-800 sm:left-[23px] sm:top-12 sm:h-[calc(100%-1.75rem)]" />
-            )}
+          <span
+            className="
+                            text-sm
+                            font-bold
+                            leading-none
+                            text-slate-900
+                            dark:text-white
+                            sm:text-[15px]
+                        "
+          >
+            {day}
+          </span>
 
-            {/* Date badge */}
-            <div className="relative z-10 flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 shadow-sm transition-colors duration-200 group-hover:border-slate-300 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 dark:group-hover:border-zinc-700 sm:h-12 sm:w-12 sm:rounded-xl">
-                <span className="text-xs font-bold leading-none sm:text-sm">{day}</span>
-                <span className="mt-1 text-[7px] font-bold tracking-wider text-slate-400 dark:text-zinc-500 sm:text-[8px]">
-                    {month}
-                </span>
+          <span
+            className="
+                            mt-1
+                            text-[8px]
+                            font-bold
+                            tracking-[0.14em]
+                            text-slate-400
+                            dark:text-zinc-600
+                        "
+          >
+            {month}
+          </span>
+        </div>
+      </div>
+
+      {/* =================================================
+                REPORT CARD
+            ================================================= */}
+
+      <article
+        className="
+                    group
+                    min-w-0
+                    overflow-hidden
+                    rounded-xl
+                    border
+                    border-slate-200/80
+                    bg-white
+                    shadow-[0_3px_16px_rgba(15,23,42,0.035)]
+                    transition-all
+                    duration-300
+                    hover:-translate-y-0.5
+                    hover:border-slate-300
+                    hover:shadow-[0_8px_24px_rgba(15,23,42,0.06)]
+                    dark:border-zinc-800
+                    dark:bg-zinc-950
+                    dark:shadow-none
+                    dark:hover:border-zinc-700
+                "
+      >
+        {/* =================================================
+                    CARD HEADER
+                ================================================= */}
+
+        <div
+          className="
+                        flex
+                        flex-col
+                        gap-3
+                        px-4
+                        py-3.5
+                        sm:px-5
+                        sm:py-4
+                        lg:flex-row
+                        lg:items-center
+                        lg:justify-between
+                    "
+        >
+          <div className="flex min-w-0 items-center gap-3">
+            {/* INDICATOR */}
+
+            <div
+              className="
+                                flex
+                                h-7
+                                w-7
+                                shrink-0
+                                items-center
+                                justify-center
+                                rounded-lg
+                                bg-indigo-50
+                                dark:bg-indigo-500/10
+                            "
+            >
+              <span
+                className="
+                                    h-1.5
+                                    w-1.5
+                                    rounded-full
+                                    bg-indigo-500
+                                    dark:bg-indigo-400
+                                "
+              />
             </div>
 
-            {/* Entry card */}
-            <div className="card min-w-0 flex-1 p-3.5 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:border-slate-350 dark:group-hover:border-zinc-700 sm:p-5">
-                <div className="flex flex-wrap items-center justify-between gap-2.5 sm:flex-nowrap sm:gap-3">
-                    <div className="flex min-w-0 items-center gap-2">
-                        <span className="relative flex h-2 w-2 shrink-0">
-                            <span
-                                className="absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"
-                                style={{
-                                    animation: "historyPing 2.5s cubic-bezier(0,0,0.2,1) infinite",
-                                }}
-                            />
-                            <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-500" />
-                        </span>
+            <div className="min-w-0">
+              <h3
+                className="
+                                    truncate
+                                    text-sm
+                                    font-bold
+                                    text-slate-900
+                                    dark:text-white
+                                    sm:text-[14px]
+                                "
+              >
+                <span className="sm:hidden">{mobileDate}</span>
 
-                        <h3 className="truncate text-xs font-bold text-slate-800 dark:text-zinc-200">
-                            <span className="sm:hidden">{fullShort}</span>
-                            <span className="hidden sm:inline">{full}</span>
-                        </h3>
-                    </div>
+                <span className="hidden sm:inline">{fullDate}</span>
+              </h3>
 
-                    {!isEditing && (
-                        <div className="flex shrink-0 items-center gap-1.5">
-                            <button
-                                onClick={() => setIsEditing(true)}
-                                className="btn-secondary py-1 px-2.5 text-[10px] font-semibold"
-                                title="Edit report"
-                            >
-                                <HiOutlinePencilSquare className="mr-1 h-3.5 w-3.5" />
-                                <span className="hidden xs:inline">Edit</span>
-                            </button>
-
-                            <button
-                                onClick={() => handleCopyReport(report.description)}
-                                className="btn-secondary py-1 px-2.5 text-[10px] font-semibold"
-                                title="Copy report"
-                            >
-                                <HiOutlineClipboardDocument className="mr-1 h-3.5 w-3.5" />
-                                <span className="hidden xs:inline">Copy</span>
-                            </button>
-                        </div>
-                    )}
-                </div>
-
-                {isEditing ? (
-                    <div className="mt-3">
-                        <textarea
-                            ref={textareaRef}
-                            rows={4}
-                            value={description}
-                            onChange={(e) => setDescription(e.target.value)}
-                            autoFocus
-                            className="w-full resize-none overflow-hidden rounded-lg border border-slate-200 bg-transparent p-2 text-xs leading-relaxed text-slate-800 placeholder:text-slate-400 shadow-none outline-none ring-0 focus:border-slate-300 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-650 dark:focus:border-zinc-700"
-                            style={{ minHeight: "90px" }}
-                        />
-
-                        <div className="mt-3 flex flex-col-reverse items-stretch gap-2.5 xs:flex-row xs:items-center xs:justify-between xs:gap-3">
-                            <span className="text-[10px] text-slate-400 dark:text-zinc-500 tabular-nums">
-                                {description.length} characters
-                            </span>
-
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={handleCancel}
-                                    disabled={reportMutation.isPending}
-                                    className="btn-secondary flex-1 py-1 px-3 text-[10px] font-semibold disabled:cursor-not-allowed disabled:opacity-60 xs:flex-none"
-                                >
-                                    Cancel
-                                </button>
-
-                                <button
-                                    onClick={handleSave}
-                                    disabled={reportMutation.isPending}
-                                    className="btn-primary flex-1 py-1 px-3 text-[10px] font-semibold disabled:cursor-not-allowed disabled:opacity-60 xs:flex-none"
-                                >
-                                    {reportMutation.isPending ? (
-                                        <>
-                                            <HiOutlineArrowPath className="mr-1 h-3.5 w-3.5 animate-spin" />
-                                            Saving…
-                                        </>
-                                    ) : (
-                                        "Save report"
-                                    )}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                ) : (
-                    <p className="mt-2.5 whitespace-pre-wrap break-words text-xs leading-relaxed text-slate-650 dark:text-zinc-350 sm:mt-3">
-                        {report.description}
-                    </p>
-                )}
+              <p
+                className="
+                                    mt-0.5
+                                    text-[9px]
+                                    font-medium
+                                    uppercase
+                                    tracking-[0.12em]
+                                    text-slate-400
+                                    dark:text-zinc-600
+                                "
+              >
+                Daily work report
+              </p>
             </div>
-        </li>
-    );
+          </div>
+
+          {/* =================================================
+                        ACTIONS
+                    ================================================= */}
+
+          {!isEditing && (
+            <div
+              className="
+                                flex
+                                w-full
+                                items-center
+                                gap-2
+                                lg:w-auto
+                            "
+            >
+              <button
+                type="button"
+                onClick={() => setIsEditing(true)}
+                className="
+                                    inline-flex
+                                    h-8
+                                    flex-1
+                                    items-center
+                                    justify-center
+                                    gap-1.5
+                                    rounded-lg
+                                    border
+                                    border-slate-200
+                                    bg-white
+                                    px-2.5
+                                    text-[11px]
+                                    font-semibold
+                                    text-slate-600
+                                    transition
+                                    hover:border-indigo-200
+                                    hover:bg-indigo-50
+                                    hover:text-indigo-600
+                                    dark:border-zinc-800
+                                    dark:bg-zinc-900
+                                    dark:text-zinc-400
+                                    dark:hover:border-indigo-500/30
+                                    dark:hover:bg-indigo-500/10
+                                    dark:hover:text-indigo-400
+                                    lg:flex-none
+                                "
+              >
+                <HiOutlinePencilSquare className="h-3.5 w-3.5" />
+                Edit
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleCopyReport(report.description)}
+                className="
+                                    inline-flex
+                                    h-8
+                                    flex-1
+                                    items-center
+                                    justify-center
+                                    gap-1.5
+                                    rounded-lg
+                                    border
+                                    border-slate-200
+                                    bg-white
+                                    px-2.5
+                                    text-[11px]
+                                    font-semibold
+                                    text-slate-600
+                                    transition
+                                    hover:border-slate-300
+                                    hover:bg-slate-50
+                                    dark:border-zinc-800
+                                    dark:bg-zinc-900
+                                    dark:text-zinc-400
+                                    dark:hover:border-zinc-700
+                                    dark:hover:bg-zinc-800
+                                    dark:hover:text-zinc-200
+                                    lg:flex-none
+                                "
+              >
+                <HiOutlineClipboardDocument className="h-3.5 w-3.5" />
+                Copy
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* =================================================
+                    DIVIDER
+                ================================================= */}
+
+        <div className="border-t border-slate-100 dark:border-zinc-900" />
+
+        {/* =================================================
+                    EDIT MODE
+                ================================================= */}
+
+        {isEditing ? (
+          <div className="p-4 sm:p-5">
+            <textarea
+              ref={textareaRef}
+              rows={5}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              autoFocus
+              className="
+                                min-h-[120px]
+                                w-full
+                                resize-none
+                                overflow-hidden
+                                rounded-xl
+                                border
+                                border-slate-200
+                                bg-slate-50
+                                px-3.5
+                                py-3
+                                text-sm
+                                leading-6
+                                text-slate-800
+                                outline-none
+                                transition
+                                placeholder:text-slate-400
+                                focus:border-indigo-400
+                                focus:bg-white
+                                focus:ring-4
+                                focus:ring-indigo-500/10
+                                dark:border-zinc-800
+                                dark:bg-zinc-900
+                                dark:text-zinc-100
+                                dark:placeholder:text-zinc-600
+                                dark:focus:border-indigo-500/50
+                                dark:focus:bg-zinc-900
+                            "
+            />
+
+            <div
+              className="
+                                mt-3
+                                flex
+                                flex-col
+                                gap-3
+                                sm:flex-row
+                                sm:items-center
+                                sm:justify-between
+                            "
+            >
+              <span
+                className="
+                                    text-[10px]
+                                    font-medium
+                                    tabular-nums
+                                    text-slate-400
+                                    dark:text-zinc-600
+                                "
+              >
+                {description.length} characters
+              </span>
+
+              <div className="flex w-full gap-2 sm:w-auto">
+                <button
+                  type="button"
+                  onClick={handleCancel}
+                  disabled={reportMutation.isPending}
+                  className="
+                                        flex-1
+                                        rounded-lg
+                                        border
+                                        border-slate-200
+                                        bg-white
+                                        px-4
+                                        py-2
+                                        text-xs
+                                        font-semibold
+                                        text-slate-600
+                                        transition
+                                        hover:bg-slate-50
+                                        disabled:opacity-50
+                                        dark:border-zinc-800
+                                        dark:bg-zinc-900
+                                        dark:text-zinc-400
+                                        dark:hover:bg-zinc-800
+                                        sm:flex-none
+                                    "
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={reportMutation.isPending}
+                  className="
+                                        inline-flex
+                                        flex-1
+                                        items-center
+                                        justify-center
+                                        gap-2
+                                        rounded-lg
+                                        bg-indigo-600
+                                        px-4
+                                        py-2
+                                        text-xs
+                                        font-semibold
+                                        text-white
+                                        shadow-sm
+                                        transition
+                                        hover:bg-indigo-500
+                                        disabled:cursor-not-allowed
+                                        disabled:opacity-60
+                                        sm:flex-none
+                                    "
+                >
+                  {reportMutation.isPending ? (
+                    <>
+                      <HiOutlineArrowPath className="h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Save report"
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* =================================================
+                       REPORT CONTENT
+                    ================================================= */
+
+          <div className="px-4 py-4 sm:px-5 sm:py-5">
+            <p
+              className="
+                                whitespace-pre-wrap
+                                break-words
+                                text-[13px]
+                                leading-6
+                                text-slate-600
+                                dark:text-zinc-400
+                            "
+            >
+              {report.description}
+            </p>
+          </div>
+        )}
+      </article>
+    </li>
+  );
 }
+
+/* ================================================================
+   SKELETON
+================================================================ */
 
 function SkeletonList() {
-    return (
-        <div className="space-y-4 sm:space-y-5">
-            {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="flex animate-pulse gap-3 sm:gap-4">
-                    <div className="h-10 w-10 shrink-0 rounded-lg bg-slate-200 dark:bg-zinc-800 sm:h-12 sm:w-12 sm:rounded-xl" />
-                    <div className="card min-w-0 flex-1 space-y-3 p-3.5 sm:p-5">
-                        <div className="flex justify-between items-center gap-2">
-                            <div className="h-3 w-28 rounded bg-slate-200 dark:bg-zinc-800 sm:w-40" />
-                            <div className="h-6 w-14 shrink-0 rounded-lg bg-slate-200 dark:bg-zinc-800" />
-                        </div>
-                        <div className="h-3 w-full rounded bg-slate-100 dark:bg-zinc-900" />
-                        <div className="h-3 w-4/6 rounded bg-slate-100 dark:bg-zinc-900" />
-                    </div>
-                </div>
-            ))}
-        </div>
-    );
-}
+  return (
+    <div className="space-y-5">
+      {Array.from({
+        length: 4,
+      }).map((_, index) => (
+        <div
+          key={index}
+          className="
+                        flex
+                        animate-pulse
+                        gap-3
+                        sm:gap-4
+                    "
+        >
+          {/* DATE */}
 
-function EmptyState({ hasDateFilter }: { hasDateFilter: boolean }) {
-    return (
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200/80 px-4 py-12 text-center dark:border-zinc-850 sm:px-6 sm:py-16">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-slate-400 dark:bg-zinc-900 dark:text-zinc-500 sm:h-12 sm:w-12">
-                <HiOutlineDocumentMagnifyingGlass size={20} className="sm:hidden" />
-                <HiOutlineDocumentMagnifyingGlass size={22} className="hidden sm:block" />
+          <div
+            className="
+                            h-[48px]
+                            w-[48px]
+                            shrink-0
+                            rounded-xl
+                            bg-slate-200
+                            dark:bg-zinc-800
+                            sm:h-[54px]
+                            sm:w-[54px]
+                        "
+          />
+
+          {/* CARD */}
+
+          <div
+            className="
+                            min-w-0
+                            flex-1
+                            overflow-hidden
+                            rounded-xl
+                            border
+                            border-slate-200
+                            bg-white
+                            dark:border-zinc-800
+                            dark:bg-zinc-950
+                        "
+          >
+            <div
+              className="
+                                flex
+                                items-center
+                                justify-between
+                                border-b
+                                border-slate-100
+                                px-4
+                                py-4
+                                dark:border-zinc-900
+                            "
+            >
+              <div className="space-y-2">
+                <div className="h-3 w-32 rounded bg-slate-200 dark:bg-zinc-800" />
+
+                <div className="h-2 w-20 rounded bg-slate-100 dark:bg-zinc-900" />
+              </div>
+
+              <div className="h-8 w-16 rounded-lg bg-slate-100 dark:bg-zinc-900" />
             </div>
 
-            <h3 className="mt-3.5 text-sm font-bold text-slate-900 dark:text-white sm:mt-4">
-                No reports found
-            </h3>
+            <div className="space-y-3 px-4 py-5">
+              <div className="h-3 w-full rounded bg-slate-100 dark:bg-zinc-900" />
 
-            <p className="mt-1 max-w-xs text-xs text-slate-400 dark:text-zinc-500">
-                {hasDateFilter
-                    ? "There are no reports matching the selected date."
-                    : "You haven't submitted any reports yet."}
-            </p>
+              <div className="h-3 w-5/6 rounded bg-slate-100 dark:bg-zinc-900" />
+
+              <div className="h-3 w-2/3 rounded bg-slate-100 dark:bg-zinc-900" />
+            </div>
+          </div>
         </div>
-    );
+      ))}
+    </div>
+  );
+}
+
+/* ================================================================
+   EMPTY STATE
+================================================================ */
+
+function EmptyState({ hasDateFilter }: { hasDateFilter: boolean }) {
+  return (
+    <div
+      className="
+                flex
+                min-h-[300px]
+                w-full
+                flex-col
+                items-center
+                justify-center
+                rounded-xl
+                border
+                border-dashed
+                border-slate-200
+                bg-white/60
+                px-4
+                text-center
+                dark:border-zinc-800
+                dark:bg-zinc-950/40
+                sm:min-h-[320px]
+                sm:px-6
+            "
+    >
+      <div
+        className="
+                    flex
+                    h-12
+                    w-12
+                    items-center
+                    justify-center
+                    rounded-xl
+                    bg-slate-100
+                    text-slate-400
+                    dark:bg-zinc-900
+                    dark:text-zinc-600
+                "
+      >
+        <HiOutlineDocumentMagnifyingGlass className="h-5 w-5" />
+      </div>
+
+      <h3
+        className="
+                    mt-4
+                    text-sm
+                    font-bold
+                    text-slate-900
+                    dark:text-white
+                "
+      >
+        No reports found
+      </h3>
+
+      <p
+        className="
+                    mt-2
+                    max-w-[300px]
+                    text-xs
+                    leading-5
+                    text-slate-400
+                    dark:text-zinc-600
+                "
+      >
+        {hasDateFilter
+          ? "There are no reports matching the selected date."
+          : "You haven't submitted any reports yet."}
+      </p>
+
+      {hasDateFilter && (
+        <p
+          className="
+                        mt-3
+                        text-[11px]
+                        font-semibold
+                        text-indigo-500
+                        dark:text-indigo-400
+                    "
+        >
+          Try clearing the date filter.
+        </p>
+      )}
+    </div>
+  );
 }

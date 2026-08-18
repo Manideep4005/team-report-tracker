@@ -1,803 +1,1034 @@
-import { useEffect, useRef, useState } from "react";
-import { useAuth } from "../../context/AuthContext";
-import {
-    useMutation,
-    useQuery,
-    useQueryClient,
-} from "@tanstack/react-query";
-import {
-    getDashboard,
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
-    saveReport,
-} from "../../services/report";
+import { useAuth } from "../../context/AuthContext";
+
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
+import { getDashboard, saveReport } from "../../services/report";
+
 import { toast } from "sonner";
+
 import {
-    HiOutlineDocumentCheck,
-    HiOutlineClock,
-    HiOutlineUsers,
-    HiOutlineClipboardDocument,
-    HiOutlineArrowPath,
-    HiOutlinePencilSquare,
-    HiOutlineUserGroup,
-    HiOutlineBolt,
+  HiOutlineDocumentCheck,
+  HiOutlineClock,
+  HiOutlineUsers,
+  HiOutlineClipboardDocument,
+  HiOutlineArrowPath,
+  HiOutlinePencilSquare,
+  HiOutlineUserGroup,
+  HiOutlineBolt,
+  HiOutlineCheck,
 } from "react-icons/hi2";
+
 import { format } from "date-fns";
+
 import DayPickerInput from "../../components/DayPickerInput";
 
+/* ========================================================================== */
+/* Types                                                                      */
+/* ========================================================================== */
+
 interface DashboardResponse {
-    stats: {
-        submitted: number;
-        pending: number;
-        totalMembers: number;
-        completion: number;
+  stats: {
+    submitted: number;
+    pending: number;
+    totalMembers: number;
+    completion: number;
+  };
+
+  reports: {
+    id: string;
+    description: string;
+    createdAt: string;
+    user: {
+      name: string;
+      email: string;
     };
+  }[];
 
-    reports: {
-        id: string;
-        description: string;
-        createdAt: string;
-        user: {
-            name: string;
-            email: string;
-        };
-    }[];
+  myReport: {
+    id: string;
+    description: string;
+  } | null;
 
-    myReport: {
-        id: string;
-        description: string;
-    } | null;
-
-    teamStatus: {
-        id: string;
-        name: string;
-        email: string;
-        submitted: boolean;
-    }[];
+  teamStatus: {
+    id: string;
+    name: string;
+    email: string;
+    submitted: boolean;
+  }[];
 }
 
-// Deterministic, varied avatar treatment — same person always gets the same pair.
+/* ========================================================================== */
+/* Avatar                                                                     */
+/* ========================================================================== */
+
 const AVATAR_PALETTE = [
-    "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400",
-    "bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:text-violet-400",
-    "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400",
-    "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400",
-    "bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400",
-    "bg-cyan-50 text-cyan-700 dark:bg-cyan-500/10 dark:text-cyan-400",
+  "bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-zinc-200",
+  "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300",
+  "bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:text-violet-300",
+  "bg-cyan-50 text-cyan-700 dark:bg-cyan-500/10 dark:text-cyan-300",
+  "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300",
+  "bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300",
 ];
 
 function avatarClasses(name: string) {
-    const sum = name
-        .split("")
-        .reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
-    return AVATAR_PALETTE[sum % AVATAR_PALETTE.length];
+  const sum = name
+    .split("")
+    .reduce((acc, character) => acc + character.charCodeAt(0), 0);
+
+  return AVATAR_PALETTE[sum % AVATAR_PALETTE.length];
 }
 
-const RING_RADIUS = 42;
+function getInitial(name: string) {
+  return name?.trim()?.charAt(0)?.toUpperCase() || "?";
+}
+
+/* ========================================================================== */
+/* Progress Ring                                                              */
+/* ========================================================================== */
+
+const RING_RADIUS = 38;
+
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
+/* ========================================================================== */
+/* Dashboard                                                                  */
+/* ========================================================================== */
+
 export default function Dashboard() {
-    const queryClient = useQueryClient();
+  const queryClient = useQueryClient();
 
-    const { hasPermission } = useAuth();
+  const { hasPermission } = useAuth();
 
-    const canViewAllReports =
-        hasPermission("REPORT_VIEW_ALL");
+  const canViewAllReports = hasPermission("REPORT_VIEW_ALL");
 
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
-    const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [description, setDescription] = useState("");
 
-    const {
-        data,
-        isLoading,
-    } = useQuery<DashboardResponse>({
-        queryKey: [
-            "dashboard",
-            format(selectedDate, "yyyy-MM-dd"),
-        ],
-        queryFn: async () => {
-            const response = await getDashboard(
-                format(selectedDate, "yyyy-MM-dd")
-            );
+  const [now, setNow] = useState<Date>(new Date());
 
-            return response.data;
-        },
-    });
+  const [animatedProgress, setAnimatedProgress] = useState(0);
 
-    const [description, setDescription] =
-        useState("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-    const [now, setNow] = useState(new Date());
+  /* ====================================================================== */
+  /* Dashboard Query                                                        */
+  /* ====================================================================== */
 
-    const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const { data, isLoading } = useQuery<DashboardResponse>({
+    queryKey: ["dashboard", format(selectedDate, "yyyy-MM-dd")],
 
-    // The selected date is the single source of truth for the whole page.
-    // Only "today" is editable — past dates are read-only snapshots.
-    const isToday =
-        format(selectedDate, "yyyy-MM-dd") ===
-        format(new Date(), "yyyy-MM-dd");
+    queryFn: async () => {
+      const response = await getDashboard(format(selectedDate, "yyyy-MM-dd"));
 
-    useEffect(() => {
-        if (data?.myReport) {
-            setDescription(data.myReport.description);
-        } else {
-            setDescription("");
-        }
-    }, [data?.myReport]);
+      return response.data;
+    },
+  });
 
-    useEffect(() => {
-        if (!canViewAllReports) {
-            setSelectedDate(new Date());
-        }
-    }, [canViewAllReports]);
+  /* ====================================================================== */
+  /* Today                                                                   */
+  /* ====================================================================== */
 
-    // Presentational only — autosizes the textarea to its content.
-    useEffect(() => {
-        const el = textareaRef.current;
-        if (el) {
-            el.style.height = "auto";
-            el.style.height = `${el.scrollHeight}px`;
-        }
-    }, [description]);
+  const isToday =
+    format(selectedDate, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
 
-    useEffect(() => {
-        const updateTime = () => setNow(new Date());
+  /* ====================================================================== */
+  /* Populate Existing Report                                               */
+  /* ====================================================================== */
 
-        // Initial update
-        updateTime();
+  useEffect(() => {
+    if (data?.myReport) {
+      setDescription(data.myReport.description);
+    } else {
+      setDescription("");
+    }
+  }, [data?.myReport]);
 
-        // Milliseconds until the next :00 or :30
-        const now = new Date();
-        const seconds = now.getSeconds();
-        const milliseconds = now.getMilliseconds();
+  /* ====================================================================== */
+  /* Employees Can Only See Today                                           */
+  /* ====================================================================== */
 
-        const delay =
-            seconds < 30
-                ? (30 - seconds) * 1000 - milliseconds
-                : (60 - seconds) * 1000 - milliseconds;
+  useEffect(() => {
+    if (!canViewAllReports) {
+      setSelectedDate(new Date());
+    }
+  }, [canViewAllReports]);
 
-        let interval: ReturnType<typeof setInterval>;
+  /* ====================================================================== */
+  /* Textarea Autosize                                                       */
+  /* ====================================================================== */
 
-        const timeout = setTimeout(() => {
-            updateTime();
+  useEffect(() => {
+    const element = textareaRef.current;
 
-            // Update every 30 seconds exactly
-            interval = setInterval(updateTime, 30000);
-        }, delay);
-
-        return () => {
-            clearTimeout(timeout);
-            if (interval) clearInterval(interval);
-        };
-    }, []);
-
-    const reportMutation = useMutation({
-        mutationFn: saveReport,
-
-        onSuccess: (response) => {
-            setDescription(response.data.description);
-
-            queryClient.invalidateQueries({
-                queryKey: [
-                    "dashboard",
-                    format(selectedDate, "yyyy-MM-dd"),
-                ],
-            });
-
-            toast.success("Report saved successfully.");
-        },
-
-        onError: (error: any) => {
-            const response = error.response?.data;
-
-            if (response?.errors?.length) {
-                response.errors.forEach((err: { message: string }) => {
-                    toast.error(err.message);
-                });
-                return;
-            }
-
-            toast.error(response?.message || "Failed to save report.");
-        },
-    });
-
-    async function handleSave() {
-
-        const text = description.trim();
-
-        if (!text) {
-            toast.warning(
-                "Please enter today's work."
-            );
-            return;
-        }
-
-        reportMutation.mutate({
-            description: text,
-            reportDate: format(
-                selectedDate,
-                "yyyy-MM-dd"
-            ),
-        });
+    if (!element) {
+      return;
     }
 
+    element.style.height = "auto";
 
-    const handleReportSummary = async () => {
-        try {
-            const summary = description;
+    element.style.height = `${element.scrollHeight}px`;
+  }, [description]);
 
-            await navigator.clipboard.writeText(summary)
+  /* ====================================================================== */
+  /* Current Time                                                            */
+  /* ====================================================================== */
 
-            toast.success("Summary copied successfully.")
-
-
-        } catch (error) {
-            toast.error("Unable to copy summary.")
-        }
-    }
-
-    const handleCopyReports = async () => {
-        if (!data?.reports.length) {
-            toast.warning("No reports to copy.");
-            return;
-        }
-
-        const text = data.reports
-            .map(
-                report =>
-                    `${report.user.name}
-${report.description}`
-            )
-            .join("\n\n");
-
-        await navigator.clipboard.writeText(text);
-
-        toast.success("Team reports copied successfully.");
+  useEffect(() => {
+    const updateTime = () => {
+      setNow(new Date());
     };
 
-    if (isLoading) {
-        return <DashboardSkeleton canViewAllReports={canViewAllReports} />;
+    updateTime();
+
+    const current = new Date();
+
+    const seconds = current.getSeconds();
+
+    const milliseconds = current.getMilliseconds();
+
+    const delay =
+      seconds < 30
+        ? (30 - seconds) * 1000 - milliseconds
+        : (60 - seconds) * 1000 - milliseconds;
+
+    let interval: ReturnType<typeof setInterval> | undefined;
+
+    const timeout = setTimeout(() => {
+      updateTime();
+
+      interval = setInterval(updateTime, 30000);
+    }, delay);
+
+    return () => {
+      clearTimeout(timeout);
+
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, []);
+
+  /* ====================================================================== */
+  /* Derived Values                                                         */
+  /* ====================================================================== */
+
+  const submitted = data?.stats.submitted ?? 0;
+
+  const total = data?.stats.totalMembers ?? 0;
+
+  const progress = total === 0 ? 0 : Math.round((submitted / total) * 100);
+
+  const ringOffset = RING_CIRCUMFERENCE * (1 - animatedProgress / 100);
+
+  const shouldShowReminder =
+    isToday &&
+    !data?.myReport &&
+    now.getDay() !== 0 &&
+    (now.getHours() > 13 || (now.getHours() === 13 && now.getMinutes() >= 0));
+
+  /* ====================================================================== */
+  /* Progress Ring Animation                                                */
+  /* ====================================================================== */
+
+  useEffect(() => {
+    if (!canViewAllReports || isLoading) {
+      return;
     }
 
-    const shouldShowReminder =
-        isToday &&
-        !data?.myReport &&
-        now.getDay() !== 0 &&
-        (
-            now.getHours() > 13 ||
-            (now.getHours() === 13 && now.getMinutes() >= 0)
-        );
+    const duration = 900;
 
-    const submitted =
-        data?.stats.submitted ?? 0;
+    const startTime = performance.now();
 
-    const total =
-        data?.stats.totalMembers ?? 0;
+    let animationFrame: number | undefined;
 
-    const progress =
-        total === 0
-            ? 0
-            : Math.round(
-                (submitted / total) * 100
-            );
+    const animate = (currentTime: number) => {
+      const elapsed = currentTime - startTime;
 
-    const ringOffset =
-        RING_CIRCUMFERENCE * (1 - progress / 100);
+      const rawProgress = Math.min(elapsed / duration, 1);
 
-    return (
-        <div className="mx-auto max-w-5xl space-y-5 px-3 py-2 sm:space-y-6 sm:px-4 sm:py-4 lg:space-y-8 lg:px-0 animate-[dashFadeIn_0.35s_ease-out]">
-            <style>{`
-                @keyframes dashFadeIn {
-                    from { opacity: 0; transform: translateY(6px); }
-                    to { opacity: 1; transform: translateY(0); }
+      /*
+       * Ease-out curve.
+       * Starts quickly and slows smoothly
+       * near the final percentage.
+       */
+      const easedProgress = 1 - Math.pow(1 - rawProgress, 3);
+
+      setAnimatedProgress(Math.round(easedProgress * progress));
+
+      if (rawProgress < 1) {
+        animationFrame = requestAnimationFrame(animate);
+      }
+    };
+
+    setAnimatedProgress(0);
+
+    animationFrame = requestAnimationFrame(animate);
+
+    return () => {
+      if (animationFrame !== undefined) {
+        cancelAnimationFrame(animationFrame);
+      }
+    };
+  }, [progress, canViewAllReports, isLoading]);
+
+  /* ====================================================================== */
+  /* Save Report Mutation                                                   */
+  /* ====================================================================== */
+
+  const reportMutation = useMutation({
+    mutationFn: saveReport,
+
+    onSuccess: (response) => {
+      setDescription(response.data.description);
+
+      queryClient.invalidateQueries({
+        queryKey: ["dashboard", format(selectedDate, "yyyy-MM-dd")],
+      });
+
+      toast.success("Report saved successfully.");
+    },
+
+    onError: (error: any) => {
+      const response = error.response?.data;
+
+      if (response?.errors?.length) {
+        response.errors.forEach((err: { message: string }) => {
+          toast.error(err.message);
+        });
+
+        return;
+      }
+
+      toast.error(response?.message || "Failed to save report.");
+    },
+  });
+
+  /* ====================================================================== */
+  /* Save Handler                                                           */
+  /* ====================================================================== */
+
+  async function handleSave() {
+    const text = description.trim();
+
+    if (!text) {
+      toast.warning("Please enter today's work.");
+
+      return;
+    }
+
+    reportMutation.mutate({
+      description: text,
+      reportDate: format(selectedDate, "yyyy-MM-dd"),
+    });
+  }
+
+  /* ====================================================================== */
+  /* Copy Own Report                                                        */
+  /* ====================================================================== */
+
+  const handleReportSummary = async () => {
+    try {
+      await navigator.clipboard.writeText(description);
+
+      toast.success("Report copied successfully.");
+    } catch {
+      toast.error("Unable to copy report.");
+    }
+  };
+
+  /* ====================================================================== */
+  /* Copy Team Reports                                                      */
+  /* ====================================================================== */
+
+  const handleCopyReports = async () => {
+    if (!data?.reports.length) {
+      toast.warning("No reports to copy.");
+
+      return;
+    }
+
+    const text = data.reports
+      .map((report) => `${report.user.name}\n${report.description}`)
+      .join("\n\n");
+
+    await navigator.clipboard.writeText(text);
+
+    toast.success("Team reports copied successfully.");
+  };
+
+  /* ====================================================================== */
+  /* Loading                                                                 */
+  /* ====================================================================== */
+
+  if (isLoading) {
+    return <DashboardSkeleton canViewAllReports={canViewAllReports} />;
+  }
+
+  /* ====================================================================== */
+  /* Dashboard                                                               */
+  /* ====================================================================== */
+
+  return (
+    <main className="mx-auto w-full max-w-[1440px] px-4 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-9">
+      <style>{`
+                @keyframes dashboard-enter {
+                    from {
+                        opacity: 0;
+                        transform: translateY(10px);
+                    }
+
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
                 }
+
+                .dashboard-enter {
+                    animation:
+                        dashboard-enter
+                        420ms
+                        cubic-bezier(.22,1,.36,1)
+                        both;
+                }
+
                 @media (prefers-reduced-motion: reduce) {
-                    .dash-fade { animation: none !important; opacity: 1 !important; }
+                    .dashboard-enter {
+                        animation: none !important;
+                    }
                 }
             `}</style>
 
-            {/* Page context — greeting/date already live in the app header,
-                so this only carries what the header can't: page identity
-                and (when relevant) which date's data is on screen. */}
-            <div className="flex flex-col gap-3.5 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
-                <div className="min-w-0">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400 sm:text-[11px]">
-                        Overview
-                    </p>
-                    <h1 className="mt-1.5 text-xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-2xl md:text-[28px]">
-                        {canViewAllReports
-                            ? isToday
-                                ? "Team activity"
-                                : format(selectedDate, "EEEE, d MMMM")
-                            : "Your workspace"}
-                    </h1>
-                    <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-zinc-500 sm:text-xs">
-                        <span className="relative flex h-1.5 w-1.5 shrink-0">
-                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75" />
-                            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-blue-500" />
-                        </span>
-                        {canViewAllReports
-                            ? isToday
-                                ? `${submitted} of ${total} submitted so far`
-                                : `Viewing reports for ${format(selectedDate, "dd MMM yyyy")}`
-                            : data?.myReport
-                                ? "Your report is submitted"
-                                : "Your report is pending"}
-                    </p>
-                </div>
+      <div className="dashboard-enter space-y-7 lg:space-y-8">
+        {/* ==========================================================
+                    HEADER
+                    ========================================================== */}
 
-                {canViewAllReports && (
-                    <div className="w-full sm:w-auto">
-                        <DayPickerInput
-                            value={selectedDate}
-                            onChange={setSelectedDate}
-                        />
-                    </div>
-                )}
+        <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+          <div className="min-w-0">
+            <div className="mb-3 flex items-center gap-2"></div>
+
+            <h1 className="text-[30px] font-bold leading-none tracking-[-0.04em] text-slate-950 dark:text-white sm:text-[34px]">
+              {canViewAllReports
+                ? isToday
+                  ? "Team activity"
+                  : format(selectedDate, "EEEE, d MMMM")
+                : "Your workspace"}
+            </h1>
+
+            <p className="mt-3 max-w-xl text-sm leading-6 text-slate-500 dark:text-zinc-500">
+              {canViewAllReports
+                ? isToday
+                  ? `${submitted} of ${total} team members have submitted today's report`
+                  : `Viewing reports for ${format(selectedDate, "dd MMM yyyy")}`
+                : data?.myReport
+                  ? "Your report has been submitted for today."
+                  : "Your daily report is waiting for submission."}
+            </p>
+          </div>
+
+          {canViewAllReports && (
+            <div className="shrink-0">
+              <DayPickerInput value={selectedDate} onChange={setSelectedDate} />
             </div>
+          )}
+        </header>
 
-            {shouldShowReminder && (
-                <div className="relative overflow-hidden rounded-2xl border border-rose-100 bg-rose-50/40 p-4 dark:border-rose-950/20 dark:bg-rose-950/10 sm:p-5">
-                    <div className="absolute top-0 right-0 h-24 w-24 bg-rose-400/5 blur-2xl dark:bg-rose-400/2 pointer-events-none" />
-                    <div className="flex flex-col gap-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-                        <div className="flex items-start gap-3">
-                            <span className="relative flex h-2.5 w-2.5 mt-1.5 shrink-0">
-                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75" />
-                                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-rose-500" />
-                            </span>
-                            <div>
-                                <h3 className="text-xs font-semibold uppercase tracking-wider text-rose-800 dark:text-rose-400">
-                                    Daily Report Reminder
-                                </h3>
-                                <p className="mt-1 text-xs text-rose-600 dark:text-rose-500/80">
-                                    Please submit today's work report before leaving.
-                                </p>
-                            </div>
-                        </div>
+        {/* ==========================================================
+                    REMINDER
+                    ========================================================== */}
 
-                        <button
-                            onClick={() => {
-                                textareaRef.current?.scrollIntoView({
-                                    behavior: "smooth",
-                                    block: "center",
-                                });
-                                setTimeout(() => textareaRef.current?.focus(), 400);
-                            }}
-                            className="inline-flex h-8 w-full items-center justify-center rounded-lg bg-rose-600 px-4 text-xs font-semibold text-white shadow-sm transition-all hover:bg-rose-700 active:scale-95 relative z-10 sm:w-auto"
-                        >
-                            Write Report
-                        </button>
-                    </div>
-                </div>
-            )}
+        {shouldShowReminder && (
+          <div className="relative overflow-hidden rounded-xl border border-rose-200 bg-rose-50/60 dark:border-rose-500/20 dark:bg-rose-500/[0.045]">
+            <div className="absolute -right-12 -top-12 h-32 w-32 rounded-full bg-rose-400/10 blur-3xl" />
 
-            {/* Overview — circular progress as the page's signature element,
-                paired with a quiet, divided stat row. Team-wide, so only
-                visible to people who can see everyone's reports. */}
-            {canViewAllReports && (
-                <section className="card p-5 sm:p-6 md:p-8">
-                    <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:gap-8">
-                        <div className="relative mx-auto flex h-28 w-28 shrink-0 items-center justify-center sm:mx-0 sm:h-32 sm:w-32 md:h-36 md:w-36">
-                            <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
-                                <circle
-                                    cx="50"
-                                    cy="50"
-                                    r={RING_RADIUS}
-                                    fill="none"
-                                    strokeWidth="8"
-                                    className="stroke-slate-100 dark:stroke-zinc-800"
-                                />
-                                <circle
-                                    cx="50"
-                                    cy="50"
-                                    r={RING_RADIUS}
-                                    fill="none"
-                                    stroke="url(#dashProgressGradient)"
-                                    strokeWidth="8"
-                                    strokeLinecap="round"
-                                    strokeDasharray={RING_CIRCUMFERENCE}
-                                    strokeDashoffset={ringOffset}
-                                    className="transition-[stroke-dashoffset] duration-700 ease-out"
-                                />
-                                <defs>
-                                    <linearGradient
-                                        id="dashProgressGradient"
-                                        x1="0%"
-                                        y1="0%"
-                                        x2="100%"
-                                        y2="100%"
-                                    >
-                                        <stop offset="0%" stopColor="#2563eb" />
-                                        <stop offset="100%" stopColor="#4f46e5" />
-                                    </linearGradient>
-                                </defs>
-                            </svg>
-
-                            <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                <span className="text-xl font-bold tabular-nums tracking-tight text-slate-900 dark:text-white sm:text-2xl">
-                                    {progress}%
-                                </span>
-                                <span className="mt-0.5 text-[8px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500 sm:text-[9px]">
-                                    Complete
-                                </span>
-                            </div>
-                        </div>
-
-                        <div className="grid flex-1 grid-cols-3 gap-x-2 gap-y-5 sm:gap-x-6 sm:divide-x sm:divide-slate-100 sm:dark:divide-zinc-800/60">
-                            <StatWidget
-                                icon={<HiOutlineDocumentCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
-                                label="Submitted"
-                                value={data?.stats.submitted}
-                                iconBg="bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400"
-                                first
-                            />
-
-                            <StatWidget
-                                icon={<HiOutlineClock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
-                                label="Pending"
-                                value={data?.stats.pending}
-                                iconBg="bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400"
-                            />
-
-                            <StatWidget
-                                icon={<HiOutlineUsers className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
-                                label="Members"
-                                value={data?.stats.totalMembers}
-                                iconBg="bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-400"
-                            />
-                        </div>
-                    </div>
-                </section>
-            )}
-
-            {/* Report editor — the page's primary action, given a proper header */}
-            <section className="card relative overflow-hidden p-4 sm:p-5 md:p-6">
-                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4 dark:border-zinc-800/60">
-                    <div className="flex min-w-0 items-center gap-3">
-                        <div className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">
-                            <HiOutlinePencilSquare className="h-4.5 w-4.5" />
-                        </div>
-                        <div className="min-w-0">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
-                                Your Report
-                            </p>
-                            <p className="mt-0.5 truncate text-xs text-slate-500 dark:text-zinc-400">
-                                {isToday
-                                    ? "Editable until you sign off for the day"
-                                    : "Read-only snapshot for this date"}
-                            </p>
-                        </div>
-                    </div>
-
-                    {data?.myReport && (
-                        <span className="badge-success shrink-0 font-semibold">
-                            Submitted
-                        </span>
-                    )}
+            <div className="relative flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-rose-100 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400">
+                  <HiOutlineClock className="h-4 w-4" />
                 </div>
 
-                <div className="mt-4 rounded-xl border border-transparent bg-slate-50/60 p-3 transition-colors focus-within:border-blue-200 focus-within:bg-white dark:bg-zinc-900/40 dark:focus-within:border-blue-900/50 dark:focus-within:bg-zinc-900/70 sm:p-4">
-                    <textarea
-                        ref={textareaRef}
-                        rows={5}
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                        placeholder={
-                            isToday
-                                ? "What did you work on today?"
-                                : "No report submitted for this date."
-                        }
-                        className="w-full resize-none overflow-hidden border-0 bg-transparent p-0 text-sm leading-relaxed text-slate-800 placeholder:text-slate-400 shadow-none outline-none ring-0 focus:outline-none focus:ring-0 focus:shadow-none focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60 dark:text-zinc-100 dark:placeholder:text-zinc-650"
-                        style={{ minHeight: "120px", outline: "none", boxShadow: "none" }}
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-rose-700 dark:text-rose-400">
+                    Daily report reminder
+                  </p>
+
+                  <p className="mt-1 text-xs text-rose-600/75 dark:text-rose-400/65">
+                    Please submit today's work report before leaving.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  textareaRef.current?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center",
+                  });
+
+                  setTimeout(() => textareaRef.current?.focus(), 400);
+                }}
+                className="inline-flex h-9 items-center justify-center rounded-lg bg-rose-600 px-4 text-xs font-semibold text-white transition hover:bg-rose-700 active:scale-[0.98]"
+              >
+                Write report
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ==========================================================
+                    TODAY OVERVIEW
+                    ========================================================== */}
+
+        {canViewAllReports && (
+          <section className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+            <div className="grid lg:grid-cols-[280px_1fr]">
+              {/* Progress */}
+
+              <div className="flex items-center gap-5 border-b border-slate-100 px-5 py-6 dark:border-zinc-800 lg:border-b-0 lg:border-r lg:px-7">
+                <div className="relative h-[88px] w-[88px] shrink-0">
+                  <svg
+                    viewBox="0 0 100 100"
+                    className="h-full w-full -rotate-90 overflow-visible"
+                  >
+                    <defs>
+                      <filter
+                        id="progressGlow"
+                        x="-50%"
+                        y="-50%"
+                        width="200%"
+                        height="200%"
+                      >
+                        <feGaussianBlur stdDeviation="2.5" result="blur" />
+
+                        <feMerge>
+                          <feMergeNode in="blur" />
+
+                          <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                      </filter>
+                    </defs>
+
+                    {/* Background Ring */}
+
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r={RING_RADIUS}
+                      fill="none"
+                      strokeWidth="6"
+                      className="stroke-slate-100 dark:stroke-zinc-800"
                     />
-                </div>
 
-                <div className="mt-4 flex flex-col-reverse gap-3 border-t border-slate-100 pt-4 dark:border-zinc-800/60 sm:flex-row sm:items-center sm:justify-between">
-                    <span className="text-xs text-slate-400 dark:text-zinc-500 tabular-nums">
-                        {description.length} characters
+                    {/* Animated Ring */}
+
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r={RING_RADIUS}
+                      fill="none"
+                      strokeWidth="6"
+                      strokeLinecap="round"
+                      strokeDasharray={RING_CIRCUMFERENCE}
+                      strokeDashoffset={ringOffset}
+                      filter="url(#progressGlow)"
+                      className="stroke-indigo-500 transition-[stroke-dashoffset] duration-100 ease-out"
+                    />
+                  </svg>
+
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-lg font-bold tracking-[-0.03em] text-slate-950 dark:text-white">
+                      {animatedProgress}%
                     </span>
 
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={handleReportSummary}
-                            disabled={!description.trim()}
-                            className="btn-secondary flex-1 py-1.5 px-3.5 text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed sm:flex-none"
-                        >
-                            <HiOutlineClipboardDocument className="mr-1.5 h-3.5 w-3.5" />
-                            Copy report
-                        </button>
-
-                        <button
-                            onClick={handleSave}
-                            disabled={reportMutation.isPending}
-                            className="btn-primary flex-1 py-1.5 px-3.5 text-xs font-semibold disabled:opacity-60 disabled:cursor-not-allowed sm:flex-none"
-                        >
-                            {reportMutation.isPending ? (
-                                <>
-                                    <HiOutlineArrowPath className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                                    Saving…
-                                </>
-                            ) : (
-                                "Save report"
-                            )}
-                        </button>
-                    </div>
-                </div>
-            </section>
-
-            {/* Team status + Activity feed */}
-            <section className="grid gap-5 sm:gap-6 lg:grid-cols-2">
-                {/* Team status */}
-                <div className="card flex flex-col overflow-hidden">
-                    <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-3.5 dark:border-zinc-800/50 sm:px-5 sm:py-4">
-                        <div className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-400">
-                            <HiOutlineUserGroup className="h-4 w-4" />
-                        </div>
-                        <div className="min-w-0">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
-                                Team Status
-                            </p>
-                            <p className="mt-0.5 text-[11px] text-slate-400 dark:text-zinc-500">
-                                {submitted} of {total} checked in
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="divide-y divide-slate-100 overflow-y-auto dark:divide-zinc-800/40">
-                        {data?.teamStatus.map((member, idx) => (
-                            <div
-                                key={member.id}
-                                className="dash-fade group flex items-center justify-between gap-3 px-4 py-3 opacity-0 transition-colors hover:bg-slate-50/40 dark:hover:bg-zinc-900/20 sm:px-5 sm:py-3.5"
-                                style={{
-                                    animation: "dashFadeIn 0.3s ease-out forwards",
-                                    animationDelay: `${Math.min(idx, 8) * 30}ms`,
-                                }}
-                            >
-                                <div className="flex min-w-0 items-center gap-3">
-                                    <div
-                                        className={`relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ring-1 ring-black/5 dark:ring-white/5 ${avatarClasses(
-                                            member.name
-                                        )}`}
-                                    >
-                                        {member.name.charAt(0).toUpperCase()}
-
-                                        {member.submitted && (
-                                            <span className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5">
-                                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                                                <span className="relative inline-flex h-2.5 w-2.5 rounded-full border border-white bg-emerald-500 dark:border-[#09090b]" />
-                                            </span>
-                                        )}
-                                    </div>
-
-                                    <p className="truncate text-xs font-semibold text-slate-800 dark:text-zinc-200">
-                                        {member.name}
-                                    </p>
-                                </div>
-
-                                <span
-                                    className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${member.submitted
-                                        ? "badge-success"
-                                        : "badge"
-                                        }`}
-                                >
-                                    {member.submitted ? "Submitted" : "Pending"}
-                                </span>
-                            </div>
-                        ))}
-                    </div>
+                    <span className="text-[8px] font-bold uppercase tracking-[0.14em] text-slate-400 dark:text-zinc-600">
+                      Complete
+                    </span>
+                  </div>
                 </div>
 
-                {/* Activity feed */}
-                <div className="card flex flex-col overflow-hidden">
-                    <div className="flex flex-wrap items-center justify-between gap-2.5 border-b border-slate-100 px-4 py-3.5 dark:border-zinc-800/50 sm:px-5 sm:py-4">
-                        <div className="flex items-center gap-3">
-                            <div className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400">
-                                <HiOutlineBolt className="h-4 w-4" />
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
-                                    Activity Feed
-                                </p>
-                                {data?.reports && data.reports.length > 0 && (
-                                    <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-500 dark:bg-zinc-800 dark:text-zinc-400">
-                                        {data.reports.length}
-                                    </span>
-                                )}
-                            </div>
-                        </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-900 dark:text-zinc-100">
+                    Today's progress
+                  </p>
 
-                        <button
-                            onClick={handleCopyReports}
-                            className="btn-secondary shrink-0 py-1.5 px-3 text-xs font-semibold"
-                        >
-                            <HiOutlineClipboardDocument className="mr-1.5 h-3.5 w-3.5" />
-                            Copy Reports
-                        </button>
-                    </div>
-
-                    <div className="max-h-[420px] divide-y divide-slate-100 overflow-y-auto dark:divide-zinc-800/40">
-                        {data?.reports.length === 0 && (
-                            <div className="px-4 py-10 text-center text-xs font-medium text-slate-400 dark:text-zinc-500 sm:px-5 sm:py-12">
-                                No reports found for {format(selectedDate, "dd MMM yyyy")}.
-                            </div>
-                        )}
-
-                        {data?.reports.map((report, idx) => (
-                            <div
-                                key={report.id}
-                                className="dash-fade group px-4 py-3.5 opacity-0 transition-colors hover:bg-slate-50/40 dark:hover:bg-zinc-900/20 sm:px-5 sm:py-4"
-                                style={{
-                                    animation: "dashFadeIn 0.3s ease-out forwards",
-                                    animationDelay: `${Math.min(idx, 8) * 30}ms`,
-                                }}
-                            >
-                                <div className="flex items-start gap-3">
-                                    <div
-                                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ring-1 ring-black/5 dark:ring-white/5 ${avatarClasses(
-                                            report.user.name
-                                        )}`}
-                                    >
-                                        {report.user.name.charAt(0).toUpperCase()}
-                                    </div>
-
-                                    <div className="min-w-0 flex-1">
-                                        <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5">
-                                            <span className="truncate text-xs font-bold text-slate-800 dark:text-zinc-200">
-                                                {report.user.name}
-                                            </span>
-                                            <span className="shrink-0 text-[10px] font-semibold text-slate-400 dark:text-zinc-500">
-                                                {new Date(
-                                                    report.createdAt
-                                                ).toLocaleTimeString("en-IN", {
-                                                    hour: "2-digit",
-                                                    minute: "2-digit",
-                                                })}
-                                            </span>
-                                        </div>
-
-                                        <p className="mt-2 whitespace-pre-wrap break-words text-xs leading-relaxed text-slate-650 dark:text-zinc-350">
-                                            {report.description}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                  <p className="mt-1 max-w-[140px] text-xs leading-5 text-slate-500 dark:text-zinc-500">
+                    {submitted} of {total} team members submitted
+                  </p>
                 </div>
-            </section>
-        </div>
-    );
+              </div>
+
+              {/* Stats */}
+
+              <div className="grid grid-cols-3 divide-x divide-slate-100 dark:divide-zinc-800">
+                <DashboardStat
+                  icon={<HiOutlineDocumentCheck />}
+                  label="Submitted"
+                  value={data?.stats.submitted ?? 0}
+                  iconClass="text-emerald-600 dark:text-emerald-400"
+                />
+
+                <DashboardStat
+                  icon={<HiOutlineClock />}
+                  label="Pending"
+                  value={data?.stats.pending ?? 0}
+                  iconClass="text-amber-600 dark:text-amber-400"
+                />
+
+                <DashboardStat
+                  icon={<HiOutlineUsers />}
+                  label="Members"
+                  value={data?.stats.totalMembers ?? 0}
+                  iconClass="text-violet-600 dark:text-violet-400"
+                />
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* ==========================================================
+                    YOUR REPORT
+                    ========================================================== */}
+
+        <section className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+          <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-zinc-800 sm:px-6">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
+                <HiOutlinePencilSquare className="h-4 w-4" />
+              </div>
+
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-600 dark:text-zinc-300">
+                    Your report
+                  </p>
+
+                  {data?.myReport && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                      <HiOutlineCheck className="h-3 w-3" />
+                      Submitted
+                    </span>
+                  )}
+                </div>
+
+                <p className="mt-0.5 text-xs text-slate-400 dark:text-zinc-600">
+                  {isToday
+                    ? "Editable until you sign off for the day"
+                    : "Read-only snapshot for this date"}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-4 sm:p-5">
+            <div className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50/50 transition focus-within:border-indigo-300 focus-within:bg-white focus-within:ring-4 focus-within:ring-indigo-500/[0.06] dark:border-zinc-800 dark:bg-zinc-900/40 dark:focus-within:border-indigo-500/30 dark:focus-within:bg-zinc-900">
+              <textarea
+                ref={textareaRef}
+                rows={5}
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                disabled={!isToday}
+                placeholder={
+                  isToday
+                    ? "What did you work on today?"
+                    : "No report submitted for this date."
+                }
+                className="min-h-[135px] w-full resize-none overflow-hidden border-0 bg-transparent px-4 py-4 text-sm leading-7 text-slate-800 outline-none placeholder:text-slate-400 focus:ring-0 dark:text-zinc-100 dark:placeholder:text-zinc-600 sm:px-5"
+              />
+
+              <div className="flex flex-col gap-3 border-t border-slate-200 px-4 py-3 dark:border-zinc-800 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+                <span className="text-[10px] font-medium tabular-nums text-slate-400 dark:text-zinc-600">
+                  {description.length} characters
+                </span>
+
+                <div className="flex w-full gap-2 sm:w-auto">
+                  <button
+                    type="button"
+                    onClick={handleReportSummary}
+                    disabled={!description.trim()}
+                    className="inline-flex h-9 flex-1 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 sm:flex-none"
+                  >
+                    <HiOutlineClipboardDocument className="mr-1.5 h-3.5 w-3.5" />
+                    Copy report
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleSave}
+                    disabled={reportMutation.isPending || !isToday}
+                    className="inline-flex h-9 flex-1 items-center justify-center rounded-lg bg-slate-950 px-4 text-xs font-semibold text-white transition hover:bg-slate-800 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200 sm:flex-none"
+                  >
+                    {reportMutation.isPending ? (
+                      <>
+                        <HiOutlineArrowPath className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      "Save report"
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ==========================================================
+                    TEAM + ACTIVITY
+                    ========================================================== */}
+
+        {canViewAllReports && (
+          <section className="grid gap-6 lg:grid-cols-2">
+            {/* Team Status */}
+
+            <DashboardPanel
+              icon={<HiOutlineUserGroup />}
+              iconClass="text-violet-600 dark:text-violet-400"
+              title="Team status"
+              subtitle={`${submitted} of ${total} checked in`}
+            >
+              <div className="divide-y divide-slate-100 dark:divide-zinc-800">
+                {data?.teamStatus.map((member) => (
+                  <div
+                    key={member.id}
+                    className="flex items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-slate-50/60 dark:hover:bg-zinc-900/50"
+                  >
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div
+                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ring-1 ring-black/[0.04] dark:ring-white/[0.05] ${avatarClasses(
+                          member.name,
+                        )}`}
+                      >
+                        {getInitial(member.name)}
+                      </div>
+
+                      <div className="min-w-0">
+                        <p className="truncate text-xs font-semibold text-slate-800 dark:text-zinc-200">
+                          {member.name}
+                        </p>
+
+                        <p className="mt-0.5 truncate text-[10px] text-slate-400 dark:text-zinc-600">
+                          {member.email}
+                        </p>
+                      </div>
+                    </div>
+
+                    {member.submitted ? (
+                      <span className="inline-flex shrink-0 items-center gap-1.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                        <HiOutlineCheck className="h-3.5 w-3.5" />
+                        Submitted
+                      </span>
+                    ) : (
+                      <span className="inline-flex shrink-0 items-center gap-1.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+                        <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                        Pending
+                      </span>
+                    )}
+                  </div>
+                ))}
+
+                {!data?.teamStatus.length && (
+                  <div className="px-5 py-12 text-center">
+                    <p className="text-xs font-medium text-slate-500 dark:text-zinc-500">
+                      No team members found.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </DashboardPanel>
+
+            {/* Recent Activity */}
+
+            <DashboardPanel
+              icon={<HiOutlineBolt />}
+              iconClass="text-amber-600 dark:text-amber-400"
+              title="Recent activity"
+              subtitle={
+                data?.reports.length
+                  ? `${data.reports.length} reports`
+                  : "No activity yet"
+              }
+              action={
+                <button
+                  type="button"
+                  onClick={handleCopyReports}
+                  className="inline-flex h-8 items-center rounded-lg border border-slate-200 bg-white px-2.5 text-[10px] font-semibold text-slate-600 transition hover:bg-slate-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                >
+                  <HiOutlineClipboardDocument className="mr-1.5 h-3.5 w-3.5" />
+                  Copy
+                </button>
+              }
+            >
+              <div className="max-h-[430px] overflow-y-auto">
+                {data?.reports.length === 0 && (
+                  <div className="px-5 py-14 text-center">
+                    <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-400 dark:bg-zinc-900 dark:text-zinc-600">
+                      <HiOutlineDocumentCheck className="h-5 w-5" />
+                    </div>
+
+                    <p className="mt-3 text-xs font-medium text-slate-500 dark:text-zinc-500">
+                      No reports yet
+                    </p>
+
+                    <p className="mt-1 text-[10px] text-slate-400 dark:text-zinc-600">
+                      Reports submitted today will appear here.
+                    </p>
+                  </div>
+                )}
+
+                {data?.reports.map((report, index) => (
+                  <div
+                    key={report.id}
+                    className="relative flex gap-4 px-5 py-4"
+                  >
+                    {index < data.reports.length - 1 && (
+                      <span className="absolute bottom-0 left-[31px] top-[48px] w-px bg-slate-100 dark:bg-zinc-800" />
+                    )}
+
+                    <div className="relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-[11px] font-bold ring-1 ring-slate-200 dark:bg-zinc-950 dark:ring-zinc-800">
+                      <span
+                        className={`flex h-7 w-7 items-center justify-center rounded-full ${avatarClasses(
+                          report.user.name,
+                        )}`}
+                      >
+                        {getInitial(report.user.name)}
+                      </span>
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-baseline justify-between gap-3">
+                        <p className="truncate text-xs font-semibold text-slate-800 dark:text-zinc-200">
+                          {report.user.name}
+                        </p>
+
+                        <time className="shrink-0 text-[10px] font-medium text-slate-400 dark:text-zinc-600">
+                          {new Date(report.createdAt).toLocaleTimeString(
+                            "en-IN",
+                            {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            },
+                          )}
+                        </time>
+                      </div>
+
+                      <p className="mt-2 whitespace-pre-wrap break-words text-xs leading-6 text-slate-500 dark:text-zinc-400">
+                        {report.description}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </DashboardPanel>
+          </section>
+        )}
+      </div>
+    </main>
+  );
 }
 
-function StatWidget({
-    icon,
-    label,
-    value,
-    iconBg,
-    first,
+/* ========================================================================== */
+/* Dashboard Stat                                                             */
+/* ========================================================================== */
+
+function DashboardStat({
+  icon,
+  label,
+  value,
+  iconClass,
 }: {
-    icon: React.ReactNode;
-    label: string;
-    value: React.ReactNode;
-    iconBg: string;
-    first?: boolean;
+  icon: ReactNode;
+  label: string;
+  value: ReactNode;
+  iconClass: string;
 }) {
-    return (
-        <div className={`flex min-w-0 items-start gap-2 sm:gap-3 ${first ? "" : "sm:pl-6"}`}>
-            <div className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${iconBg} sm:h-9 sm:w-9`}>
-                {icon}
-            </div>
+  return (
+    <div className="flex min-w-0 items-center gap-3 px-3 py-6 sm:px-5 lg:px-7">
+      <div
+        className={`
+                    flex
+                    h-9
+                    w-9
+                    shrink-0
+                    items-center
+                    justify-center
+                    rounded-lg
+                    bg-slate-50
+                    dark:bg-zinc-900
+                    ${iconClass}
+                `}
+      >
+        <span className="text-[17px]">{icon}</span>
+      </div>
 
-            <div className="min-w-0">
-                <p className="text-base font-bold leading-none tracking-tight text-slate-900 dark:text-white tabular-nums sm:text-lg md:text-xl">
-                    {value}
-                </p>
-                <p className="mt-1.5 truncate text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500 sm:text-[10px]">
-                    {label}
-                </p>
-            </div>
-        </div>
-    );
+      <div className="min-w-0">
+        <p className="text-xl font-bold tracking-[-0.03em] text-slate-950 dark:text-white sm:text-2xl">
+          {value}
+        </p>
+
+        <p className="mt-1 truncate text-[9px] font-bold uppercase tracking-[0.14em] text-slate-400 dark:text-zinc-600 sm:text-[10px]">
+          {label}
+        </p>
+      </div>
+    </div>
+  );
 }
+
+/* ========================================================================== */
+/* Dashboard Panel                                                            */
+/* ========================================================================== */
+
+function DashboardPanel({
+  icon,
+  iconClass,
+  title,
+  subtitle,
+  action,
+  children,
+}: {
+  icon: ReactNode;
+  iconClass: string;
+  title: string;
+  subtitle: string;
+  action?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+      <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-4 dark:border-zinc-800">
+        <div className="flex min-w-0 items-center gap-3">
+          <div
+            className={`
+                            flex
+                            h-9
+                            w-9
+                            shrink-0
+                            items-center
+                            justify-center
+                            rounded-lg
+                            bg-slate-50
+                            dark:bg-zinc-900
+                            ${iconClass}
+                        `}
+          >
+            <span className="text-[17px]">{icon}</span>
+          </div>
+
+          <div className="min-w-0">
+            <p className="text-xs font-bold text-slate-800 dark:text-zinc-200">
+              {title}
+            </p>
+
+            <p className="mt-0.5 text-[10px] text-slate-400 dark:text-zinc-600">
+              {subtitle}
+            </p>
+          </div>
+        </div>
+
+        {action}
+      </div>
+
+      {children}
+    </div>
+  );
+}
+
+/* ========================================================================== */
+/* Dashboard Skeleton                                                         */
+/* ========================================================================== */
 
 function DashboardSkeleton({
-    canViewAllReports,
+  canViewAllReports,
 }: {
-    canViewAllReports: boolean;
+  canViewAllReports: boolean;
 }) {
-    return (
-        <div className="mx-auto max-w-5xl space-y-5 px-3 py-2 sm:space-y-6 sm:px-4 sm:py-4 lg:space-y-8 lg:px-0 animate-pulse">
-            {/* Page context Skeleton */}
-            <div className="flex flex-col gap-3.5 sm:flex-row sm:items-end sm:justify-between">
-                <div className="space-y-2">
-                    <div className="h-2.5 w-20 rounded bg-slate-200 dark:bg-zinc-800" />
-                    <div className="h-6 w-40 rounded bg-slate-200 dark:bg-zinc-800 sm:h-7 sm:w-44" />
-                    <div className="h-3 w-32 rounded bg-slate-100 dark:bg-zinc-900 sm:w-36" />
-                </div>
-                <div className="h-9 w-full rounded-lg bg-slate-200 dark:bg-zinc-800 sm:w-32" />
-            </div>
+  return (
+    <div className="mx-auto w-full max-w-[1440px] animate-pulse px-4 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-9">
+      <div className="space-y-7">
+        {/* Header */}
 
-            {/* Overview Skeleton — only for admins, matches live gating */}
-            {canViewAllReports && (
-                <div className="card p-5 sm:p-6 md:p-8">
-                    <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:gap-8">
-                        <div className="mx-auto h-28 w-28 shrink-0 rounded-full bg-slate-100 dark:bg-zinc-900 sm:mx-0 sm:h-32 sm:w-32 md:h-36 md:w-36" />
-                        <div className="grid flex-1 grid-cols-3 gap-4 sm:gap-6">
-                            {Array.from({ length: 3 }).map((_, i) => (
-                                <div key={i} className="flex items-start gap-2 sm:gap-3">
-                                    <div className="h-7 w-7 shrink-0 rounded-lg bg-slate-200 dark:bg-zinc-800 sm:h-9 sm:w-9" />
-                                    <div className="min-w-0 space-y-2">
-                                        <div className="h-4 w-8 rounded bg-slate-250 dark:bg-zinc-800 sm:h-5 sm:w-10" />
-                                        <div className="h-2.5 w-12 rounded bg-slate-200 dark:bg-zinc-900 sm:w-14" />
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            )}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="space-y-3">
+            <div className="h-2 w-16 rounded bg-slate-200 dark:bg-zinc-800" />
 
-            {/* Editor Skeleton */}
-            <div className="card p-4 sm:p-5 md:p-6 space-y-4">
-                <div className="flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-zinc-800/60">
-                    <div className="h-9 w-9 shrink-0 rounded-lg bg-slate-200 dark:bg-zinc-800" />
-                    <div className="min-w-0 space-y-1.5">
-                        <div className="h-2.5 w-20 rounded bg-slate-200 dark:bg-zinc-800" />
-                        <div className="h-2.5 w-32 rounded bg-slate-100 dark:bg-zinc-900" />
-                    </div>
-                </div>
-                <div className="space-y-2 rounded-xl bg-slate-50/60 p-3 dark:bg-zinc-900/40 sm:p-4">
-                    <div className="h-3.5 w-full rounded bg-slate-200 dark:bg-zinc-800" />
-                    <div className="h-3.5 w-5/6 rounded bg-slate-200 dark:bg-zinc-800" />
-                    <div className="h-3.5 w-2/3 rounded bg-slate-200 dark:bg-zinc-800" />
-                </div>
-                <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-4 dark:border-zinc-800/60 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="h-3 w-20 rounded bg-slate-100 dark:bg-zinc-900" />
-                    <div className="flex gap-2">
-                        <div className="h-8 flex-1 rounded-lg bg-slate-200 dark:bg-zinc-800 sm:w-24 sm:flex-none" />
-                        <div className="h-8 flex-1 rounded-lg bg-slate-200 dark:bg-zinc-800 sm:w-24 sm:flex-none" />
-                    </div>
-                </div>
-            </div>
+            <div className="h-9 w-48 rounded-lg bg-slate-200 dark:bg-zinc-800" />
 
-            {/* Grid Skeleton */}
-            <div className="grid gap-5 sm:gap-6 lg:grid-cols-2">
-                <div className="card p-4 sm:p-5 space-y-4">
-                    <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 shrink-0 rounded-lg bg-slate-200 dark:bg-zinc-800" />
-                        <div className="h-3 w-24 rounded bg-slate-250 dark:bg-zinc-800" />
-                    </div>
-                    <div className="space-y-3 pt-2">
-                        {Array.from({ length: 4 }).map((_, i) => (
-                            <div key={i} className="flex justify-between items-center py-1">
-                                <div className="flex min-w-0 items-center gap-3">
-                                    <div className="h-7 w-7 shrink-0 rounded-full bg-slate-200 dark:bg-zinc-800" />
-                                    <div className="h-3 w-28 rounded bg-slate-200 dark:bg-zinc-800" />
-                                </div>
-                                <div className="h-5 w-16 shrink-0 rounded-full bg-slate-200 dark:bg-zinc-800" />
-                            </div>
-                        ))}
-                    </div>
-                </div>
+            <div className="h-3 w-72 rounded bg-slate-100 dark:bg-zinc-900" />
+          </div>
 
-                <div className="card p-4 sm:p-5 space-y-4">
-                    <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 shrink-0 rounded-lg bg-slate-200 dark:bg-zinc-800" />
-                        <div className="h-3 w-24 rounded bg-slate-250 dark:bg-zinc-800" />
-                    </div>
-                    <div className="space-y-4 pt-2">
-                        {Array.from({ length: 3 }).map((_, i) => (
-                            <div key={i} className="space-y-2">
-                                <div className="flex justify-between">
-                                    <div className="h-3.5 w-20 rounded bg-slate-200 dark:bg-zinc-800" />
-                                    <div className="h-2.5 w-10 rounded bg-slate-100 dark:bg-zinc-900" />
-                                </div>
-                                <div className="h-3 w-full rounded bg-slate-100 dark:bg-zinc-900" />
-                                <div className="h-3 w-5/6 rounded bg-slate-100 dark:bg-zinc-900" />
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
+          {canViewAllReports && (
+            <div className="h-9 w-32 rounded-lg bg-slate-200 dark:bg-zinc-800" />
+          )}
         </div>
-    );
+
+        {/* Stats */}
+
+        {canViewAllReports && (
+          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+            <div className="grid lg:grid-cols-[280px_1fr]">
+              <div className="h-36 border-b border-slate-100 dark:border-zinc-800 lg:border-b-0 lg:border-r" />
+
+              <div className="grid grid-cols-3 divide-x divide-slate-100 dark:divide-zinc-800">
+                {Array.from({
+                  length: 3,
+                }).map((_, index) => (
+                  <div key={index} className="h-36" />
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Report */}
+
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-lg bg-slate-200 dark:bg-zinc-800" />
+
+            <div className="space-y-2">
+              <div className="h-2.5 w-24 rounded bg-slate-200 dark:bg-zinc-800" />
+
+              <div className="h-2.5 w-48 rounded bg-slate-100 dark:bg-zinc-900" />
+            </div>
+          </div>
+
+          <div className="mt-5 h-44 rounded-lg bg-slate-100 dark:bg-zinc-900" />
+        </div>
+
+        {/* Panels */}
+
+        <div className="grid gap-6 lg:grid-cols-2">
+          {Array.from({
+            length: 2,
+          }).map((_, panelIndex) => (
+            <div
+              key={panelIndex}
+              className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-zinc-800 dark:bg-zinc-950"
+            >
+              <div className="h-16 border-b border-slate-100 dark:border-zinc-800" />
+
+              <div className="space-y-5 p-5">
+                {Array.from({
+                  length: 4,
+                }).map((_, index) => (
+                  <div key={index} className="flex items-center gap-3">
+                    <div className="h-9 w-9 rounded-full bg-slate-200 dark:bg-zinc-800" />
+
+                    <div className="flex-1 space-y-2">
+                      <div className="h-2.5 w-28 rounded bg-slate-200 dark:bg-zinc-800" />
+
+                      <div className="h-2.5 w-40 rounded bg-slate-100 dark:bg-zinc-900" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 }

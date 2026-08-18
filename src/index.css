@@ -1,19 +1,175 @@
 @import "tailwindcss";
 
-/* Enable class-based dark mode */
+/* Class-based dark mode */
 @custom-variant dark (&:where(.dark, .dark *));
+
+/* =========================================================
+   TEAM WORK — DESIGN TOKENS
+   ========================================================= */
+
+:root {
+  color-scheme: light;
+
+  /* Brand */
+  --brand: #4f46e5;
+  --brand-hover: #4338ca;
+  --brand-active: #3730a3;
+  --brand-soft: #eef2ff;
+  --brand-soft-hover: #e0e7ff;
+
+  /* Backgrounds */
+  --background: #f7f8fb;
+  --background-subtle: #f3f4f8;
+
+  /* Surfaces */
+  --surface: #ffffff;
+  --surface-subtle: #fafbfc;
+  --surface-elevated: #ffffff;
+  --surface-hover: #f8fafc;
+
+  /* Text */
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --text-muted: #6b7280;
+  --text-subtle: #94a3b8;
+  --text-disabled: #9ca3af;
+
+  /* Borders */
+  --border: #e5e7eb;
+  --border-subtle: #eef0f3;
+  --border-strong: #d1d5db;
+
+  /* Semantic */
+  --success: #059669;
+  --success-soft: #ecfdf5;
+
+  --warning: #d97706;
+  --warning-soft: #fffbeb;
+
+  --danger: #dc2626;
+  --danger-soft: #fef2f2;
+
+  --info: #0284c7;
+  --info-soft: #f0f9ff;
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgb(15 23 42 / 0.03);
+
+  --shadow-sm:
+    0 1px 2px rgb(15 23 42 / 0.04),
+    0 4px 12px rgb(15 23 42 / 0.03);
+
+  --shadow-md:
+    0 1px 2px rgb(15 23 42 / 0.03),
+    0 10px 30px rgb(15 23 42 / 0.055);
+
+  --shadow-lg:
+    0 4px 8px rgb(15 23 42 / 0.03),
+    0 20px 50px rgb(15 23 42 / 0.07);
+
+  /* Radius */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+
+  /* Motion */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* =========================================================
+   DARK THEME
+   ========================================================= */
+
+.dark {
+  color-scheme: dark;
+
+  --brand: #6366f1;
+  --brand-hover: #818cf8;
+  --brand-active: #a5b4fc;
+  --brand-soft: rgb(99 102 241 / 0.12);
+  --brand-soft-hover: rgb(99 102 241 / 0.18);
+
+  --background: #09090b;
+  --background-subtle: #0c0c0f;
+
+  --surface: #111113;
+  --surface-subtle: #141416;
+  --surface-elevated: #18181b;
+  --surface-hover: #1c1c1f;
+
+  --text-primary: #fafafa;
+  --text-secondary: #d4d4d8;
+  --text-muted: #a1a1aa;
+  --text-subtle: #71717a;
+  --text-disabled: #52525b;
+
+  --border: #27272a;
+  --border-subtle: #1f1f22;
+  --border-strong: #3f3f46;
+
+  --success: #10b981;
+  --success-soft: rgb(16 185 129 / 0.10);
+
+  --warning: #f59e0b;
+  --warning-soft: rgb(245 158 11 / 0.10);
+
+  --danger: #f43f5e;
+  --danger-soft: rgb(244 63 94 / 0.10);
+
+  --info: #38bdf8;
+  --info-soft: rgb(56 189 248 / 0.10);
+
+  --shadow-xs: none;
+
+  --shadow-sm:
+    0 0 0 1px rgb(255 255 255 / 0.015);
+
+  --shadow-md:
+    0 0 0 1px rgb(255 255 255 / 0.018),
+    0 12px 32px rgb(0 0 0 / 0.18);
+
+  --shadow-lg:
+    0 0 0 1px rgb(255 255 255 / 0.02),
+    0 24px 60px rgb(0 0 0 / 0.28);
+}
+
+/* =========================================================
+   BASE
+   ========================================================= */
 
 html {
   scroll-behavior: smooth;
+  background: var(--background);
 }
 
 body {
   margin: 0;
   min-width: 320px;
+  min-height: 100vh;
   overflow-x: hidden;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
-  
-  @apply bg-slate-50/50 text-slate-900 antialiased dark:bg-[#09090b] dark:text-zinc-100;
+
+  background: var(--background);
+  color: var(--text-primary);
+
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif;
+
+  font-size: 14px;
+  line-height: 1.5;
+
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 #root {
@@ -26,12 +182,96 @@ body {
   box-sizing: border-box;
 }
 
-/* ---------- Keyboard Focus States ---------- */
-*:focus-visible {
-  @apply outline-none ring-2 ring-zinc-950 ring-offset-2 dark:ring-zinc-200 dark:ring-offset-[#09090b];
+::selection {
+  background: rgb(79 70 229 / 0.18);
+  color: var(--text-primary);
 }
 
-/* ---------- Theme transition (global, consistent) ---------- */
+.dark ::selection {
+  background: rgb(99 102 241 / 0.3);
+}
+
+/* =========================================================
+   MEDIA
+   ========================================================= */
+
+img,
+svg,
+video,
+canvas {
+  display: block;
+  max-width: 100%;
+}
+
+/* =========================================================
+   FORM RESET
+   ========================================================= */
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+input,
+textarea,
+select {
+  color: inherit;
+}
+
+textarea {
+  resize: vertical;
+}
+
+/* Remove ugly autofill colors */
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--text-primary);
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+/* =========================================================
+   ACCESSIBLE FOCUS
+   ========================================================= */
+
+*:focus-visible {
+  outline: none;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid rgb(79 70 229 / 0.55);
+  outline-offset: 2px;
+}
+
+.dark button:focus-visible,
+.dark a:focus-visible,
+.dark input:focus-visible,
+.dark textarea:focus-visible,
+.dark select:focus-visible,
+.dark [role="button"]:focus-visible {
+  outline-color: rgb(129 140 248 / 0.7);
+}
+
+/* =========================================================
+   THEME TRANSITION
+   ========================================================= */
+
 html.theme-transition *,
 html.theme-transition *::before,
 html.theme-transition *::after {
@@ -43,8 +283,8 @@ html.theme-transition *::after {
     stroke,
     box-shadow;
 
-  transition-duration: 200ms;
-  transition-timing-function: ease;
+  transition-duration: 180ms;
+  transition-timing-function: var(--ease-standard);
 }
 
 .no-theme-transition,
@@ -54,37 +294,39 @@ html.theme-transition *::after {
   transition: none !important;
 }
 
-img,
-svg,
-video,
-canvas {
-  display: block;
-  max-width: 100%;
+/* Respect reduced motion */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }
 
-button {
-  cursor: pointer;
-}
+/* =========================================================
+   SCROLLBARS
+   ========================================================= */
 
-input,
-textarea,
-select {
-  font: inherit;
-}
-
-/* ---------- Custom Scrollbars ---------- */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--color-slate-200) transparent;
+  scrollbar-color: #cbd5e1 transparent;
 }
 
 .dark * {
-  scrollbar-color: var(--color-zinc-800) transparent;
+  scrollbar-color: #3f3f46 transparent;
 }
 
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
 }
 
 ::-webkit-scrollbar-track {
@@ -92,7 +334,29 @@ select {
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply rounded-full bg-slate-200 hover:bg-slate-300 dark:bg-zinc-800 dark:hover:bg-zinc-700;
+  border: 2px solid transparent;
+  border-radius: 9999px;
+  background: #cbd5e1;
+  background-clip: padding-box;
 }
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+  background-clip: padding-box;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #3f3f46;
+  background-clip: padding-box;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #52525b;
+  background-clip: padding-box;
+}
+
+/* =========================================================
+   SHARED COMPONENT STYLES
+   ========================================================= */
 
 @import "./styles/components.css";

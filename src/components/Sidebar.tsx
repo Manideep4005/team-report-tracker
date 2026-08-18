@@ -8,11 +8,22 @@ import {
     HiOutlineDocumentText,
     HiOutlineArrowRightOnRectangle,
     HiOutlineKey,
+    HiOutlineChevronUp,
+    HiOutlineChevronDown,
+    HiOutlineCog6Tooth,
+    HiOutlineMoon,
+    HiOutlineSun,
 } from "react-icons/hi2";
-import { NavLink } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import { useEffect } from "react";
 
+import { NavLink, useNavigate } from "react-router-dom";
+import {
+    useEffect,
+    useRef,
+    useState,
+} from "react";
+
+import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 
 interface SidebarProps {
     open: boolean;
@@ -50,7 +61,9 @@ function getAvatarColor(name?: string) {
         0
     );
 
-    return avatarColors[hash % avatarColors.length];
+    return avatarColors[
+        hash % avatarColors.length
+    ];
 }
 
 export default function Sidebar({
@@ -60,319 +73,697 @@ export default function Sidebar({
     const {
         user,
         hasPermission,
+        logout,
     } = useAuth();
 
-    const initials = getInitials(user?.name);
-    const avatarColor = getAvatarColor(user?.name);
+    const { theme, toggleTheme } =
+        useTheme();
 
+    const navigate = useNavigate();
+
+    const [accountOpen, setAccountOpen] =
+        useState(false);
+
+    /*
+     * Account wrapper reference.
+     * Used for outside-click detection.
+     */
+    const accountRef =
+        useRef<HTMLDivElement>(null);
+
+    const initials = getInitials(
+        user?.name
+    );
+
+    const avatarColor =
+        getAvatarColor(user?.name);
+
+    /*
+     * Lock body scrolling while
+     * mobile sidebar is open.
+     */
     useEffect(() => {
-        document.body.style.overflow = open
-            ? "hidden"
-            : "";
+        document.body.style.overflow =
+            open ? "hidden" : "";
 
         return () => {
-            document.body.style.overflow = "";
+            document.body.style.overflow =
+                "";
         };
     }, [open]);
 
+    /*
+     * Close account popup when clicking
+     * anywhere outside the account area.
+     */
+    useEffect(() => {
+        function handleOutsideClick(
+            event: MouseEvent
+        ) {
+            if (
+                accountRef.current &&
+                !accountRef.current.contains(
+                    event.target as Node
+                )
+            ) {
+                setAccountOpen(false);
+            }
+        }
+
+        if (accountOpen) {
+            document.addEventListener(
+                "mousedown",
+                handleOutsideClick
+            );
+        }
+
+        return () => {
+            document.removeEventListener(
+                "mousedown",
+                handleOutsideClick
+            );
+        };
+    }, [accountOpen]);
+
+    /*
+     * Navigation link styling.
+     */
     const linkClass = ({
         isActive,
     }: {
         isActive: boolean;
     }) =>
-        `group flex items-center gap-3 rounded-xl px-4 py-2.5 text-xs font-semibold tracking-wide transition-all duration-200 ${isActive
-            ? "bg-slate-900/5 text-slate-900 ring-1 ring-slate-900/10 dark:bg-zinc-800/60 dark:text-zinc-100 dark:ring-zinc-800"
-            : "text-slate-500 hover:bg-slate-100/50 hover:text-slate-900 dark:text-zinc-400 dark:hover:bg-zinc-900/40 dark:hover:text-zinc-200"
+        `sidebar-link ${
+            isActive
+                ? "sidebar-link-active"
+                : ""
         }`;
 
-    return (
-        <>
-            {/* Mobile Overlay */}
+    /*
+     * Logout.
+     */
+    async function handleLogout() {
+        setAccountOpen(false);
+        onClose();
 
-            <div
-                onClick={onClose}
-                className={`fixed inset-0 z-40 bg-black/10 backdrop-blur-sm transition-all duration-300 ease-out lg:hidden ${open
-                    ? "opacity-100 visible"
-                    : "opacity-0 invisible"
-                    }`}
-            />
+        await logout();
 
-            {/* Mobile Sidebar */}
+        navigate("/");
+    }
 
-            <div
-                className={`fixed inset-y-0 left-0 z-50 lg:hidden ${open
-                    ? "pointer-events-auto"
-                    : "pointer-events-none"
-                    }`}
-            >
-                <aside
-                    className={`flex h-full w-64 max-w-[80vw] flex-col border-r border-slate-200/60 bg-white/95 shadow-xl transform-gpu backdrop-blur-md transition-transform duration-300 ease-out dark:border-zinc-800/60 dark:bg-zinc-950/95 ${open
-                        ? "translate-x-0"
-                        : "-translate-x-full"
-                        }`}
+    /*
+     * Change password.
+     */
+    function handleChangePassword() {
+        setAccountOpen(false);
+        onClose();
+
+        navigate("/settings");
+    }
+
+    /*
+     * Navigation.
+     */
+    const renderNavigation = (
+        mobile = false
+    ) => (
+        <nav className="sidebar-nav">
+
+            {/* =================================================
+                WORKSPACE
+                ================================================= */}
+
+            <div className="sidebar-section">
+
+                <p className="sidebar-section-label">
+                    Workspace
+                </p>
+
+                {/* Dashboard */}
+                <NavLink
+                    to="/dashboard"
+                    className={linkClass}
+                    onClick={
+                        mobile
+                            ? onClose
+                            : undefined
+                    }
                 >
-                    <div className="flex h-16 items-center justify-between border-b border-slate-200/50 px-5 dark:border-zinc-800/50">
+                    <span className="sidebar-link-icon">
+                        <HiOutlineSquares2X2
+                            size={18}
+                        />
+                    </span>
 
-                        <div className="flex items-center gap-2.5">
+                    <span>
+                        Dashboard
+                    </span>
+                </NavLink>
 
-                            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/20">
-                                <HiOutlineUserGroup size={16} />
-                            </div>
-
-                            <div>
-
-                                <h2 className="text-xs font-bold tracking-tight text-slate-900 dark:text-white">
-                                    Team Work
-                                </h2>
-
-                                <p className="text-[10px] font-semibold text-slate-400 dark:text-zinc-500">
-                                    Report Tracker
-                                </p>
-
-                            </div>
-
-                        </div>
-
-                        <button
-                            onClick={onClose}
-                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200/50 text-slate-500 transition-all duration-200 hover:rotate-90 hover:bg-slate-100 dark:border-zinc-800/50 dark:text-zinc-400 dark:hover:bg-zinc-800"
-                        >
-                            <HiOutlineXMark size={16} />
-                        </button>
-
-                    </div>
-
-                    <nav
-                        className={`flex-1 space-y-1.5 p-4 transition-all duration-300 ${open
-                            ? "translate-y-0 opacity-100"
-                            : "translate-y-4 opacity-0"
-                            }`}
+                {/* My Reports */}
+                {hasPermission(
+                    "REPORT_VIEW_OWN"
+                ) && (
+                    <NavLink
+                        to="/history"
+                        className={linkClass}
+                        onClick={
+                            mobile
+                                ? onClose
+                                : undefined
+                        }
                     >
-                        <NavLink
-                            to="/dashboard"
-                            className={linkClass}
-                            onClick={onClose}
-                        >
-                            <HiOutlineSquares2X2 size={16} />
-                            Dashboard
-                        </NavLink>
+                        <span className="sidebar-link-icon">
+                            <HiOutlineClock
+                                size={18}
+                            />
+                        </span>
 
-                        {hasPermission("REPORT_VIEW_OWN") && (
-                            <NavLink
-                                to="/history"
-                                className={linkClass}
-                                onClick={onClose}
-                            >
-                                <HiOutlineClock size={16} />
-                                My Reports
-                            </NavLink>
-                        )}
+                        <span>
+                            My Reports
+                        </span>
+                    </NavLink>
+                )}
 
-                        {hasPermission("REPORT_VIEW_ALL") && (
-                            <NavLink
-                                to="/reports"
-                                className={linkClass}
-                                onClick={onClose}
-                            >
-                                <HiOutlineDocumentText size={16} />
-                                All Reports
-                            </NavLink>
-                        )}
-
-                        {hasPermission("USER_VIEW") && (
-                            <NavLink
-                                to="/users"
-                                className={linkClass}
-                                onClick={onClose}
-                            >
-                                <HiOutlineUsers size={16} />
-                                Users
-                            </NavLink>
-                        )}
-
-                        {hasPermission("ROLE_VIEW") && (
-                            <NavLink
-                                to="/roles"
-                                className={linkClass}
-                                onClick={onClose}
-                            >
-                                <HiOutlineShieldCheck size={16} />
-                                Roles
-                            </NavLink>
-                        )}
-
-                        {hasPermission("PERMISSION_VIEW") && (
-                            <NavLink
-                                to="/permissions"
-                                className={linkClass}
-                                onClick={onClose}
-                            >
-                                <HiOutlineKey size={16} />
-                                Permissions
-                            </NavLink>
-                        )}
-
-                        {hasPermission("LOGIN_HISTORY_VIEW") && (
-                            <NavLink
-                                to="/login-history"
-                                className={linkClass}
-                                onClick={onClose}
-                            >
-                                <HiOutlineArrowRightOnRectangle size={16} />
-                                Login History
-                            </NavLink>
-                        )}
-
-                    </nav>
-
-                    <div
-                        className={`border-t border-slate-200/50 p-4 transition-all duration-300 dark:border-zinc-800/50 ${open
-                            ? "translate-y-0 opacity-100"
-                            : "translate-y-4 opacity-0"
-                            }`}
+                {/* All Reports */}
+                {hasPermission(
+                    "REPORT_VIEW_ALL"
+                ) && (
+                    <NavLink
+                        to="/reports"
+                        className={linkClass}
+                        onClick={
+                            mobile
+                                ? onClose
+                                : undefined
+                        }
                     >
-                        <div className="rounded-xl border border-slate-200/60 bg-slate-50/50 p-3.5 dark:border-zinc-800/60 dark:bg-zinc-900/30">
+                        <span className="sidebar-link-icon">
+                            <HiOutlineDocumentText
+                                size={18}
+                            />
+                        </span>
 
-                            <div className="flex items-center gap-2.5">
-
-                                <div
-                                    className={`flex h-9 w-9 items-center justify-center rounded-full ${avatarColor} text-xs font-bold text-white shadow-sm ring-1 ring-black/5 dark:ring-white/10`}
-                                >
-                                    {initials}
-                                </div>
-
-                                <div className="min-w-0">
-
-                                    <p className="truncate text-xs font-bold text-slate-900 dark:text-white">
-                                        {user?.name}
-                                    </p>
-
-                                    <p className="truncate text-[10px] font-medium text-slate-400 dark:text-zinc-500">
-                                        {user?.email}
-                                    </p>
-
-                                </div>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                </aside>
+                        <span>
+                            All Reports
+                        </span>
+                    </NavLink>
+                )}
 
             </div>
 
-            {/* Desktop Sidebar */}
+            {/* =================================================
+                MANAGEMENT
+                ================================================= */}
 
-            <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-slate-200/50 bg-slate-50/10 dark:border-zinc-800/40 dark:bg-zinc-950/10 lg:flex">
+            <div className="sidebar-section">
 
-                <div className="flex h-16 items-center border-b border-slate-200/50 px-5 dark:border-zinc-800/40">
+                <p className="sidebar-section-label">
+                    Management
+                </p>
 
-                    <div className="flex items-center gap-2.5">
+                {/* Users */}
+                {hasPermission(
+                    "USER_VIEW"
+                ) && (
+                    <NavLink
+                        to="/users"
+                        className={linkClass}
+                        onClick={
+                            mobile
+                                ? onClose
+                                : undefined
+                        }
+                    >
+                        <span className="sidebar-link-icon">
+                            <HiOutlineUsers
+                                size={18}
+                            />
+                        </span>
 
-                        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/20">
-                            <HiOutlineUserGroup size={16} />
+                        <span>
+                            Users
+                        </span>
+                    </NavLink>
+                )}
+
+                {/* Roles */}
+                {hasPermission(
+                    "ROLE_VIEW"
+                ) && (
+                    <NavLink
+                        to="/roles"
+                        className={linkClass}
+                        onClick={
+                            mobile
+                                ? onClose
+                                : undefined
+                        }
+                    >
+                        <span className="sidebar-link-icon">
+                            <HiOutlineShieldCheck
+                                size={18}
+                            />
+                        </span>
+
+                        <span>
+                            Roles
+                        </span>
+                    </NavLink>
+                )}
+
+                {/* Permissions */}
+                {hasPermission(
+                    "PERMISSION_VIEW"
+                ) && (
+                    <NavLink
+                        to="/permissions"
+                        className={linkClass}
+                        onClick={
+                            mobile
+                                ? onClose
+                                : undefined
+                        }
+                    >
+                        <span className="sidebar-link-icon">
+                            <HiOutlineKey
+                                size={18}
+                            />
+                        </span>
+
+                        <span>
+                            Permissions
+                        </span>
+                    </NavLink>
+                )}
+
+                {/* Login History */}
+                {hasPermission(
+                    "LOGIN_HISTORY_VIEW"
+                ) && (
+                    <NavLink
+                        to="/login-history"
+                        className={linkClass}
+                        onClick={
+                            mobile
+                                ? onClose
+                                : undefined
+                        }
+                    >
+                        <span className="sidebar-link-icon">
+                            <HiOutlineArrowRightOnRectangle
+                                size={18}
+                            />
+                        </span>
+
+                        <span>
+                            Login History
+                        </span>
+                    </NavLink>
+                )}
+
+            </div>
+        </nav>
+    );
+
+    /*
+     * Brand.
+     */
+    const brand = (
+        <div className="sidebar-brand">
+
+            <div className="sidebar-brand-mark">
+                <HiOutlineUserGroup
+                    size={20}
+                />
+            </div>
+
+            <div className="min-w-0">
+
+                <h1 className="sidebar-brand-title">
+                    Team Work
+                </h1>
+
+                <p className="sidebar-brand-subtitle">
+                    Report Tracker
+                </p>
+
+            </div>
+
+        </div>
+    );
+
+    /*
+     * User card + account popup.
+     */
+    const userCard = (
+        <div
+            ref={accountRef}
+            className="relative"
+        >
+
+            {/* =================================================
+                ACCOUNT POPUP
+                ================================================= */}
+
+            {accountOpen && (
+                <div
+                    className="
+                        absolute
+                        bottom-[calc(100%+10px)]
+                        left-0
+                        z-[200]
+                        w-[250px]
+
+                        overflow-hidden
+                        rounded-2xl
+
+                        border
+                        border-[var(--border)]
+
+                        bg-[var(--surface-elevated)]
+
+                        shadow-[0_20px_60px_rgba(0,0,0,0.25)]
+
+                        backdrop-blur-xl
+
+                        animate-in
+                        fade-in
+                        slide-in-from-bottom-2
+                        duration-150
+                    "
+                >
+
+                    {/* =================================================
+                        PROFILE
+                        ================================================= */}
+
+                    <div className="sidebar-account-profile">
+
+                        <div
+                            className={`sidebar-account-avatar ${avatarColor}`}
+                        >
+                            {initials}
                         </div>
 
-                        <div>
+                        <div className="min-w-0">
 
-                            <h2 className="text-xs font-bold tracking-tight text-slate-900 dark:text-white">
-                                Team Work
-                            </h2>
+                            <p className="sidebar-account-name">
+                                {user?.name}
+                            </p>
 
-                            <p className="text-[10px] font-semibold text-slate-400 dark:text-zinc-500">
-                                Report Tracker
+                            <p className="sidebar-account-email">
+                                {user?.email}
                             </p>
 
                         </div>
 
                     </div>
 
+                    <div className="sidebar-account-content">
+
+                        {/* =================================================
+                            THEME SETTING
+                            ================================================= */}
+
+                        <div className="flex min-h-11 w-full items-center justify-between gap-3 rounded-lg px-3">
+
+                            <div className="flex min-w-0 items-center gap-2.5">
+
+                                <span className="flex size-6 shrink-0 items-center justify-center text-[var(--text-muted)]">
+
+                                    {theme === "dark" ? (
+                                        <HiOutlineMoon
+                                            size={16}
+                                        />
+                                    ) : (
+                                        <HiOutlineSun
+                                            size={16}
+                                        />
+                                    )}
+
+                                </span>
+
+                                <span className="text-xs font-medium text-[var(--text-secondary)]">
+                                    {theme === "dark"
+                                        ? "Dark mode"
+                                        : "Light mode"}
+                                </span>
+
+                            </div>
+
+                            {/* Theme Toggle */}
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    toggleTheme();
+
+                                    /*
+                                     * Close popup immediately
+                                     * after changing theme.
+                                     */
+                                    setAccountOpen(false);
+                                }}
+                                aria-label={
+                                    theme === "dark"
+                                        ? "Switch to light mode"
+                                        : "Switch to dark mode"
+                                }
+                                aria-pressed={
+                                    theme === "dark"
+                                }
+                                className={`relative h-5 w-9 shrink-0 cursor-pointer rounded-full border-0 p-0 transition-colors duration-200 ${
+                                    theme === "dark"
+                                        ? "bg-indigo-500"
+                                        : "bg-slate-300"
+                                }`}
+                            >
+                                <span
+                                    className={`pointer-events-none absolute left-0.5 top-0.5 size-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${
+                                        theme ===
+                                        "dark"
+                                            ? "translate-x-4"
+                                            : "translate-x-0"
+                                    }`}
+                                />
+                            </button>
+
+                        </div>
+
+                        {/* =================================================
+                            CHANGE PASSWORD
+                            ================================================= */}
+
+                        <button
+                            type="button"
+                            onClick={
+                                handleChangePassword
+                            }
+                            className="sidebar-account-item"
+                        >
+                            <span className="sidebar-account-item-left">
+
+                                <span className="sidebar-account-item-icon">
+                                    <HiOutlineCog6Tooth
+                                        size={17}
+                                    />
+                                </span>
+
+                                <span>
+                                    Change Password
+                                </span>
+
+                            </span>
+                        </button>
+
+                        {/* Divider */}
+                        <div className="sidebar-account-divider" />
+
+                        {/* =================================================
+                            LOGOUT
+                            ================================================= */}
+
+                        <button
+                            type="button"
+                            onClick={
+                                handleLogout
+                            }
+                            className="sidebar-account-item sidebar-account-danger"
+                        >
+                            <span className="sidebar-account-item-left">
+
+                                <span className="sidebar-account-item-icon">
+                                    <HiOutlineArrowRightOnRectangle
+                                        size={17}
+                                    />
+                                </span>
+
+                                <span>
+                                    Logout
+                                </span>
+
+                            </span>
+                        </button>
+
+                    </div>
+                </div>
+            )}
+
+            {/* =================================================
+                ACCOUNT BUTTON
+                ================================================= */}
+
+            <button
+                type="button"
+                onClick={() =>
+                    setAccountOpen(
+                        (previous) =>
+                            !previous
+                    )
+                }
+                aria-expanded={accountOpen}
+                className={`
+                    sidebar-user-card
+                    relative
+                    z-10
+                    transition-all
+                    duration-150
+                    ${
+                        accountOpen
+                            ? "border-indigo-500/70 ring-1 ring-indigo-500/30"
+                            : ""
+                    }
+                `}
+            >
+
+                {/* Avatar */}
+                <div
+                    className={`sidebar-user-avatar ${avatarColor}`}
+                >
+                    {initials}
                 </div>
 
-                <nav className="flex-1 space-y-1.5 p-4">
+                {/* User information */}
+                <div className="min-w-0 flex-1 text-left">
 
-                    <NavLink
-                        to="/dashboard"
-                        className={linkClass}
+                    <p className="sidebar-user-name">
+                        {user?.name}
+                    </p>
+
+                    <p className="sidebar-user-email">
+                        {user?.email}
+                    </p>
+
+                </div>
+
+                {/* Chevron */}
+                <span className="sidebar-user-chevron">
+
+                    {accountOpen ? (
+                        <HiOutlineChevronUp
+                            size={16}
+                        />
+                    ) : (
+                        <HiOutlineChevronDown
+                            size={16}
+                        />
+                    )}
+
+                </span>
+
+            </button>
+
+        </div>
+    );
+
+    return (
+        <>
+            {/* =================================================
+                MOBILE OVERLAY
+                ================================================= */}
+
+            <div
+                onClick={() => {
+                    setAccountOpen(false);
+                    onClose();
+                }}
+                className={`
+                    sidebar-overlay
+                    ${
+                        open
+                            ? "sidebar-overlay-visible"
+                            : ""
+                    }
+                `}
+            />
+
+            {/* =================================================
+                MOBILE SIDEBAR
+                ================================================= */}
+
+            <aside
+                className={`
+                    sidebar-mobile
+                    z-[100]
+                    ${
+                        open
+                            ? "sidebar-mobile-open"
+                            : ""
+                    }
+                `}
+            >
+
+                {/* Header */}
+                <div className="sidebar-header">
+
+                    {brand}
+
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setAccountOpen(false);
+                            onClose();
+                        }}
+                        aria-label="Close navigation"
+                        className="sidebar-close-button"
                     >
-                        <HiOutlineSquares2X2 size={16} />
-                        Dashboard
-                    </NavLink>
+                        <HiOutlineXMark
+                            size={19}
+                        />
+                    </button>
 
-                    {hasPermission("REPORT_VIEW_OWN") && (
-                        <NavLink
-                            to="/history"
-                            className={linkClass}
-                            onClick={onClose}
-                        >
-                            <HiOutlineClock size={16} />
-                            My Reports
-                        </NavLink>
-                    )}
+                </div>
 
-                    {hasPermission("REPORT_VIEW_ALL") && (
-                        <NavLink
-                            to="/reports"
-                            className={linkClass}
-                            onClick={onClose}
-                        >
-                            <HiOutlineDocumentText size={16} />
-                            All Reports
-                        </NavLink>
-                    )}
+                {/* Navigation */}
+                {renderNavigation(true)}
 
-                    {hasPermission("USER_VIEW") && (
-                        <NavLink
-                            to="/users"
-                            className={linkClass}
-                            onClick={onClose}
-                        >
-                            <HiOutlineUsers size={16} />
-                            Users
-                        </NavLink>
-                    )}
-
-
-                    {hasPermission("ROLE_VIEW") && (
-                        <NavLink
-                            to="/roles"
-                            className={linkClass}
-                            onClick={onClose}
-                        >
-                            <HiOutlineShieldCheck size={16} />
-                            Roles
-                        </NavLink>
-                    )}
-
-                    {hasPermission("PERMISSION_VIEW") && (
-                        <NavLink
-                            to="/permissions"
-                            className={linkClass}
-                            onClick={onClose}
-                        >
-                            <HiOutlineKey size={16} />
-                            Permissions
-                        </NavLink>
-                    )}
-
-                    {hasPermission("LOGIN_HISTORY_VIEW") && (
-                        <NavLink
-                            to="/login-history"
-                            className={linkClass}
-                            onClick={onClose}
-                        >
-                            <HiOutlineArrowRightOnRectangle size={16} />
-                            Login History
-                        </NavLink>
-                    )}
-
-                </nav>
-
+                {/* Footer */}
+                <div className="sidebar-footer">
+                    {userCard}
+                </div>
 
             </aside>
 
+            {/* =================================================
+                DESKTOP SIDEBAR
+                ================================================= */}
+
+            <aside className="sidebar-desktop z-[100]">
+
+                {/* Header */}
+                <div className="sidebar-header">
+                    {brand}
+                </div>
+
+                {/* Navigation */}
+                {renderNavigation()}
+
+                {/* Footer */}
+                <div className="sidebar-footer">
+                    {userCard}
+                </div>
+
+            </aside>
         </>
     );
 }

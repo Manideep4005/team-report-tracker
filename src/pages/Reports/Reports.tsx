@@ -1,10 +1,12 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+
 import {
-    HiOutlineClipboardDocument,
-    HiOutlineDocumentMagnifyingGlass,
-    HiOutlineXMark,
+  HiOutlineClipboardDocument,
+  HiOutlineDocumentMagnifyingGlass,
+  HiOutlineXMark,
 } from "react-icons/hi2";
+
 import { format } from "date-fns";
 import { toast } from "sonner";
 
@@ -12,363 +14,1010 @@ import { getAllReports } from "../../services/report";
 import DayPickerInput from "../../components/DayPickerInput";
 
 interface ReportItem {
-    id: string;
-    reportDate: string;
-    description: string;
-    userId: string;
-    user: {
-        name: string;
-        email: string;
-    };
+  id: string;
+  reportDate: string;
+  description: string;
+  userId: string;
+
+  user: {
+    name: string;
+    email: string;
+  };
 }
 
 interface DateGroup {
-    date: string;
-    reports: ReportItem[];
+  date: string;
+  reports: ReportItem[];
 }
 
 export default function Reports() {
-    const [date, setDate] = useState<Date | null>(null);
+  const [date, setDate] = useState<Date | null>(null);
 
-    const dateParam = date
-        ? format(date, "yyyy-MM-dd")
-        : undefined;
+  const dateParam = date ? format(date, "yyyy-MM-dd") : undefined;
 
-    const { data, isLoading } = useQuery<ReportItem[]>({
-        queryKey: ["all-reports", dateParam],
+  const { data, isLoading, isError } = useQuery<ReportItem[]>({
+    queryKey: ["all-reports", dateParam],
 
-        queryFn: async () => {
-            const response = await getAllReports(dateParam);
-            return response.data;
-        },
-    });
+    queryFn: async () => {
+      const response = await getAllReports(dateParam);
 
-    const groupedReports = useMemo<DateGroup[]>(() => {
-        if (!data?.length) {
-            return [];
-        }
+      return response.data;
+    },
+  });
 
-        const groups = new Map<string, ReportItem[]>();
+  /* ============================================================
+     GROUP REPORTS BY DATE
+  ============================================================ */
 
-        for (const report of data) {
-            const key = format(
-                new Date(report.reportDate),
-                "yyyy-MM-dd"
-            );
+  const groupedReports = useMemo<DateGroup[]>(() => {
+    if (!data?.length) {
+      return [];
+    }
 
-            if (!groups.has(key)) {
-                groups.set(key, []);
-            }
+    const groups = new Map<string, ReportItem[]>();
 
-            groups.get(key)!.push(report);
-        }
+    for (const report of data) {
+      const reportDate = new Date(report.reportDate);
 
-        return Array.from(groups.entries())
-            .sort(([a], [b]) => b.localeCompare(a))
-            .map(([date, reports]) => ({
-                date,
-                reports: reports.sort((a, b) =>
-                    a.user.name.localeCompare(b.user.name)
-                ),
-            }));
-    }, [data]);
+      if (Number.isNaN(reportDate.getTime())) {
+        continue;
+      }
 
-    const handleCopy = async (text: string) => {
-        try {
-            await navigator.clipboard.writeText(text);
-            toast.success("Report copied successfully.");
-        } catch {
-            toast.error("Unable to copy report.");
-        }
-    };
+      const key = format(reportDate, "yyyy-MM-dd");
 
-    const totalReports = data?.length ?? 0;
+      if (!groups.has(key)) {
+        groups.set(key, []);
+      }
 
-    return (
-        <div className="mx-auto w-full max-w-4xl px-4 py-2 sm:px-6 sm:py-4">
+      groups.get(key)!.push(report);
+    }
 
-            {/* Header */}
+    return Array.from(groups.entries())
+      .sort(([a], [b]) => b.localeCompare(a))
+      .map(([date, reports]) => ({
+        date,
+        reports: reports.sort((a, b) => a.user.name.localeCompare(b.user.name)),
+      }));
+  }, [data]);
 
-            <div className="flex flex-col gap-4 border-b border-slate-200/50 pb-5 dark:border-zinc-800/50 sm:flex-row sm:items-end sm:justify-between">
+  /* ============================================================
+     COPY REPORTS
+  ============================================================ */
 
-                <div>
-                    <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-2xl">
-                        Team Reports
-                    </h1>
+  const handleCopy = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
 
-                    <p className="mt-1 text-xs text-slate-500 dark:text-zinc-500">
-                        Browse the team's daily work reports.
-                    </p>
-                </div>
+      toast.success("Reports copied successfully.");
+    } catch {
+      toast.error("Unable to copy reports.");
+    }
+  };
 
-                <div className="flex flex-wrap items-center gap-2.5">
+  const totalReports = data?.length ?? 0;
 
-                    {!isLoading && totalReports > 0 && (
-                        <span className="badge-primary font-semibold">
-                            {totalReports}{" "}
-                            {totalReports === 1
-                                ? "Report"
-                                : "Reports"}
-                        </span>
-                    )}
+  return (
+    <div
+      className="
+        mx-auto
+        w-full
+        max-w-[1040px]
+        px-4
+        py-5
+        sm:px-6
+        sm:py-7
+        lg:px-8
+        lg:py-8
+      "
+    >
+      {/* ========================================================
+          PAGE HEADER
+      ======================================================== */}
 
-                    <DayPickerInput
-                        value={date}
-                        onChange={setDate}
-                        placeholder="Filter by date"
-                    />
+      <div
+        className="
+          flex
+          flex-col
+          gap-5
+          border-b
+          border-slate-200/80
+          pb-5
+          dark:border-zinc-800/80
+          sm:gap-6
+          sm:pb-6
+          lg:flex-row
+          lg:items-end
+          lg:justify-between
+        "
+      >
+        {/* TITLE */}
 
-                    <button
-                        onClick={() => setDate(null)}
-                        disabled={!date}
-                        className="inline-flex h-9 items-center gap-1 rounded-xl border border-slate-200 bg-white/50 px-3 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-800 dark:bg-zinc-900/55 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
-                    >
-                        <HiOutlineXMark size={14} />
-                        Clear
-                    </button>
+        <div className="min-w-0">
+          <div className="mb-3 flex items-center gap-2"></div>
 
-                </div>
-            </div>
+          <h1
+            className="
+              text-[26px]
+              font-bold
+              tracking-[-0.035em]
+              text-slate-950
+              dark:text-white
+              sm:text-3xl
+            "
+          >
+            Team Reports
+          </h1>
 
-            {/* Content */}
-
-            <div className="mt-6 sm:mt-8">
-
-                {isLoading ? (
-                    <SkeletonList />
-                ) : groupedReports.length ? (
-                    <div className="space-y-10">
-
-                        {groupedReports.map((group) => (
-                            <DateSection
-                                key={group.date}
-                                date={group.date}
-                                reports={group.reports}
-                                onCopy={handleCopy}
-                            />
-                        ))}
-
-                    </div>
-                ) : (
-                    <EmptyState />
-                )}
-
-            </div>
+          <p
+            className="
+              mt-1.5
+              text-sm
+              text-slate-500
+              dark:text-zinc-500
+            "
+          >
+            Browse the team's daily work reports.
+          </p>
         </div>
-    );
+
+        {/* ======================================================
+            FILTERS
+        ====================================================== */}
+
+        <div
+          className="
+            flex
+            w-full
+            flex-col
+            gap-2
+            sm:w-auto
+            sm:flex-row
+            sm:flex-wrap
+            sm:items-center
+            sm:justify-end
+          "
+        >
+          {/* REPORT COUNT */}
+
+          {!isLoading && totalReports > 0 && (
+            <div
+              className="
+                inline-flex
+                h-10
+                w-fit
+                shrink-0
+                items-center
+                rounded-xl
+                border
+                border-indigo-100
+                bg-indigo-50
+                px-3.5
+                text-xs
+                font-bold
+                text-indigo-600
+                dark:border-indigo-500/20
+                dark:bg-indigo-500/10
+                dark:text-indigo-400
+              "
+            >
+              {totalReports} {totalReports === 1 ? "Report" : "Reports"}
+            </div>
+          )}
+
+          {/* DATE PICKER */}
+
+          <div
+            className="
+              w-full
+              min-w-0
+              sm:w-auto
+            "
+          >
+            <div className="w-full sm:w-auto">
+              <DayPickerInput
+                value={date}
+                onChange={setDate}
+                placeholder="Filter by date"
+              />
+            </div>
+          </div>
+
+          {/* CLEAR */}
+
+          <button
+            type="button"
+            onClick={() => setDate(null)}
+            disabled={!date}
+            className="
+              inline-flex
+              h-10
+              w-full
+              shrink-0
+              items-center
+              justify-center
+              gap-1.5
+              rounded-xl
+              border
+              border-slate-200
+              bg-white
+              px-3.5
+              text-xs
+              font-semibold
+              text-slate-600
+              shadow-sm
+              transition
+              duration-200
+              hover:border-slate-300
+              hover:bg-slate-50
+              hover:text-slate-900
+              disabled:cursor-not-allowed
+              disabled:opacity-35
+              dark:border-zinc-800
+              dark:bg-zinc-900
+              dark:text-zinc-400
+              dark:hover:border-zinc-700
+              dark:hover:bg-zinc-800
+              dark:hover:text-zinc-200
+              sm:w-auto
+            "
+          >
+            <HiOutlineXMark className="h-4 w-4" />
+            Clear
+          </button>
+        </div>
+      </div>
+
+      {/* ========================================================
+          CONTENT
+      ======================================================== */}
+
+      <div className="mt-7 sm:mt-8">
+        {isLoading ? (
+          <SkeletonList />
+        ) : isError ? (
+          <ErrorState />
+        ) : groupedReports.length > 0 ? (
+          <div className="space-y-8 sm:space-y-9">
+            {groupedReports.map((group) => (
+              <DateSection
+                key={group.date}
+                date={group.date}
+                reports={group.reports}
+                onCopy={handleCopy}
+              />
+            ))}
+          </div>
+        ) : (
+          <EmptyState hasDateFilter={Boolean(date)} />
+        )}
+      </div>
+    </div>
+  );
 }
+
+/* ================================================================
+   DATE SECTION
+================================================================ */
 
 function DateSection({
-    date,
-    reports,
-    onCopy,
+  date,
+  reports,
+  onCopy,
 }: {
-    date: string;
-    reports: ReportItem[];
-    onCopy: (text: string) => void;
+  date: string;
+  reports: ReportItem[];
+  onCopy: (text: string) => void;
 }) {
-    const parsedDate = new Date(`${date}T00:00:00`);
+  const parsedDate = new Date(`${date}T00:00:00`);
 
-    const formattedDate = parsedDate.toLocaleDateString(
-        "en-IN",
-        {
-            weekday: "long",
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-            timeZone: "Asia/Kolkata",
-        }
-    );
+  const formattedDate = parsedDate.toLocaleDateString("en-IN", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "Asia/Kolkata",
+  });
 
-    const dayText = reports
-        .map(
-            (report) =>
-                `${report.user.name}\n${report.description}`
-        )
-        .join("\n\n");
+  const mobileDate = parsedDate.toLocaleDateString("en-IN", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "Asia/Kolkata",
+  });
 
-    return (
-        <section>
+  const day = parsedDate.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    timeZone: "Asia/Kolkata",
+  });
 
-            {/* Date Header */}
+  const month = parsedDate
+    .toLocaleDateString("en-IN", {
+      month: "short",
+      timeZone: "Asia/Kolkata",
+    })
+    .toUpperCase();
 
-            <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-3">
+  const dayText = reports
+    .map((report) => `${report.user.name}\n${report.description}`)
+    .join("\n\n");
 
-                <div className="flex min-w-0 items-center gap-3">
+  return (
+    <section className="w-full">
+      {/* ======================================================
+          DATE HEADER
+      ====================================================== */}
 
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-xs font-bold text-white shadow-sm dark:bg-white dark:text-zinc-900">
-                        {parsedDate.toLocaleDateString("en-IN", {
-                            day: "2-digit",
-                            timeZone: "Asia/Kolkata",
-                        })}
-                    </div>
+      <div
+        className="
+          mb-4
+          flex
+          flex-col
+          gap-3
+          sm:mb-5
+          sm:flex-row
+          sm:items-center
+        "
+      >
+        {/* DATE */}
 
-                    <div className="min-w-0 flex-1">
-                        <h2 className="truncate text-sm font-bold text-slate-900 dark:text-white">
-                            {formattedDate}
-                        </h2>
+        <div
+          className="
+            flex
+            min-w-0
+            items-center
+            gap-3
+          "
+        >
+          {/* DATE BADGE */}
 
-                        <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
-                            {reports.length}{" "}
-                            {reports.length === 1
-                                ? "report"
-                                : "reports"}{" "}
-                            submitted
-                        </p>
-                    </div>
+          <div
+            className="
+              flex
+              h-11
+              w-11
+              shrink-0
+              flex-col
+              items-center
+              justify-center
+              rounded-xl
+              border
+              border-slate-200
+              bg-white
+              shadow-[0_3px_12px_rgba(15,23,42,0.04)]
+              dark:border-zinc-800
+              dark:bg-zinc-950
+              dark:shadow-none
+              sm:h-12
+              sm:w-12
+            "
+          >
+            <span
+              className="
+                text-sm
+                font-bold
+                leading-none
+                text-slate-900
+                dark:text-white
+              "
+            >
+              {day}
+            </span>
 
-                </div>
+            <span
+              className="
+                mt-1
+                text-[8px]
+                font-bold
+                tracking-[0.14em]
+                text-slate-400
+                dark:text-zinc-600
+              "
+            >
+              {month}
+            </span>
+          </div>
 
-                <div className="hidden h-px flex-1 bg-slate-200/70 dark:bg-zinc-800/70 sm:block" />
+          {/* DATE TEXT */}
 
-                <button
-                    onClick={() => onCopy(dayText)}
-                    className="btn-secondary shrink-0 self-start px-2.5 py-1.5 text-[10px] font-semibold sm:self-auto"
-                >
-                    <HiOutlineClipboardDocument
-                        className="mr-1 h-3.5 w-3.5"
-                    />
-                    Copy
-                </button>
+          <div className="min-w-0">
+            <h2
+              className="
+                truncate
+                text-sm
+                font-bold
+                text-slate-900
+                dark:text-white
+                sm:text-[15px]
+              "
+            >
+              <span className="sm:hidden">{mobileDate}</span>
 
-            </div>
+              <span className="hidden sm:inline">{formattedDate}</span>
+            </h2>
 
-            {/* Reports */}
-
-            <div className="relative ml-3 space-y-4 border-l border-slate-200 pl-5 dark:border-zinc-800 sm:ml-5 sm:pl-7">
-
-                {reports.map((report) => (
-                    <ReportCard
-                        key={report.id}
-                        report={report}
-                    />
-                ))}
-
-            </div>
-
-        </section>
-    );
-}
-
-function ReportCard({
-    report,
-}: {
-    report: ReportItem;
-}) {
-    const initials = report.user.name
-        .trim()
-        .split(/\s+/)
-        .slice(0, 2)
-        .map((part) => part[0])
-        .join("")
-        .toUpperCase();
-
-    return (
-        <article className="relative">
-
-            {/* Timeline dot */}
-
-            <span className="absolute -left-[23px] top-5 h-2.5 w-2.5 rounded-full border-2 border-white bg-blue-500 dark:border-zinc-950 dark:bg-blue-400 sm:-left-[35px]" />
-
-            <div className="card overflow-hidden">
-
-                {/* User */}
-
-                <div className="flex items-center gap-3 border-b border-slate-200/50 px-4 py-3 dark:border-zinc-800/60 sm:px-5">
-
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-[10px] font-bold text-white shadow-sm">
-                        {initials}
-                    </div>
-
-                    <div className="min-w-0">
-                        <p className="truncate text-xs font-bold text-slate-900 dark:text-white">
-                            {report.user.name}
-                        </p>
-
-                        <p className="truncate text-[10px] text-slate-400 dark:text-zinc-500">
-                            {report.user.email}
-                        </p>
-                    </div>
-
-                </div>
-
-                {/* Report */}
-
-                <div className="px-4 py-4 sm:px-5">
-
-                    <p className="whitespace-pre-wrap break-words text-xs leading-relaxed text-slate-650 dark:text-zinc-350">
-                        {report.description}
-                    </p>
-
-                </div>
-
-            </div>
-        </article>
-    );
-}
-
-function SkeletonList() {
-    return (
-        <div className="space-y-8">
-
-            {Array.from({ length: 2 }).map((_, sectionIndex) => (
-                <div key={sectionIndex}>
-
-                    <div className="mb-5 flex items-center gap-3">
-                        <div className="h-10 w-10 shrink-0 animate-pulse rounded-xl bg-slate-200 dark:bg-zinc-800" />
-
-                        <div className="space-y-2">
-                            <div className="h-3 w-36 animate-pulse rounded bg-slate-200 dark:bg-zinc-800" />
-                            <div className="h-2.5 w-20 animate-pulse rounded bg-slate-100 dark:bg-zinc-900" />
-                        </div>
-                    </div>
-
-                    <div className="ml-3 space-y-4 border-l border-slate-200 pl-5 dark:border-zinc-800 sm:ml-5 sm:pl-7">
-
-                        {[1, 2].map((item) => (
-                            <div
-                                key={item}
-                                className="card animate-pulse p-5"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className="h-9 w-9 shrink-0 rounded-full bg-slate-200 dark:bg-zinc-800" />
-
-                                    <div className="space-y-2">
-                                        <div className="h-3 w-24 rounded bg-slate-200 dark:bg-zinc-800" />
-                                        <div className="h-2.5 w-32 rounded bg-slate-100 dark:bg-zinc-900" />
-                                    </div>
-                                </div>
-
-                                <div className="mt-5 space-y-2">
-                                    <div className="h-3 w-full rounded bg-slate-100 dark:bg-zinc-900" />
-                                    <div className="h-3 w-5/6 rounded bg-slate-100 dark:bg-zinc-900" />
-                                </div>
-                            </div>
-                        ))}
-
-                    </div>
-                </div>
-            ))}
-
+            <p
+              className="
+                mt-0.5
+                text-[10px]
+                font-semibold
+                uppercase
+                tracking-[0.12em]
+                text-slate-400
+                dark:text-zinc-600
+              "
+            >
+              {reports.length} {reports.length === 1 ? "report" : "reports"}{" "}
+              submitted
+            </p>
+          </div>
         </div>
-    );
+
+        {/* DIVIDER */}
+
+        <div
+          className="
+            hidden
+            h-px
+            flex-1
+            bg-slate-200
+            dark:bg-zinc-800
+            sm:block
+          "
+        />
+
+        {/* COPY BUTTON */}
+
+        <button
+          type="button"
+          onClick={() => onCopy(dayText)}
+          className="
+            inline-flex
+            h-9
+            w-fit
+            shrink-0
+            items-center
+            justify-center
+            gap-1.5
+            self-start
+            rounded-xl
+            border
+            border-slate-200
+            bg-white
+            px-3
+            text-[11px]
+            font-semibold
+            text-slate-600
+            shadow-sm
+            transition
+            duration-200
+            hover:border-slate-300
+            hover:bg-slate-50
+            hover:text-slate-900
+            dark:border-zinc-800
+            dark:bg-zinc-900
+            dark:text-zinc-400
+            dark:hover:border-zinc-700
+            dark:hover:bg-zinc-800
+            dark:hover:text-zinc-200
+            sm:self-auto
+          "
+        >
+          <HiOutlineClipboardDocument className="h-3.5 w-3.5" />
+          Copy
+        </button>
+      </div>
+
+      {/* ======================================================
+          REPORT TIMELINE
+      ====================================================== */}
+
+      <div
+        className="
+          relative
+          ml-2
+          space-y-3
+          border-l
+          border-slate-200
+          pl-5
+          dark:border-zinc-800
+          sm:ml-4
+          sm:space-y-4
+          sm:pl-7
+        "
+      >
+        {reports.map((report) => (
+          <ReportCard key={report.id} report={report} />
+        ))}
+      </div>
+    </section>
+  );
 }
-function EmptyState() {
-    return (
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200/80 px-6 py-16 text-center dark:border-zinc-800">
 
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 text-slate-400 dark:bg-zinc-900 dark:text-zinc-500">
-                <HiOutlineDocumentMagnifyingGlass size={22} />
-            </div>
+/* ================================================================
+   REPORT CARD
+================================================================ */
 
-            <h3 className="mt-4 text-sm font-bold text-slate-900 dark:text-white">
-                No team reports found
-            </h3>
+function ReportCard({ report }: { report: ReportItem }) {
+  const initials = report.user.name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
 
-            <p className="mt-1 max-w-xs text-xs text-slate-400 dark:text-zinc-500">
-                There are no reports available for the selected date.
+  return (
+    <article
+      className="
+        group
+        relative
+        min-w-0
+      "
+    >
+      {/* ======================================================
+          TIMELINE DOT
+      ====================================================== */}
+
+      <span
+        className="
+          absolute
+          -left-[25px]
+          top-5
+          h-2
+          w-2
+          rounded-full
+          border
+          border-white
+          bg-indigo-500
+          shadow-[0_0_0_3px_rgba(99,102,241,0.08)]
+          dark:border-zinc-950
+          dark:bg-indigo-400
+          dark:shadow-[0_0_0_3px_rgba(129,140,248,0.08)]
+          sm:-left-[34px]
+        "
+      />
+
+      {/* ======================================================
+          CARD
+      ====================================================== */}
+
+      <div
+        className="
+          overflow-hidden
+          rounded-xl
+          border
+          border-slate-200/80
+          bg-white
+          shadow-[0_3px_16px_rgba(15,23,42,0.035)]
+          transition-all
+          duration-200
+          hover:-translate-y-0.5
+          hover:border-slate-300
+          hover:shadow-[0_8px_24px_rgba(15,23,42,0.06)]
+          dark:border-zinc-800
+          dark:bg-zinc-950
+          dark:shadow-none
+          dark:hover:border-zinc-700
+        "
+      >
+        {/* ==================================================
+            USER HEADER
+        ================================================== */}
+
+        <div
+          className="
+            flex
+            items-center
+            gap-3
+            border-b
+            border-slate-100
+            px-4
+            py-3
+            dark:border-zinc-900
+            sm:px-5
+            sm:py-3.5
+          "
+        >
+          {/* AVATAR */}
+
+          <div
+            className="
+              flex
+              h-9
+              w-9
+              shrink-0
+              items-center
+              justify-center
+              rounded-full
+              bg-indigo-50
+              text-[10px]
+              font-bold
+              text-indigo-600
+              dark:bg-indigo-500/10
+              dark:text-indigo-400
+            "
+          >
+            {initials}
+          </div>
+
+          {/* USER DETAILS */}
+
+          <div className="min-w-0">
+            <p
+              className="
+                truncate
+                text-xs
+                font-bold
+                text-slate-900
+                dark:text-white
+              "
+            >
+              {report.user.name}
             </p>
 
+            <p
+              className="
+                mt-0.5
+                truncate
+                text-[10px]
+                text-slate-400
+                dark:text-zinc-600
+              "
+            >
+              {report.user.email}
+            </p>
+          </div>
         </div>
-    );
+
+        {/* ==================================================
+            REPORT CONTENT
+        ================================================== */}
+
+        <div
+          className="
+            px-4
+            py-4
+            sm:px-5
+            sm:py-4
+          "
+        >
+          <p
+            className="
+              whitespace-pre-wrap
+              break-words
+              text-[13px]
+              leading-6
+              text-slate-600
+              dark:text-zinc-400
+            "
+          >
+            {report.description}
+          </p>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+/* ================================================================
+   SKELETON
+================================================================ */
+
+function SkeletonList() {
+  return (
+    <div className="space-y-8 sm:space-y-9">
+      {[1, 2].map((section) => (
+        <div key={section}>
+          {/* DATE */}
+
+          <div
+            className="
+              mb-5
+              flex
+              items-center
+              gap-3
+            "
+          >
+            <div
+              className="
+                h-11
+                w-11
+                shrink-0
+                animate-pulse
+                rounded-xl
+                bg-slate-200
+                dark:bg-zinc-800
+              "
+            />
+
+            <div className="space-y-2">
+              <div
+                className="
+                  h-3
+                  w-36
+                  animate-pulse
+                  rounded
+                  bg-slate-200
+                  dark:bg-zinc-800
+                "
+              />
+
+              <div
+                className="
+                  h-2.5
+                  w-24
+                  animate-pulse
+                  rounded
+                  bg-slate-100
+                  dark:bg-zinc-900
+                "
+              />
+            </div>
+          </div>
+
+          {/* CARDS */}
+
+          <div
+            className="
+              ml-2
+              space-y-4
+              border-l
+              border-slate-200
+              pl-5
+              dark:border-zinc-800
+              sm:ml-4
+              sm:pl-7
+            "
+          >
+            {[1, 2].map((item) => (
+              <div
+                key={item}
+                className="
+                  overflow-hidden
+                  rounded-xl
+                  border
+                  border-slate-200
+                  bg-white
+                  dark:border-zinc-800
+                  dark:bg-zinc-950
+                "
+              >
+                <div
+                  className="
+                    flex
+                    animate-pulse
+                    items-center
+                    gap-3
+                    border-b
+                    border-slate-100
+                    px-4
+                    py-3.5
+                    dark:border-zinc-900
+                  "
+                >
+                  <div
+                    className="
+                      h-9
+                      w-9
+                      shrink-0
+                      rounded-full
+                      bg-slate-200
+                      dark:bg-zinc-800
+                    "
+                  />
+
+                  <div className="space-y-2">
+                    <div
+                      className="
+                        h-3
+                        w-24
+                        rounded
+                        bg-slate-200
+                        dark:bg-zinc-800
+                      "
+                    />
+
+                    <div
+                      className="
+                        h-2.5
+                        w-32
+                        rounded
+                        bg-slate-100
+                        dark:bg-zinc-900
+                      "
+                    />
+                  </div>
+                </div>
+
+                <div
+                  className="
+                    animate-pulse
+                    space-y-2
+                    px-4
+                    py-5
+                  "
+                >
+                  <div
+                    className="
+                      h-3
+                      w-full
+                      rounded
+                      bg-slate-100
+                      dark:bg-zinc-900
+                    "
+                  />
+
+                  <div
+                    className="
+                      h-3
+                      w-5/6
+                      rounded
+                      bg-slate-100
+                      dark:bg-zinc-900
+                    "
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ================================================================
+   EMPTY STATE
+================================================================ */
+
+function EmptyState({ hasDateFilter }: { hasDateFilter: boolean }) {
+  return (
+    <div
+      className="
+        flex
+        min-h-[300px]
+        w-full
+        flex-col
+        items-center
+        justify-center
+        rounded-xl
+        border
+        border-dashed
+        border-slate-200
+        bg-white/60
+        px-5
+        text-center
+        dark:border-zinc-800
+        dark:bg-zinc-950/40
+        sm:min-h-[320px]
+        sm:px-6
+      "
+    >
+      <div
+        className="
+          flex
+          h-12
+          w-12
+          items-center
+          justify-center
+          rounded-xl
+          bg-slate-100
+          text-slate-400
+          dark:bg-zinc-900
+          dark:text-zinc-600
+        "
+      >
+        <HiOutlineDocumentMagnifyingGlass className="h-5 w-5" />
+      </div>
+
+      <h3
+        className="
+          mt-4
+          text-sm
+          font-bold
+          text-slate-900
+          dark:text-white
+        "
+      >
+        {hasDateFilter ? "No reports for this date" : "No team reports found"}
+      </h3>
+
+      <p
+        className="
+          mt-2
+          max-w-[320px]
+          text-xs
+          leading-5
+          text-slate-400
+          dark:text-zinc-600
+        "
+      >
+        {hasDateFilter
+          ? "Try selecting another date or clear the date filter to view all reports."
+          : "There are no team reports available yet."}
+      </p>
+
+      {hasDateFilter && (
+        <p
+          className="
+            mt-3
+            text-[11px]
+            font-medium
+            text-indigo-500
+            dark:text-indigo-400
+          "
+        >
+          Use "Clear" above to view all reports.
+        </p>
+      )}
+    </div>
+  );
+}
+
+/* ================================================================
+   ERROR STATE
+================================================================ */
+
+function ErrorState() {
+  return (
+    <div
+      className="
+        flex
+        min-h-[300px]
+        w-full
+        flex-col
+        items-center
+        justify-center
+        rounded-xl
+        border
+        border-red-200
+        bg-red-50/50
+        px-5
+        text-center
+        dark:border-red-500/20
+        dark:bg-red-500/5
+      "
+    >
+      <div
+        className="
+          flex
+          h-12
+          w-12
+          items-center
+          justify-center
+          rounded-xl
+          bg-red-100
+          text-red-500
+          dark:bg-red-500/10
+          dark:text-red-400
+        "
+      >
+        <HiOutlineXMark className="h-5 w-5" />
+      </div>
+
+      <h3
+        className="
+          mt-4
+          text-sm
+          font-bold
+          text-slate-900
+          dark:text-white
+        "
+      >
+        Unable to load reports
+      </h3>
+
+      <p
+        className="
+          mt-2
+          text-xs
+          text-slate-500
+          dark:text-zinc-500
+        "
+      >
+        Something went wrong while loading the team reports.
+      </p>
+    </div>
+  );
 }
