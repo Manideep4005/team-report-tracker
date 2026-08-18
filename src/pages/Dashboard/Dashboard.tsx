@@ -680,151 +680,146 @@ export default function Dashboard() {
                     TEAM + ACTIVITY
                     ========================================================== */}
 
-        {canViewAllReports && (
-          <section className="grid gap-6 lg:grid-cols-2">
-            {/* Team Status */}
+        <section className="grid gap-6 lg:grid-cols-2">
+          {/* Team Status */}
 
-            <DashboardPanel
-              icon={<HiOutlineUserGroup />}
-              iconClass="text-violet-600 dark:text-violet-400"
-              title="Team status"
-              subtitle={`${submitted} of ${total} checked in`}
-            >
-              <div className="divide-y divide-slate-100 dark:divide-zinc-800">
-                {data?.teamStatus.map((member) => (
-                  <div
-                    key={member.id}
-                    className="flex items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-slate-50/60 dark:hover:bg-zinc-900/50"
-                  >
-                    <div className="flex min-w-0 items-center gap-3">
-                      <div
-                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ring-1 ring-black/[0.04] dark:ring-white/[0.05] ${avatarClasses(
-                          member.name,
-                        )}`}
-                      >
-                        {getInitial(member.name)}
-                      </div>
-
-                      <div className="min-w-0">
-                        <p className="truncate text-xs font-semibold text-slate-800 dark:text-zinc-200">
-                          {member.name}
-                        </p>
-
-                        <p className="mt-0.5 truncate text-[10px] text-slate-400 dark:text-zinc-600">
-                          {member.email}
-                        </p>
-                      </div>
-                    </div>
-
-                    {member.submitted ? (
-                      <span className="inline-flex shrink-0 items-center gap-1.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
-                        <HiOutlineCheck className="h-3.5 w-3.5" />
-                        Submitted
-                      </span>
-                    ) : (
-                      <span className="inline-flex shrink-0 items-center gap-1.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
-                        <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-                        Pending
-                      </span>
-                    )}
-                  </div>
-                ))}
-
-                {!data?.teamStatus.length && (
-                  <div className="px-5 py-12 text-center">
-                    <p className="text-xs font-medium text-slate-500 dark:text-zinc-500">
-                      No team members found.
-                    </p>
-                  </div>
-                )}
-              </div>
-            </DashboardPanel>
-
-            {/* Recent Activity */}
-
-            <DashboardPanel
-              icon={<HiOutlineBolt />}
-              iconClass="text-amber-600 dark:text-amber-400"
-              title="Recent activity"
-              subtitle={
-                data?.reports.length
-                  ? `${data.reports.length} reports`
-                  : "No activity yet"
-              }
-              action={
-                <button
-                  type="button"
-                  onClick={handleCopyReports}
-                  className="inline-flex h-8 items-center rounded-lg border border-slate-200 bg-white px-2.5 text-[10px] font-semibold text-slate-600 transition hover:bg-slate-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          <DashboardPanel
+            icon={<HiOutlineUserGroup />}
+            iconClass="text-violet-600 dark:text-violet-400"
+            title="Team status"
+            subtitle={`${submitted} of ${total} checked in`}
+          >
+            <div className="divide-y divide-slate-100 dark:divide-zinc-800">
+              {data?.teamStatus.map((member) => (
+                <div
+                  key={member.id}
+                  className="flex items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-slate-50/60 dark:hover:bg-zinc-900/50"
                 >
-                  <HiOutlineClipboardDocument className="mr-1.5 h-3.5 w-3.5" />
-                  Copy
-                </button>
-              }
-            >
-              <div className="max-h-[430px] overflow-y-auto">
-                {data?.reports.length === 0 && (
-                  <div className="px-5 py-14 text-center">
-                    <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-400 dark:bg-zinc-900 dark:text-zinc-600">
-                      <HiOutlineDocumentCheck className="h-5 w-5" />
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div
+                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ring-1 ring-black/[0.04] dark:ring-white/[0.05] ${avatarClasses(
+                        member.name,
+                      )}`}
+                    >
+                      {getInitial(member.name)}
                     </div>
 
-                    <p className="mt-3 text-xs font-medium text-slate-500 dark:text-zinc-500">
-                      No reports yet
-                    </p>
+                    <div className="min-w-0">
+                      <p className="truncate text-xs font-semibold text-slate-800 dark:text-zinc-200">
+                        {member.name}
+                      </p>
 
-                    <p className="mt-1 text-[10px] text-slate-400 dark:text-zinc-600">
-                      Reports submitted today will appear here.
-                    </p>
-                  </div>
-                )}
-
-                {data?.reports.map((report, index) => (
-                  <div
-                    key={report.id}
-                    className="relative flex gap-4 px-5 py-4"
-                  >
-                    {index < data.reports.length - 1 && (
-                      <span className="absolute bottom-0 left-[31px] top-[48px] w-px bg-slate-100 dark:bg-zinc-800" />
-                    )}
-
-                    <div className="relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-[11px] font-bold ring-1 ring-slate-200 dark:bg-zinc-950 dark:ring-zinc-800">
-                      <span
-                        className={`flex h-7 w-7 items-center justify-center rounded-full ${avatarClasses(
-                          report.user.name,
-                        )}`}
-                      >
-                        {getInitial(report.user.name)}
-                      </span>
-                    </div>
-
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-baseline justify-between gap-3">
-                        <p className="truncate text-xs font-semibold text-slate-800 dark:text-zinc-200">
-                          {report.user.name}
-                        </p>
-
-                        <time className="shrink-0 text-[10px] font-medium text-slate-400 dark:text-zinc-600">
-                          {new Date(report.createdAt).toLocaleTimeString(
-                            "en-IN",
-                            {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            },
-                          )}
-                        </time>
-                      </div>
-
-                      <p className="mt-2 whitespace-pre-wrap break-words text-xs leading-6 text-slate-500 dark:text-zinc-400">
-                        {report.description}
+                      <p className="mt-0.5 truncate text-[10px] text-slate-400 dark:text-zinc-600">
+                        {member.email}
                       </p>
                     </div>
                   </div>
-                ))}
-              </div>
-            </DashboardPanel>
-          </section>
-        )}
+
+                  {member.submitted ? (
+                    <span className="inline-flex shrink-0 items-center gap-1.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                      <HiOutlineCheck className="h-3.5 w-3.5" />
+                      Submitted
+                    </span>
+                  ) : (
+                    <span className="inline-flex shrink-0 items-center gap-1.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+                      <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                      Pending
+                    </span>
+                  )}
+                </div>
+              ))}
+
+              {!data?.teamStatus.length && (
+                <div className="px-5 py-12 text-center">
+                  <p className="text-xs font-medium text-slate-500 dark:text-zinc-500">
+                    No team members found.
+                  </p>
+                </div>
+              )}
+            </div>
+          </DashboardPanel>
+
+          {/* Recent Activity */}
+
+          <DashboardPanel
+            icon={<HiOutlineBolt />}
+            iconClass="text-amber-600 dark:text-amber-400"
+            title="Recent activity"
+            subtitle={
+              data?.reports.length
+                ? `${data.reports.length} reports`
+                : "No activity yet"
+            }
+            action={
+              <button
+                type="button"
+                onClick={handleCopyReports}
+                className="inline-flex h-8 items-center rounded-lg border border-slate-200 bg-white px-2.5 text-[10px] font-semibold text-slate-600 transition hover:bg-slate-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              >
+                <HiOutlineClipboardDocument className="mr-1.5 h-3.5 w-3.5" />
+                Copy
+              </button>
+            }
+          >
+            <div className="max-h-[430px] overflow-y-auto">
+              {data?.reports.length === 0 && (
+                <div className="px-5 py-14 text-center">
+                  <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-400 dark:bg-zinc-900 dark:text-zinc-600">
+                    <HiOutlineDocumentCheck className="h-5 w-5" />
+                  </div>
+
+                  <p className="mt-3 text-xs font-medium text-slate-500 dark:text-zinc-500">
+                    No reports yet
+                  </p>
+
+                  <p className="mt-1 text-[10px] text-slate-400 dark:text-zinc-600">
+                    Reports submitted today will appear here.
+                  </p>
+                </div>
+              )}
+
+              {data?.reports.map((report, index) => (
+                <div key={report.id} className="relative flex gap-4 px-5 py-4">
+                  {index < data.reports.length - 1 && (
+                    <span className="absolute bottom-0 left-[31px] top-[48px] w-px bg-slate-100 dark:bg-zinc-800" />
+                  )}
+
+                  <div className="relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-[11px] font-bold ring-1 ring-slate-200 dark:bg-zinc-950 dark:ring-zinc-800">
+                    <span
+                      className={`flex h-7 w-7 items-center justify-center rounded-full ${avatarClasses(
+                        report.user.name,
+                      )}`}
+                    >
+                      {getInitial(report.user.name)}
+                    </span>
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-baseline justify-between gap-3">
+                      <p className="truncate text-xs font-semibold text-slate-800 dark:text-zinc-200">
+                        {report.user.name}
+                      </p>
+
+                      <time className="shrink-0 text-[10px] font-medium text-slate-400 dark:text-zinc-600">
+                        {new Date(report.createdAt).toLocaleTimeString(
+                          "en-IN",
+                          {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          },
+                        )}
+                      </time>
+                    </div>
+
+                    <p className="mt-2 whitespace-pre-wrap break-words text-xs leading-6 text-slate-500 dark:text-zinc-400">
+                      {report.description}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </DashboardPanel>
+        </section>
       </div>
     </main>
   );
