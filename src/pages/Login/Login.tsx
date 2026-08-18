@@ -269,25 +269,25 @@ export default function Login() {
           >
             <div
               className="
-                                flex
-                                h-9
-                                w-9
-                                items-center
-                                justify-center
-
-                                rounded-xl
-
-                                bg-gradient-to-br
-                                from-blue-600
-                                to-indigo-600
-
-                                text-white
-
-                                shadow-md
-                                shadow-blue-500/20
-                            "
+    flex
+    h-9
+    w-9
+    shrink-0
+    items-center
+    justify-center
+    overflow-hidden
+    rounded-xl
+  "
             >
-              <HiOutlineUserGroup size={18} />
+              <img
+                src="/group.png"
+                alt="Team Work"
+                className="
+      h-full
+      w-full
+      object-contain
+    "
+              />
             </div>
 
             <div>
@@ -1045,7 +1045,7 @@ export default function Login() {
 
                 {/* Mobile brand */}
 
-                <div
+                {/* <div
                   className="
                                         mb-7
                                         flex
@@ -1057,25 +1057,25 @@ export default function Login() {
                 >
                   <div
                     className="
-                                            flex
-                                            h-9
-                                            w-9
-                                            items-center
-                                            justify-center
-
-                                            rounded-xl
-
-                                            bg-gradient-to-br
-                                            from-blue-600
-                                            to-indigo-600
-
-                                            text-white
-
-                                            shadow-md
-                                            shadow-blue-500/20
-                                        "
+    flex
+    h-9
+    w-9
+    shrink-0
+    items-center
+    justify-center
+    overflow-hidden
+    rounded-xl
+  "
                   >
-                    <HiOutlineUserGroup size={17} />
+                    <img
+                      src="/group.png"
+                      alt="Team Work"
+                      className="
+      h-full
+      w-full
+      object-contain
+    "
+                    />
                   </div>
 
                   <div>
@@ -1105,7 +1105,7 @@ export default function Login() {
                       Report Tracker
                     </p>
                   </div>
-                </div>
+                </div> */}
 
                 {/* Heading */}
 
