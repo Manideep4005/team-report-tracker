@@ -7,15 +7,18 @@ import {
 } from "react";
 
 import * as auth from "../services/auth";
+
 import {
     hasPermission,
     hasAnyPermission,
     hasAllPermissions,
 } from "../utils/permissions";
+
 import type { User } from "../services/auth";
 
 
 interface Context {
+
     user: User | null;
 
     login: (
@@ -25,7 +28,21 @@ interface Context {
 
     logout: () => Promise<void>;
 
-    updateUser: (user: User) => void;
+    /*
+     * Update the currently authenticated user
+     * inside AuthContext.
+     */
+    updateUser: (
+        user: User
+    ) => void;
+
+    /*
+     * Re-fetch the currently authenticated user
+     * from the backend.
+     *
+     * This is important after role/permission changes.
+     */
+    refreshUser: () => Promise<void>;
 
     hasPermission: (
         permission: string
@@ -42,7 +59,10 @@ interface Context {
     loading: boolean;
 }
 
-const AuthContext = createContext({} as Context);
+
+const AuthContext =
+    createContext({} as Context);
+
 
 export function AuthProvider({
 
@@ -50,26 +70,69 @@ export function AuthProvider({
 
 }: {
 
-    children: ReactNode
+    children: ReactNode;
 
 }) {
 
-    const [user, setUser] = useState<User | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [
+        user,
+        setUser,
+    ] = useState<User | null>(null);
+
+
+    const [
+        loading,
+        setLoading,
+    ] = useState(true);
+
+
+    /*
+     * =========================================================
+     * LOAD USER
+     * =========================================================
+     */
+
+    async function loadUser() {
+
+        try {
+
+            const response =
+                await auth.me();
+
+            setUser(
+                response.user
+            );
+
+        } catch {
+
+            setUser(null);
+
+        } finally {
+
+            setLoading(false);
+
+        }
+    }
+
+
+    /*
+     * =========================================================
+     * INITIAL LOAD
+     * =========================================================
+     */
 
     useEffect(() => {
-        async function loadUser() {
-            try {
-                const response = await auth.me();
-                setUser(response.user);
-            } catch (err) {
-                setUser(null);
-            } finally {
-                setLoading(false);
-            }
-        }
+
         loadUser();
+
     }, []);
+
+
+    /*
+     * =========================================================
+     * LOGIN
+     * =========================================================
+     */
 
     async function login(
 
@@ -79,17 +142,28 @@ export function AuthProvider({
 
     ) {
 
-        const response = await auth.login({
+        const response =
+            await auth.login({
 
-            email,
+                email,
 
-            password,
+                password,
 
-        });
+            });
 
-        setUser(response.user);
+
+        setUser(
+            response.user
+        );
 
     }
+
+
+    /*
+     * =========================================================
+     * LOGOUT
+     * =========================================================
+     */
 
     async function logout() {
 
@@ -99,60 +173,145 @@ export function AuthProvider({
 
     }
 
-    function updateUser(user: User) {
+
+    /*
+     * =========================================================
+     * UPDATE USER
+     * =========================================================
+     */
+
+    function updateUser(
+        user: User
+    ) {
+
         setUser(user);
+
     }
+
+
+    /*
+     * =========================================================
+     * REFRESH CURRENT USER
+     *
+     * Used when role/permission changes.
+     * =========================================================
+     */
+
+    async function refreshUser() {
+
+        try {
+
+            const response =
+                await auth.me();
+
+            setUser(
+                response.user
+            );
+
+        } catch {
+
+            /*
+             * If the current session is no longer valid,
+             * clear the authenticated user.
+             */
+
+            setUser(null);
+
+        }
+
+    }
+
+
+    /*
+     * =========================================================
+     * PERMISSION CHECKS
+     * =========================================================
+     */
 
     function checkPermission(
         permission: string
     ) {
+
         return hasPermission(
             user,
             permission
         );
+
     }
+
 
     function checkAnyPermission(
         permissions: string[]
     ) {
+
         return hasAnyPermission(
             user,
             permissions
         );
+
     }
+
 
     function checkAllPermissions(
         permissions: string[]
     ) {
+
         return hasAllPermissions(
             user,
             permissions
         );
+
     }
+
+
+    /*
+     * =========================================================
+     * PROVIDER
+     * =========================================================
+     */
 
     return (
 
         <AuthContext.Provider
             value={{
+
                 user,
+
                 login,
+
                 logout,
+
                 updateUser,
-                hasPermission: checkPermission,
-                hasAnyPermission: checkAnyPermission,
-                hasAllPermissions: checkAllPermissions,
+
+                refreshUser,
+
+                hasPermission:
+                    checkPermission,
+
+                hasAnyPermission:
+                    checkAnyPermission,
+
+                hasAllPermissions:
+                    checkAllPermissions,
+
                 loading,
+
             }}
         >
+
             {children}
+
         </AuthContext.Provider>
 
-    )
+    );
 
 }
 
+
 export function useAuth() {
 
-    return useContext(AuthContext);
+    return useContext(
+        AuthContext
+    );
 
 }

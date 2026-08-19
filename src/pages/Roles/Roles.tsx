@@ -29,7 +29,10 @@ import { useAuth } from "../../context/AuthContext";
 ================================================================ */
 
 export default function Roles() {
-  const { hasPermission } = useAuth();
+  const {
+    hasPermission,
+    refreshUser,
+  } = useAuth();
 
   const [deleteTarget, setDeleteTarget] = useState<Role | null>(null);
 
@@ -127,16 +130,48 @@ export default function Roles() {
       };
     }) => updateRole(id, payload),
 
-    onSuccess: (response) => {
-      toast.success(response.message);
+    onSuccess: async (response) => {
+
+      /*
+       * First close the edit modal.
+       */
 
       setEditRole(null);
 
-      refetch();
+
+      /*
+       * Refresh the roles list.
+       */
+
+      await refetch();
+
+
+      /*
+       * IMPORTANT:
+       *
+       * Refresh the currently authenticated user.
+       *
+       * This causes AuthContext to receive the
+       * latest role/permission information from
+       * the backend.
+       */
+
+      await refreshUser();
+
+
+      toast.success(
+        response.message
+      );
+
     },
 
     onError: (error: any) => {
-      toast.error(error?.response?.data?.message ?? "Unable to update role.");
+
+      toast.error(
+        error?.response?.data?.message ??
+        "Unable to update role."
+      );
+
     },
   });
 
@@ -1429,9 +1464,8 @@ function PermissionSelector({
                                         transition-all
                                         duration-150
 
-                                        ${
-                                          selected
-                                            ? `
+                                        ${selected
+                    ? `
                                                     border-indigo-200
                                                     bg-indigo-50/70
                                                     shadow-sm
@@ -1439,7 +1473,7 @@ function PermissionSelector({
                                                     dark:border-indigo-500/30
                                                     dark:bg-indigo-500/10
                                                 `
-                                            : `
+                    : `
                                                     border-slate-200
                                                     bg-white
                                                     hover:border-slate-300
@@ -1448,7 +1482,7 @@ function PermissionSelector({
                                                     dark:bg-zinc-900/40
                                                     dark:hover:bg-zinc-900
                                                 `
-                                        }
+                  }
                                     `}
               >
                 {/* CHECKBOX */}
@@ -1467,20 +1501,19 @@ function PermissionSelector({
                                             text-[9px]
                                             font-bold
 
-                                            ${
-                                              selected
-                                                ? `
+                                            ${selected
+                      ? `
                                                         border-indigo-600
                                                         bg-indigo-600
                                                         text-white
                                                     `
-                                                : `
+                      : `
                                                         border-slate-300
                                                         bg-white
                                                         dark:border-zinc-700
                                                         dark:bg-zinc-950
                                                     `
-                                            }
+                    }
                                         `}
                 >
                   {selected ? "✓" : ""}

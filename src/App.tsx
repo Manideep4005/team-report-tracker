@@ -1,8 +1,10 @@
 import { Routes, Route } from "react-router-dom";
 
 import Login from "./pages/Login/Login";
+
 import ProtectedRoute from "./routes/ProtectedRoute";
 import DashboardLayout from "./layouts/DashboardLayout";
+
 import Dashboard from "./pages/Dashboard/Dashboard";
 import History from "./pages/History/History";
 import Settings from "./pages/Settings/Settings";
@@ -10,17 +12,46 @@ import Users from "./pages/Users/Users";
 import Roles from "./pages/Roles/Roles";
 import Reports from "./pages/Reports/Reports";
 import LoginHistory from "./pages/LoginHistory/LoginHistory";
-import Permissions
-    from "./pages/Permissions/Permissions";
+import Permissions from "./pages/Permissions/Permissions";
+
+import PublicMonitorManagement
+    from "./pages/PublicMonitorManagement/PublicMonitorManagement";
+
+import PublicMonitorView
+    from "./pages/PublicMonitorView/PublicMonitorView";
+
+
 
 function App() {
+
     return (
         <Routes>
+
+            {/* Login */}
+
             <Route
                 path="/"
                 element={<Login />}
             />
 
+
+            {/* =================================================
+                PUBLIC MONITOR VIEW
+
+                NO AUTHENTICATION
+            ================================================= */}
+
+            <Route
+                path="/monitor/:token"
+                element={
+                    <PublicMonitorView />
+                }
+            />
+
+
+            {/* =================================================
+                DASHBOARD
+            ================================================= */}
 
             <Route
                 path="/dashboard"
@@ -33,6 +64,9 @@ function App() {
                 }
             />
 
+
+            {/* History */}
+
             <Route
                 path="/history"
                 element={
@@ -43,6 +77,9 @@ function App() {
                     </ProtectedRoute>
                 }
             />
+
+
+            {/* Settings */}
 
             <Route
                 path="/settings"
@@ -55,6 +92,9 @@ function App() {
                 }
             />
 
+
+            {/* Users */}
+
             <Route
                 path="/users"
                 element={
@@ -65,6 +105,9 @@ function App() {
                     </ProtectedRoute>
                 }
             />
+
+
+            {/* Reports */}
 
             <Route
                 path="/reports"
@@ -78,6 +121,8 @@ function App() {
             />
 
 
+            {/* Login History */}
+
             <Route
                 path="/login-history"
                 element={
@@ -88,6 +133,9 @@ function App() {
                     </ProtectedRoute>
                 }
             />
+
+
+            {/* Roles */}
 
             <Route
                 path="/roles"
@@ -100,6 +148,9 @@ function App() {
                 }
             />
 
+
+            {/* Permissions */}
+
             <Route
                 path="/permissions"
                 element={
@@ -110,10 +161,28 @@ function App() {
                     </ProtectedRoute>
                 }
             />
+
+
+            {/* =================================================
+                PUBLIC MONITOR MANAGEMENT
+
+                AUTHENTICATED
+            ================================================= */}
+
+            <Route
+                path="/public-monitor"
+                element={
+                    <ProtectedRoute>
+                        <DashboardLayout>
+                            <PublicMonitorManagement />
+                        </DashboardLayout>
+                    </ProtectedRoute>
+                }
+            />
+
         </Routes>
-
-
     );
 }
+
 
 export default App;
