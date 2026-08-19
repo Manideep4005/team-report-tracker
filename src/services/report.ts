@@ -32,10 +32,21 @@ export async function getTodayReport() {
   return data;
 }
 
-export async function getHistory(date?: string) {
-  const { data } = await api.get("/api/reports/history", {
-    params: date ? { date } : {},
-  });
+export async function getHistory(
+  date?: string,
+  page = 1,
+  limit = 10
+) {
+  const { data } = await api.get(
+    "/api/reports/history",
+    {
+      params: {
+        ...(date ? { date } : {}),
+        page,
+        limit,
+      },
+    }
+  );
 
   return data;
 }
@@ -50,13 +61,27 @@ export async function getTeamReports() {
   const { data } = await api.get("/api/team");
   return data;
 }
-export async function getAllReports(date?: string) {
-  const { data } = await api.get("/api/reports/all", {
-    params: date ? { date } : {},
-  });
+
+export async function getAllReports(
+  date?: string,
+  page = 1,
+  limit = 10
+) {
+  const { data } = await api.get(
+    "/api/reports/all",
+    {
+      params: {
+        ...(date ? { date } : {}),
+        page,
+        limit,
+      },
+    }
+  );
 
   return data;
 }
+
+
 // export async function getSummaryByDate(date: string) {
 //   const { data } = await api.get("/api/summary/by-date", {
 //     params: { date },
