@@ -92,43 +92,33 @@ export interface RevokeMonitorLinkResponse {
 
 export interface PublicMonitorReport {
     id: string;
-
     reportDate: string;
-
     description: string;
-
     createdAt: string;
-
     updatedAt: string;
-
-    user: {
-        id: string;
-        name: string;
-        email?: string;
-    };
 }
 
 
 export interface PublicMonitorTeamMember {
     id: string;
-
     name: string;
-
     submitted: boolean;
+
+    report: PublicMonitorReport | null;
+}
+
+
+export interface PublicMonitorStats {
+    submitted: number;
+    totalMembers: number;
+    completion: number;
 }
 
 
 export interface PublicMonitorData {
     date: string;
 
-    stats: {
-        submitted: number;
-        pending: number;
-        totalMembers: number;
-        completion: number;
-    };
-
-    reports: PublicMonitorReport[];
+    stats: PublicMonitorStats;
 
     teamStatus: PublicMonitorTeamMember[];
 }

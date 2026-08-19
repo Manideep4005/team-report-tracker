@@ -19,6 +19,13 @@ import {
     type PublicMonitorReport,
 } from "../../services/publicMonitor";
 
+type PublicMonitorReportWithUser =
+    PublicMonitorReport & {
+        user: {
+            name: string;
+        };
+    };
+
 
 /* =========================================================
    HELPERS
@@ -91,7 +98,7 @@ function formatReportDescription(
 function ReportCard({
     report,
 }: {
-    report: PublicMonitorReport;
+    report: PublicMonitorReportWithUser;
 }) {
 
     const lines =
@@ -373,21 +380,68 @@ export default function PublicMonitorView() {
         data?.data;
 
 
-    const reports =
-        monitorData?.reports ?? [];
-
-
     const teamStatus =
         monitorData?.teamStatus ?? [];
 
 
-    const stats =
+    /*
+     * The backend does not return a top-level `reports`
+     * array.
+     *
+     * Reports are inside:
+     *
+     * teamStatus[].report
+     *
+     * Convert them into the format required by ReportCard
+     * and attach the member name from teamStatus.
+     */
+    const reports: PublicMonitorReportWithUser[] =
+        teamStatus
+            .filter(
+                member =>
+                    member.submitted &&
+                    member.report
+            )
+            .map(member => ({
+                ...member.report!,
+                user: {
+                    name: member.name,
+                },
+            }));
+
+    const backendStats =
         monitorData?.stats ?? {
             submitted: 0,
-            pending: 0,
             totalMembers: 0,
             completion: 0,
         };
+
+
+    /*
+     * Backend currently does not return `pending`.
+     *
+     * Calculate it from total members - submitted.
+     */
+    const pending =
+        Math.max(
+            backendStats.totalMembers -
+            backendStats.submitted,
+            0
+        );
+
+
+    const stats = {
+        submitted:
+            backendStats.submitted,
+
+        pending,
+
+        totalMembers:
+            backendStats.totalMembers,
+
+        completion:
+            backendStats.completion,
+    };
 
 
     /* =====================================================
