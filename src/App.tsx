@@ -19,6 +19,7 @@ import PublicMonitorManagement
 
 import PublicMonitorView
     from "./pages/PublicMonitorView/PublicMonitorView";
+import Chat from "./pages/Chat/Chat";
 
 
 
@@ -157,6 +158,20 @@ function App() {
                     <ProtectedRoute>
                         <DashboardLayout>
                             <Permissions />
+                        </DashboardLayout>
+                    </ProtectedRoute>
+                }
+            />
+
+            {/* chat */}
+            {/* Chat */}
+
+            <Route
+                path="/chat"
+                element={
+                    <ProtectedRoute>
+                        <DashboardLayout>
+                            <Chat />
                         </DashboardLayout>
                     </ProtectedRoute>
                 }

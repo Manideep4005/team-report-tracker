@@ -13,6 +13,7 @@ import {
   HiOutlineMoon,
   HiOutlineSun,
   HiOutlineLink,
+  HiOutlineChatBubbleLeftRight,
 } from "react-icons/hi2";
 
 import { NavLink, useNavigate } from "react-router-dom";
@@ -297,6 +298,31 @@ export default function Sidebar({
           </span>
 
         </NavLink>
+
+
+        {/* Chat */}
+
+        {hasPermission("CHATS_VIEW") && (
+          <NavLink
+            to="/chat"
+            className={linkClass}
+            onClick={
+              mobile
+                ? onClose
+                : undefined
+            }
+          >
+            <span className="sidebar-link-icon">
+              <HiOutlineChatBubbleLeftRight
+                size={18}
+              />
+            </span>
+
+            <span>
+              Chat
+            </span>
+          </NavLink>
+        )}
 
 
         {/* My Reports */}
