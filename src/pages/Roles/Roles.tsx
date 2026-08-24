@@ -595,7 +595,7 @@ function RoleCard({
               </span>
             ))}
 
-            {role.permissions.length > 5 && (
+            {role.permissions.length > 4 && (
               <span
                 className="
                                     inline-flex
@@ -614,7 +614,7 @@ function RoleCard({
                                     dark:text-zinc-500
                                 "
               >
-                +{role.permissions.length - 5}
+                +{role.permissions.length - 4}
               </span>
             )}
 
