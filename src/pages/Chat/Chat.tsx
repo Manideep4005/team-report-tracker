@@ -97,6 +97,155 @@ export default function Chat() {
     const messagesEndRef =
         useRef<HTMLDivElement | null>(null);
 
+
+    async function requestNotificationPermission() {
+        if (!("Notification" in window)) {
+            console.log("Browser notifications are not supported");
+            return;
+        }
+
+        if (Notification.permission === "default") {
+            const permission =
+                await Notification.requestPermission();
+
+            console.log(
+                "Notification permission:",
+                permission
+            );
+        }
+    }
+
+    useEffect(() => {
+        requestNotificationPermission();
+    }, []);
+
+    function playNotificationSound() {
+        try {
+            const AudioContext =
+                window.AudioContext ||
+                (
+                    window as typeof window & {
+                        webkitAudioContext?: typeof AudioContext;
+                    }
+                ).webkitAudioContext;
+
+            if (!AudioContext) {
+                return;
+            }
+
+            const audioContext =
+                new AudioContext();
+
+            const oscillator =
+                audioContext.createOscillator();
+
+            const gainNode =
+                audioContext.createGain();
+
+            oscillator.type = "sine";
+
+            // First tone
+            oscillator.frequency.setValueAtTime(
+                880,
+                audioContext.currentTime
+            );
+
+            // Second tone
+            oscillator.frequency.setValueAtTime(
+                660,
+                audioContext.currentTime + 0.15
+            );
+
+            gainNode.gain.setValueAtTime(
+                0.0001,
+                audioContext.currentTime
+            );
+
+            gainNode.gain.exponentialRampToValueAtTime(
+                0.8,
+                audioContext.currentTime + 0.02
+            );
+
+            gainNode.gain.exponentialRampToValueAtTime(
+                0.0001,
+                audioContext.currentTime + 0.45
+            );
+
+            oscillator.connect(gainNode);
+            gainNode.connect(
+                audioContext.destination
+            );
+
+            oscillator.start();
+
+            oscillator.stop(
+                audioContext.currentTime + 0.45
+            );
+
+            oscillator.onended = () => {
+                audioContext.close();
+            };
+        } catch (error) {
+            console.error(
+                "Notification sound failed:",
+                error
+            );
+        }
+    }
+
+    function showMessageNotification(
+        newMessage: Message
+    ) {
+        if (!user?.id) {
+            return;
+        }
+
+        if (newMessage.senderId === user.id) {
+            return;
+        }
+
+        if (!("Notification" in window)) {
+            return;
+        }
+
+        if (
+            Notification.permission !==
+            "granted"
+        ) {
+            return;
+        }
+
+        const currentConversation =
+            selectedConversationRef.current;
+
+        if (
+            currentConversation?.id ===
+            newMessage.conversationId
+        ) {
+            return;
+        }
+
+        const notification =
+            new Notification(
+                `💬 ${newMessage.sender.name}`,
+                {
+                    body: newMessage.content,
+                    tag: `chat-${newMessage.conversationId}`,
+                }
+            );
+
+        playNotificationSound();
+
+        notification.onclick = () => {
+            window.focus();
+            notification.close();
+        };
+
+        setTimeout(() => {
+            notification.close();
+        }, 5000);
+    }
+
     /*
      * Keep selected conversation ref
      * synchronized.
@@ -108,6 +257,7 @@ export default function Chat() {
         selectedConversationRef.current =
             selectedConversation;
     }, [selectedConversation]);
+
 
     /*
      * LOAD CONVERSATIONS
@@ -195,6 +345,15 @@ export default function Chat() {
         socket.on(
             "new_message",
             (newMessage: Message) => {
+                console.log(
+                    "🔔 NEW MESSAGE EVENT:",
+                    newMessage
+                );
+
+                showMessageNotification(
+                    newMessage
+                );
+
                 const currentConversation =
                     selectedConversationRef.current;
 
@@ -907,6 +1066,8 @@ export default function Chat() {
             );
         }
 
+
+
         return conversations.map(
             (conversation) => {
                 const active =
@@ -1535,6 +1696,8 @@ export default function Chat() {
                         py-4
                     "
                 >
+
+
                     <div>
                         <h1 className="text-lg font-semibold text-[var(--text-primary)]">
                             Chat
