@@ -1,160 +1,158 @@
 import {
+  useState,
+  type FormEvent,
+} from "react";
+
+import {
   HiOutlineEye,
   HiOutlineEyeSlash,
-  HiOutlineUserGroup,
-  HiOutlineCheckCircle,
-  HiOutlineClock,
-  HiOutlineArrowRight,
+  HiOutlineLockClosed,
+  HiOutlineEnvelope,
   HiOutlineShieldCheck,
 } from "react-icons/hi2";
 
 import { useNavigate } from "react-router-dom";
-import { useState, type FormEvent } from "react";
 
-import { useAuth } from "../../context/AuthContext";
 import { toast } from "sonner";
 
-import { useQuery } from "@tanstack/react-query";
-import { getLoginPreview } from "../../services/dashboard";
+import { useAuth } from "../../context/AuthContext";
 
-/* ========================================================================== */
-/* Types                                                                      */
-/* ========================================================================== */
-
-interface TeamMember {
-  name: string;
-  submitted: boolean;
-}
-
-interface LoginPreview {
-  date: string;
-
-  stats: {
-    submitted: number;
-    pending: number;
-    totalMembers: number;
-    completion: number;
-  };
-
-  teamStatus: TeamMember[];
-}
-
-/* ========================================================================== */
-/* Helpers                                                                    */
-/* ========================================================================== */
-
-function getInitials(name: string) {
-  if (!name?.trim()) return "?";
-
-  return name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part.charAt(0))
-    .join("")
-    .toUpperCase();
-}
-
-/* ========================================================================== */
-/* Login                                                                      */
-/* ========================================================================== */
 
 export default function Login() {
+
   const { login } = useAuth();
+
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState("");
 
-  const [password, setPassword] = useState("");
+  const [email, setEmail] =
+    useState("");
 
-  const [showPassword, setShowPassword] = useState(false);
+  const [password, setPassword] =
+    useState("");
 
-  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] =
+    useState(false);
 
-  /* ---------------------------------------------------------------------- */
-  /* Live team preview                                                      */
-  /* ---------------------------------------------------------------------- */
+  const [loading, setLoading] =
+    useState(false);
 
-  const { data: previewResponse, isLoading: previewLoading } = useQuery({
-    queryKey: ["login-preview"],
 
-    queryFn: getLoginPreview,
+  /*
+   * =========================================================
+   * LOGIN
+   * =========================================================
+   */
 
-    staleTime: 60 * 1000,
+  async function handleSubmit(
+    event: FormEvent<HTMLFormElement>
+  ) {
 
-    retry: 1,
-  });
-
-  const preview: LoginPreview | null = previewResponse?.data ?? null;
-
-  const stats = preview?.stats;
-
-  const teamStatus = preview?.teamStatus ?? [];
-
-  /* ---------------------------------------------------------------------- */
-  /* Login                                                                   */
-  /* ---------------------------------------------------------------------- */
-
-  async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (loading) return;
 
-    const trimmedEmail = email.trim();
+    const cleanEmail =
+      email.trim();
 
-    if (!trimmedEmail || !password.trim()) {
-      toast.warning("Please enter email and password.");
+
+    /*
+     * Basic validation
+     */
+
+    if (!cleanEmail) {
+
+      toast.error(
+        "Please enter your email address."
+      );
 
       return;
     }
 
+
+    if (!password) {
+
+      toast.error(
+        "Please enter your password."
+      );
+
+      return;
+    }
+
+
     try {
+
       setLoading(true);
 
-      await login(trimmedEmail, password);
 
-      navigate("/dashboard");
-    } catch (error: any) {
-      toast.error(
-        error?.response?.data?.message ?? "Invalid email or password.",
+      /*
+       * Authenticate user.
+       *
+       * AuthContext updates the authenticated
+       * user state.
+       */
+
+      await login(
+        cleanEmail,
+        password
       );
+
+
+      /*
+       * Authentication succeeded.
+       *
+       * Send the user to the dashboard.
+       *
+       * replace: true prevents the login page
+       * from remaining in browser history.
+       */
+
+      navigate(
+        "/dashboard",
+        {
+          replace: true,
+        }
+      );
+
+
+    } catch (error: any) {
+
+      const message =
+        error?.response?.data?.message ??
+        error?.message ??
+        "Unable to sign in. Please check your credentials.";
+
+
+      toast.error(
+        message
+      );
+
+
     } finally {
+
       setLoading(false);
+
     }
   }
 
-  /* ---------------------------------------------------------------------- */
-  /* Date                                                                    */
-  /* ---------------------------------------------------------------------- */
-
-  const today = new Date().toLocaleDateString("en-IN", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
 
   return (
-    <div
+
+    <main
       className="
                 relative
                 min-h-screen
                 overflow-hidden
-
-                bg-slate-50
-                text-slate-900
-
-                transition-colors
-                duration-300
-
-                dark:bg-[#09090b]
-                dark:text-zinc-100
+                bg-[#020817]
+                text-white
             "
     >
-      {/* =================================================================
+
+      {/* =====================================================
                 BACKGROUND
-            ================================================================= */}
+            ===================================================== */}
 
       <div
+        aria-hidden="true"
         className="
                     pointer-events-none
                     absolute
@@ -162,1396 +160,995 @@ export default function Login() {
                     overflow-hidden
                 "
       >
-        {/* Primary glow */}
 
-        <div
-          className="
-                        absolute
-                        left-1/3
-                        top-[-300px]
-
-                        h-[620px]
-                        w-[620px]
-
-                        -translate-x-1/2
-
-                        rounded-full
-
-                        bg-blue-500/[0.055]
-
-                        blur-[130px]
-
-                        dark:bg-blue-500/[0.075]
-                    "
-        />
-
-        {/* Secondary glow */}
-
-        <div
-          className="
-                        absolute
-                        bottom-[-280px]
-                        right-[-180px]
-
-                        h-[500px]
-                        w-[500px]
-
-                        rounded-full
-
-                        bg-indigo-500/[0.045]
-
-                        blur-[120px]
-
-                        dark:bg-indigo-500/[0.055]
-                    "
-        />
-
-        {/* Subtle grid */}
+        {/* Fine grid */}
 
         <div
           className="
                         absolute
                         inset-0
-
-                        opacity-[0.018]
-
-                        dark:opacity-[0.025]
+                        opacity-[0.045]
+                        bg-[linear-gradient(to_right,#64748b_1px,transparent_1px),linear-gradient(to_bottom,#64748b_1px,transparent_1px)]
+                        bg-[size:48px_48px]
                     "
-          style={{
-            backgroundImage:
-              "linear-gradient(currentColor 1px, transparent 1px), linear-gradient(90deg, currentColor 1px, transparent 1px)",
-            backgroundSize: "48px 48px",
-          }}
         />
+
+
+        {/* Center glow */}
+
+        <div
+          className="
+                        absolute
+                        left-1/2
+                        top-1/2
+                        h-[700px]
+                        w-[700px]
+                        -translate-x-1/2
+                        -translate-y-1/2
+                        rounded-full
+                        bg-blue-600/[0.035]
+                        blur-[120px]
+                    "
+        />
+
+
+        {/* Top-left glow */}
+
+        <div
+          className="
+                        absolute
+                        -left-40
+                        -top-40
+                        h-[500px]
+                        w-[500px]
+                        rounded-full
+                        bg-cyan-500/[0.025]
+                        blur-[110px]
+                    "
+        />
+
+
+        {/* Bottom-right glow */}
+
+        <div
+          className="
+                        absolute
+                        -bottom-40
+                        -right-40
+                        h-[550px]
+                        w-[550px]
+                        rounded-full
+                        bg-indigo-500/[0.035]
+                        blur-[120px]
+                    "
+        />
+
+
+        {/* =================================================
+                    LEFT DECORATIVE NETWORK
+                ================================================= */}
+
+        <div
+          className="
+                        absolute
+                        left-[5%]
+                        top-[28%]
+                        hidden
+                        h-[360px]
+                        w-[300px]
+                        lg:block
+                    "
+        >
+
+          {/* Horizontal line */}
+
+          <div
+            className="
+                            absolute
+                            left-0
+                            top-16
+                            h-px
+                            w-44
+                            bg-gradient-to-r
+                            from-blue-500/30
+                            to-transparent
+                        "
+          />
+
+
+          {/* Vertical line */}
+
+          <div
+            className="
+                            absolute
+                            left-24
+                            top-16
+                            h-44
+                            w-px
+                            bg-gradient-to-b
+                            from-blue-500/30
+                            to-transparent
+                        "
+          />
+
+
+          {/* Node */}
+
+          <span
+            className="
+                            absolute
+                            left-[5.65rem]
+                            top-[3.7rem]
+                            h-2
+                            w-2
+                            rounded-full
+                            bg-blue-500/60
+                            shadow-[0_0_14px_rgba(59,130,246,0.7)]
+                        "
+          />
+
+
+          {/* Second horizontal */}
+
+          <div
+            className="
+                            absolute
+                            left-24
+                            top-60
+                            h-px
+                            w-48
+                            bg-gradient-to-r
+                            from-blue-500/25
+                            to-transparent
+                        "
+          />
+
+
+          <span
+            className="
+                            absolute
+                            left-[14.5rem]
+                            top-[14.75rem]
+                            h-1.5
+                            w-1.5
+                            rounded-full
+                            bg-cyan-400/60
+                        "
+          />
+
+
+          {/* Document box */}
+
+          <div
+            className="
+                            absolute
+                            left-0
+                            top-8
+                            flex
+                            h-20
+                            w-24
+                            items-center
+                            justify-center
+                            rounded-xl
+                            border
+                            border-blue-400/10
+                            bg-slate-900/20
+                        "
+          >
+
+            <div
+              className="
+                                h-10
+                                w-8
+                                rounded-md
+                                border
+                                border-blue-400/20
+                            "
+            />
+
+          </div>
+
+
+          {/* Team node */}
+
+          <div
+            className="
+                            absolute
+                            left-20
+                            top-40
+                            flex
+                            h-20
+                            w-24
+                            items-center
+                            justify-center
+                            rounded-xl
+                            border
+                            border-blue-400/10
+                            bg-slate-900/20
+                        "
+          >
+
+            <div
+              className="
+                                h-8
+                                w-8
+                                rounded-full
+                                border
+                                border-blue-400/20
+                            "
+            />
+
+          </div>
+
+        </div>
+
+
+        {/* =================================================
+                    RIGHT DECORATIVE NETWORK
+                ================================================= */}
+
+        <div
+          className="
+                        absolute
+                        right-[4%]
+                        bottom-[18%]
+                        hidden
+                        h-[330px]
+                        w-[300px]
+                        lg:block
+                    "
+        >
+
+          <div
+            className="
+                            absolute
+                            right-0
+                            top-16
+                            h-px
+                            w-48
+                            bg-gradient-to-l
+                            from-indigo-500/30
+                            to-transparent
+                        "
+          />
+
+
+          <div
+            className="
+                            absolute
+                            right-24
+                            top-16
+                            h-44
+                            w-px
+                            bg-gradient-to-b
+                            from-indigo-500/30
+                            to-transparent
+                        "
+          />
+
+
+          <span
+            className="
+                            absolute
+                            right-[5.9rem]
+                            top-[3.7rem]
+                            h-2
+                            w-2
+                            rounded-full
+                            bg-indigo-500/60
+                            shadow-[0_0_14px_rgba(99,102,241,0.7)]
+                        "
+          />
+
+
+          <div
+            className="
+                            absolute
+                            bottom-8
+                            right-8
+                            h-40
+                            w-40
+                            rounded-full
+                            border
+                            border-blue-500/[0.08]
+                        "
+          />
+
+
+          <div
+            className="
+                            absolute
+                            bottom-14
+                            right-14
+                            h-28
+                            w-28
+                            rounded-full
+                            border
+                            border-blue-500/[0.08]
+                        "
+          />
+
+
+          <div
+            className="
+                            absolute
+                            bottom-20
+                            right-20
+                            h-16
+                            w-16
+                            rounded-full
+                            border
+                            border-blue-500/[0.10]
+                        "
+          />
+
+
+          <span
+            className="
+                            absolute
+                            bottom-[4.4rem]
+                            right-[4.4rem]
+                            h-3
+                            w-3
+                            rounded-full
+                            bg-blue-500/60
+                            shadow-[0_0_18px_rgba(59,130,246,0.8)]
+                        "
+          />
+
+        </div>
+
       </div>
 
-      {/* =================================================================
-                PAGE
-            ================================================================= */}
 
-      <div
+      {/* =====================================================
+                HEADER
+            ===================================================== */}
+
+      <header
         className="
-                    relative
-                    z-10
-
+                    absolute
+                    left-0
+                    right-0
+                    top-0
+                    z-20
                     flex
-                    min-h-screen
-                    flex-col
+                    h-20
+                    items-center
+                    justify-between
+                    border-b
+                    border-white/[0.06]
+                    px-6
+                    sm:px-8
+                    lg:px-12
                 "
       >
-        {/* =============================================================
-                    TOP BAR
-                ============================================================= */}
 
-        <header
+        <div
           className="
                         flex
                         items-center
-                        justify-between
-
-                        px-5
-                        py-5
-
-                        sm:px-8
-                        sm:py-6
-
-                        lg:px-10
+                        gap-3
                     "
         >
-          {/* Brand */}
 
           <div
             className="
                             flex
+                            h-10
+                            w-10
                             items-center
-                            gap-2.5
+                            justify-center
+                            rounded-xl
+                            border
+                            border-white/10
+                            bg-white/[0.04]
+                            p-1.5
                         "
           >
-            <div
+
+            <img
+              src="/group.png"
+              alt="Team Work"
               className="
-    flex
-    h-9
-    w-9
-    shrink-0
-    items-center
-    justify-center
-    overflow-hidden
-    rounded-xl
-  "
+                                h-full
+                                w-full
+                                object-contain
+                            "
+            />
+
+          </div>
+
+
+          <div>
+
+            <p
+              className="
+                                text-sm
+                                font-semibold
+                                tracking-tight
+                            "
             >
-              <img
-                src="/group.png"
-                alt="Team Work"
-                className="
-      h-full
-      w-full
-      object-contain
-    "
-              />
-            </div>
+              Team Work
+            </p>
 
-            <div>
-              <p
-                className="
-                                    text-xs
-                                    font-bold
 
-                                    text-slate-900
-                                    dark:text-white
-                                "
-              >
-                Team Work
-              </p>
+            <p
+              className="
+                                text-[10px]
+                                uppercase
+                                tracking-[0.16em]
+                                text-slate-500
+                            "
+            >
+              Reporting System
+            </p>
 
-              <p
-                className="
-                                    text-[9px]
-                                    font-medium
-
-                                    text-slate-400
-                                    dark:text-zinc-500
-                                "
-              >
-                Report Tracker
-              </p>
-            </div>
           </div>
 
-          {/* Security label */}
+        </div>
 
-          <div
-            className="
-                            hidden
-                            items-center
-                            gap-1.5
 
-                            text-[10px]
-                            font-medium
-
-                            text-slate-400
-
-                            sm:flex
-
-                            dark:text-zinc-600
-                        "
-          >
-            <HiOutlineShieldCheck size={13} />
-            Secure internal portal
-          </div>
-        </header>
-
-        {/* =============================================================
-                    MAIN
-                ============================================================= */}
-
-        <main
+        <div
           className="
-                        flex
-                        flex-1
+                        hidden
                         items-center
-
-                        px-5
-                        pb-8
-                        pt-4
-
-                        sm:px-8
-                        sm:pb-10
-
-                        lg:px-10
-                        lg:py-6
+                        gap-3
+                        sm:flex
                     "
         >
-          <div
+
+          <span
             className="
-                            mx-auto
-                            grid
-                            w-full
-                            max-w-5xl
+                            h-1.5
+                            w-1.5
+                            rounded-full
+                            bg-emerald-400
+                        "
+          />
 
-                            items-center
 
-                            gap-12
-
-                            lg:grid-cols-[1fr_390px]
-                            lg:gap-16
+          <span
+            className="
+                            text-xs
+                            text-slate-500
                         "
           >
-            {/* =====================================================
-                            LEFT CONTENT
-                        ===================================================== */}
+            Secure application
+          </span>
 
-            <section
+        </div>
+
+      </header>
+
+
+      {/* =====================================================
+                MAIN
+            ===================================================== */}
+
+      <section
+        className="
+                    relative
+                    z-10
+                    flex
+                    min-h-screen
+                    items-center
+                    justify-center
+                    px-4
+                    pb-12
+                    pt-24
+                "
+      >
+
+        <div
+          className="
+                        w-full
+                        max-w-[430px]
+                    "
+        >
+
+          {/* =================================================
+                        AUTH LABEL
+                    ================================================= */}
+
+          <div
+            className="
+                            mb-5
+                            flex
+                            items-center
+                            gap-3
+                        "
+          >
+
+            <div
               className="
-                                hidden
-                                lg:block
-
-                                animate-[loginContentIn_500ms_ease-out]
+                                h-px
+                                flex-1
+                                bg-white/[0.07]
                             "
-            >
-              {/* Eyebrow */}
+            />
 
-              <div
-                className="
-                                    mb-5
-                                    inline-flex
-                                    items-center
-                                    gap-2
 
-                                    rounded-full
 
-                                    border
-                                    border-blue-200/70
 
-                                    bg-blue-50/70
 
-                                    px-3
-                                    py-1.5
-
-                                    text-[9px]
-                                    font-bold
-                                    uppercase
-                                    tracking-[0.14em]
-
-                                    text-blue-600
-
-                                    backdrop-blur-md
-
-                                    dark:border-blue-500/20
-                                    dark:bg-blue-500/[0.08]
-                                    dark:text-blue-400
-                                "
-              >
-                <HiOutlineShieldCheck size={12} />
-                Secure team workspace
-              </div>
-
-              {/* Heading */}
-
-              <h1
-                className="
-                                    max-w-xl
-
-                                    text-[42px]
-                                    font-bold
-                                    leading-[1.08]
-
-                                    tracking-[-0.045em]
-
-                                    text-slate-950
-
-                                    dark:text-white
-                                "
-              >
-                Daily work reporting,
-                <span
-                  className="
-                                        block
-
-                                        bg-gradient-to-r
-                                        from-blue-600
-                                        to-indigo-600
-
-                                        bg-clip-text
-
-                                        text-transparent
-
-                                        dark:from-blue-400
-                                        dark:to-indigo-400
-                                    "
-                >
-                  made simple.
-                </span>
-              </h1>
-
-              <p
-                className="
-                                    mt-5
-                                    max-w-lg
-
-                                    text-sm
-                                    leading-6
-
-                                    text-slate-500
-
-                                    dark:text-zinc-500
-                                "
-              >
-                One workspace for daily reports, team progress, and everything
-                your team gets done.
-              </p>
-
-              {/* =================================================
-                                LIVE TEAM PREVIEW
-                            ================================================= */}
-
-              <div
-                className="
-                                    mt-9
-                                    w-full
-                                    max-w-md
-                                "
-              >
-                <div
-                  className="
-                                        overflow-hidden
-
-                                        rounded-2xl
-
-                                        border
-                                        border-slate-200/80
-
-                                        bg-white/70
-
-                                        shadow-[0_24px_70px_-35px_rgba(15,23,42,0.22)]
-
-                                        backdrop-blur-xl
-
-                                        dark:border-zinc-800/80
-                                        dark:bg-zinc-900/55
-
-                                        dark:shadow-[0_24px_70px_-35px_rgba(0,0,0,0.8)]
-                                    "
-                >
-                  {/* Preview header */}
-
-                  <div
-                    className="
-                                            flex
-                                            items-center
-                                            justify-between
-
-                                            border-b
-                                            border-slate-200/70
-
-                                            px-5
-                                            py-4
-
-                                            dark:border-zinc-800/70
-                                        "
-                  >
-                    <div>
-                      <div
-                        className="
-                                                    flex
-                                                    items-center
-                                                    gap-2
-                                                "
-                      >
-                        <span
-                          className="
-                                                        h-1.5
-                                                        w-1.5
-                                                        rounded-full
-                                                        bg-blue-500
-                                                    "
-                        />
-
-                        <p
-                          className="
-                                                        text-[9px]
-                                                        font-bold
-                                                        uppercase
-                                                        tracking-[0.14em]
-
-                                                        text-slate-400
-
-                                                        dark:text-zinc-500
-                                                    "
-                        >
-                          Today's activity
-                        </p>
-                      </div>
-
-                      <p
-                        className="
-                                                    mt-1.5
-
-                                                    text-xs
-                                                    font-semibold
-
-                                                    text-slate-800
-
-                                                    dark:text-zinc-200
-                                                "
-                      >
-                        {today}
-                      </p>
-                    </div>
-
-                    {/* Completion */}
-
-                    <div
-                      className="
-                                                text-right
-                                            "
-                    >
-                      {previewLoading ? (
-                        <>
-                          <div
-                            className="
-                                                            ml-auto
-                                                            h-6
-                                                            w-12
-
-                                                            animate-pulse
-
-                                                            rounded-md
-
-                                                            bg-slate-100
-
-                                                            dark:bg-zinc-800
-                                                        "
-                          />
-
-                          <div
-                            className="
-                                                            mt-1
-                                                            ml-auto
-                                                            h-2
-                                                            w-10
-
-                                                            animate-pulse
-
-                                                            rounded
-
-                                                            bg-slate-100
-
-                                                            dark:bg-zinc-800
-                                                        "
-                          />
-                        </>
-                      ) : (
-                        <>
-                          <p
-                            className="
-                                                            text-lg
-                                                            font-bold
-                                                            tracking-tight
-
-                                                            text-slate-900
-
-                                                            dark:text-white
-                                                        "
-                          >
-                            {stats?.completion ?? 0}%
-                          </p>
-
-                          <p
-                            className="
-                                                            text-[8px]
-                                                            font-semibold
-                                                            uppercase
-                                                            tracking-wider
-
-                                                            text-slate-400
-
-                                                            dark:text-zinc-500
-                                                        "
-                          >
-                            complete
-                          </p>
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* =================================================
-                                        Progress
-                                    ================================================= */}
-
-                  <div
-                    className="
-                                            px-5
-                                            pt-4
-                                        "
-                  >
-                    <div
-                      className="
-                                                h-1.5
-                                                overflow-hidden
-                                                rounded-full
-
-                                                bg-slate-100
-
-                                                dark:bg-zinc-800
-                                            "
-                    >
-                      <div
-                        className="
-                                                    h-full
-                                                    rounded-full
-
-                                                    bg-gradient-to-r
-                                                    from-blue-600
-                                                    to-indigo-500
-
-                                                    transition-all
-                                                    duration-700
-                                                "
-                        style={{
-                          width: `${stats?.completion ?? 0}%`,
-                        }}
-                      />
-                    </div>
-
-                    <div
-                      className="
-                                                mt-2
-
-                                                flex
-                                                items-center
-                                                justify-between
-                                            "
-                    >
-                      <span
-                        className="
-                                                    text-[9px]
-                                                    font-medium
-
-                                                    text-slate-400
-
-                                                    dark:text-zinc-600
-                                                "
-                      >
-                        Team progress
-                      </span>
-
-                      <span
-                        className="
-                                                    text-[9px]
-                                                    font-semibold
-
-                                                    text-slate-500
-
-                                                    dark:text-zinc-500
-                                                "
-                      >
-                        {stats?.submitted ?? 0}
-                        {" / "}
-                        {stats?.totalMembers ?? 0}
-                        {" submitted"}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* =================================================
-                                        Team members
-                                    ================================================= */}
-
-                  <div
-                    className="
-                                            px-3
-                                            pb-3
-                                            pt-3
-                                        "
-                  >
-                    {previewLoading ? (
-                      <div
-                        className="
-                                                    space-y-1
-                                                "
-                      >
-                        {Array.from({
-                          length: 3,
-                        }).map((_, index) => (
-                          <div
-                            key={index}
-                            className="
-                                                                flex
-                                                                items-center
-                                                                justify-between
-
-                                                                rounded-xl
-
-                                                                px-2
-                                                                py-2
-                                                            "
-                          >
-                            <div
-                              className="
-                                                                    flex
-                                                                    items-center
-                                                                    gap-2.5
-                                                                "
-                            >
-                              <div
-                                className="
-                                                                        h-7
-                                                                        w-7
-
-                                                                        animate-pulse
-
-                                                                        rounded-lg
-
-                                                                        bg-slate-100
-
-                                                                        dark:bg-zinc-800
-                                                                    "
-                              />
-
-                              <div
-                                className="
-                                                                        h-2.5
-                                                                        w-20
-
-                                                                        animate-pulse
-
-                                                                        rounded
-
-                                                                        bg-slate-100
-
-                                                                        dark:bg-zinc-800
-                                                                    "
-                              />
-                            </div>
-
-                            <div
-                              className="
-                                                                    h-4
-                                                                    w-14
-
-                                                                    animate-pulse
-
-                                                                    rounded-full
-
-                                                                    bg-slate-100
-
-                                                                    dark:bg-zinc-800
-                                                                "
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    ) : teamStatus.length > 0 ? (
-                      <div
-                        className="
-                                                    space-y-0.5
-                                                "
-                      >
-                        {teamStatus.slice(0, 4).map((member, index) => (
-                          <div
-                            key={`${member.name}-${index}`}
-                            className="
-                                                                    flex
-                                                                    items-center
-                                                                    justify-between
-
-                                                                    rounded-xl
-
-                                                                    px-2
-                                                                    py-2
-
-                                                                    transition-colors
-
-                                                                    hover:bg-slate-50
-
-                                                                    dark:hover:bg-zinc-800/50
-                                                                "
-                          >
-                            {/* Member */}
-
-                            <div
-                              className="
-                                                                        flex
-                                                                        min-w-0
-                                                                        items-center
-                                                                        gap-2.5
-                                                                    "
-                            >
-                              <div
-                                className="
-                                                                            flex
-                                                                            h-7
-                                                                            w-7
-                                                                            shrink-0
-                                                                            items-center
-                                                                            justify-center
-
-                                                                            rounded-lg
-
-                                                                            bg-slate-100
-
-                                                                            text-[9px]
-                                                                            font-bold
-
-                                                                            text-slate-600
-
-                                                                            dark:bg-zinc-800
-                                                                            dark:text-zinc-300
-                                                                        "
-                              >
-                                {getInitials(member.name)}
-                              </div>
-
-                              <span
-                                className="
-                                                                            truncate
-
-                                                                            text-[10px]
-                                                                            font-semibold
-
-                                                                            text-slate-700
-
-                                                                            dark:text-zinc-300
-                                                                        "
-                              >
-                                {member.name}
-                              </span>
-                            </div>
-
-                            {/* Status */}
-
-                            {member.submitted ? (
-                              <span
-                                className="
-                                                                            inline-flex
-                                                                            shrink-0
-                                                                            items-center
-                                                                            gap-1.5
-
-                                                                            text-[9px]
-                                                                            font-semibold
-
-                                                                            text-emerald-600
-
-                                                                            dark:text-emerald-400
-                                                                        "
-                              >
-                                <HiOutlineCheckCircle className="h-3.5 w-3.5" />
-                                Submitted
-                              </span>
-                            ) : (
-                              <span
-                                className="
-                                                                            inline-flex
-                                                                            shrink-0
-                                                                            items-center
-                                                                            gap-1.5
-
-                                                                            text-[9px]
-                                                                            font-semibold
-
-                                                                            text-amber-600
-
-                                                                            dark:text-amber-400
-                                                                        "
-                              >
-                                <HiOutlineClock className="h-3.5 w-3.5" />
-                                Pending
-                              </span>
-                            )}
-                          </div>
-                        ))}
-
-                        {teamStatus.length > 4 && (
-                          <p
-                            className="
-                                                            px-2
-                                                            pt-1
-
-                                                            text-[9px]
-                                                            font-medium
-
-                                                            text-slate-400
-
-                                                            dark:text-zinc-600
-                                                        "
-                          >
-                            +{teamStatus.length - 4} more team members
-                          </p>
-                        )}
-                      </div>
-                    ) : (
-                      <div
-                        className="
-                                                    px-2
-                                                    py-5
-                                                    text-center
-                                                "
-                      >
-                        <p
-                          className="
-                                                        text-[10px]
-                                                        font-medium
-
-                                                        text-slate-400
-
-                                                        dark:text-zinc-600
-                                                    "
-                        >
-                          Team activity is unavailable right now.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* =====================================================
-                            LOGIN CARD
-                        ===================================================== */}
-
-            <section
+            <div
               className="
+                                h-px
+                                flex-1
+                                bg-white/[0.07]
+                            "
+            />
+
+          </div>
+
+
+          {/* =================================================
+                        LOGIN CARD
+                    ================================================= */}
+
+          <div
+            className="
+                            overflow-hidden
+                            rounded-2xl
+                            border
+                            border-white/[0.10]
+                            bg-[#0b1220]/90
+                            shadow-2xl
+                            shadow-black/40
+                            backdrop-blur-xl
+                        "
+          >
+
+            {/* Top accent */}
+
+            <div
+              className="
+                                h-px
                                 w-full
+                                bg-gradient-to-r
+                                from-transparent
+                                via-blue-500/70
+                                to-transparent
+                            "
+            />
 
-                                animate-[loginFormIn_500ms_ease-out]
+
+            <div
+              className="
+                                p-6
+                                sm:p-8
                             "
             >
+
+              {/* Shield */}
+
               <div
                 className="
-                                    relative
-
-                                    overflow-hidden
-
-                                    rounded-2xl
-
+                                    mb-6
+                                    flex
+                                    h-11
+                                    w-11
+                                    items-center
+                                    justify-center
+                                    rounded-xl
                                     border
-                                    border-slate-200/80
-
-                                    bg-white/85
-
-                                    p-6
-
-                                    shadow-[0_25px_80px_-35px_rgba(15,23,42,0.25)]
-
-                                    backdrop-blur-xl
-
-                                    sm:p-7
-
-                                    dark:border-zinc-800
-                                    dark:bg-zinc-900/75
-
-                                    dark:shadow-[0_25px_80px_-35px_rgba(0,0,0,0.8)]
+                                    border-blue-500/20
+                                    bg-blue-500/[0.08]
                                 "
               >
-                {/* Top accent */}
 
-                <div
+                <HiOutlineShieldCheck
                   className="
-                                        absolute
-                                        left-0
-                                        right-0
-                                        top-0
-                                        h-px
-
-                                        bg-gradient-to-r
-                                        from-transparent
-                                        via-blue-500/60
-                                        to-transparent
+                                        h-6
+                                        w-6
+                                        text-blue-400
                                     "
                 />
 
-                {/* Mobile brand */}
+              </div>
 
-                {/* <div
-                  className="
-                                        mb-7
-                                        flex
-                                        items-center
-                                        gap-2.5
 
-                                        lg:hidden
-                                    "
-                >
-                  <div
-                    className="
-    flex
-    h-9
-    w-9
-    shrink-0
-    items-center
-    justify-center
-    overflow-hidden
-    rounded-xl
-  "
-                  >
-                    <img
-                      src="/group.png"
-                      alt="Team Work"
-                      className="
-      h-full
-      w-full
-      object-contain
-    "
-                    />
-                  </div>
+              <h1
+                className="
+                                    text-2xl
+                                    font-semibold
+                                    tracking-tight
+                                "
+              >
+                Sign in
+              </h1>
 
-                  <div>
-                    <p
-                      className="
-                                                text-xs
-                                                font-bold
 
-                                                text-slate-900
+              <p
+                className="
+                                    mt-2
+                                    text-sm
+                                    text-slate-500
+                                "
+              >
+                Enter your credentials to continue.
+              </p>
 
-                                                dark:text-white
-                                            "
-                    >
-                      Team Work
-                    </p>
 
-                    <p
-                      className="
-                                                text-[9px]
-                                                font-medium
+              {/* =================================================
+                                FORM
+                            ================================================= */}
 
-                                                text-slate-400
+              <form
+                onSubmit={handleSubmit}
+                className="
+                                    mt-7
+                                    space-y-5
+                                "
+              >
 
-                                                dark:text-zinc-500
-                                            "
-                    >
-                      Report Tracker
-                    </p>
-                  </div>
-                </div> */}
-
-                {/* Heading */}
+                {/* Email */}
 
                 <div>
-                  <p
+
+                  <label
+                    htmlFor="email"
                     className="
                                             mb-2
-
-                                            text-[9px]
-                                            font-bold
-                                            uppercase
-                                            tracking-[0.16em]
-
-                                            text-blue-600
-
-                                            dark:text-blue-400
-                                        "
-                  >
-                    Team workspace
-                  </p>
-
-                  <h2
-                    className="
-                                            text-2xl
-                                            font-bold
-
-                                            tracking-[-0.03em]
-
-                                            text-slate-950
-
-                                            dark:text-white
-                                        "
-                  >
-                    Welcome back
-                  </h2>
-
-                  <p
-                    className="
-                                            mt-2
-
+                                            block
                                             text-xs
-                                            leading-relaxed
-
-                                            text-slate-500
-
-                                            dark:text-zinc-500
+                                            font-medium
+                                            uppercase
+                                            tracking-wide
+                                            text-slate-400
                                         "
                   >
-                    Sign in to continue to your workspace.
-                  </p>
-                </div>
+                    Email address
+                  </label>
 
-                {/* =================================================
-                                    FORM
-                                ================================================= */}
 
-                <form
-                  onSubmit={handleLogin}
-                  className="
-                                        mt-7
-                                        space-y-5
-                                    "
-                >
-                  {/* Email */}
+                  <div
+                    className="
+                                            relative
+                                        "
+                  >
 
-                  <div>
-                    <label
-                      htmlFor="email"
+                    <HiOutlineEnvelope
                       className="
-                                                mb-2
-                                                block
-
-                                                text-[10px]
-                                                font-bold
-                                                uppercase
-                                                tracking-[0.12em]
-
+                                                pointer-events-none
+                                                absolute
+                                                left-3.5
+                                                top-1/2
+                                                h-5
+                                                w-5
+                                                -translate-y-1/2
                                                 text-slate-600
-
-                                                dark:text-zinc-400
                                             "
-                    >
-                      Email address
-                    </label>
+                    />
+
 
                     <input
                       id="email"
                       type="email"
-                      autoComplete="email"
-                      inputMode="email"
-                      placeholder="you@company.com"
                       value={email}
-                      onChange={(event) => setEmail(event.target.value)}
+                      onChange={(event) =>
+                        setEmail(
+                          event.target.value
+                        )
+                      }
+                      autoComplete="email"
+                      placeholder="Enter your email"
                       disabled={loading}
                       className="
-                                                h-11
+                                                h-12
                                                 w-full
-
                                                 rounded-xl
-
                                                 border
-                                                border-slate-200
-
-                                                bg-slate-50/70
-
-                                                px-3.5
-
+                                                border-white/[0.09]
+                                                bg-[#060c18]
+                                                pl-11
+                                                pr-4
                                                 text-sm
-
-                                                text-slate-900
-
+                                                text-white
                                                 outline-none
-
+                                                placeholder:text-slate-700
                                                 transition
-
-                                                placeholder:text-slate-400
-
-                                                hover:border-slate-300
-
-                                                focus:border-blue-500
-                                                focus:bg-white
-                                                focus:ring-4
+                                                focus:border-blue-500/60
+                                                focus:ring-2
                                                 focus:ring-blue-500/10
-
                                                 disabled:cursor-not-allowed
-                                                disabled:opacity-60
-
-                                                dark:border-zinc-800
-                                                dark:bg-zinc-950/50
-                                                dark:text-zinc-100
-                                                dark:placeholder:text-zinc-600
-                                                dark:hover:border-zinc-700
-                                                dark:focus:border-blue-500
-                                                dark:focus:bg-zinc-950
+                                                disabled:opacity-50
                                             "
                     />
+
                   </div>
 
-                  {/* Password */}
+                </div>
 
-                  <div>
-                    <label
-                      htmlFor="password"
+
+                {/* Password */}
+
+                <div>
+
+                  <label
+                    htmlFor="password"
+                    className="
+                                            mb-2
+                                            block
+                                            text-xs
+                                            font-medium
+                                            uppercase
+                                            tracking-wide
+                                            text-slate-400
+                                        "
+                  >
+                    Password
+                  </label>
+
+
+                  <div
+                    className="
+                                            relative
+                                        "
+                  >
+
+                    <HiOutlineLockClosed
                       className="
-                                                mb-2
-                                                block
-
-                                                text-[10px]
-                                                font-bold
-                                                uppercase
-                                                tracking-[0.12em]
-
+                                                pointer-events-none
+                                                absolute
+                                                left-3.5
+                                                top-1/2
+                                                h-5
+                                                w-5
+                                                -translate-y-1/2
                                                 text-slate-600
-
-                                                dark:text-zinc-400
                                             "
-                    >
-                      Password
-                    </label>
+                    />
 
-                    <div
+
+                    <input
+                      id="password"
+                      type={
+                        showPassword
+                          ? "text"
+                          : "password"
+                      }
+                      value={password}
+                      onChange={(event) =>
+                        setPassword(
+                          event.target.value
+                        )
+                      }
+                      autoComplete="current-password"
+                      placeholder="Enter your password"
+                      disabled={loading}
                       className="
-                                                relative
+                                                h-12
+                                                w-full
+                                                rounded-xl
+                                                border
+                                                border-white/[0.09]
+                                                bg-[#060c18]
+                                                pl-11
+                                                pr-12
+                                                text-sm
+                                                text-white
+                                                outline-none
+                                                placeholder:text-slate-700
+                                                transition
+                                                focus:border-blue-500/60
+                                                focus:ring-2
+                                                focus:ring-blue-500/10
+                                                disabled:cursor-not-allowed
+                                                disabled:opacity-50
+                                            "
+                    />
+
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setShowPassword(
+                          value =>
+                            !value
+                        )
+                      }
+                      disabled={loading}
+                      aria-label={
+                        showPassword
+                          ? "Hide password"
+                          : "Show password"
+                      }
+                      className="
+                                                absolute
+                                                right-2
+                                                top-1/2
+                                                flex
+                                                h-8
+                                                w-8
+                                                -translate-y-1/2
+                                                items-center
+                                                justify-center
+                                                rounded-lg
+                                                text-slate-600
+                                                transition
+                                                hover:bg-white/[0.05]
+                                                hover:text-slate-300
                                             "
                     >
-                      <input
-                        id="password"
-                        type={showPassword ? "text" : "password"}
-                        autoComplete="current-password"
-                        placeholder="Enter your password"
-                        value={password}
-                        onChange={(event) => setPassword(event.target.value)}
-                        disabled={loading}
+
+                      {showPassword ? (
+
+                        <HiOutlineEyeSlash
+                          className="
+                                                        h-5
+                                                        w-5
+                                                    "
+                        />
+
+                      ) : (
+
+                        <HiOutlineEye
+                          className="
+                                                        h-5
+                                                        w-5
+                                                    "
+                        />
+
+                      )}
+
+                    </button>
+
+                  </div>
+
+                </div>
+
+
+                {/* =================================================
+                                    SIGN IN BUTTON
+                                ================================================= */}
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="
+                                        mt-2
+                                        flex
+                                        h-12
+                                        w-full
+                                        items-center
+                                        justify-center
+                                        gap-2
+                                        rounded-xl
+                                        bg-blue-600
+                                        text-sm
+                                        font-semibold
+                                        tracking-wide
+                                        text-white
+                                        shadow-lg
+                                        shadow-blue-600/10
+                                        transition
+                                        hover:bg-blue-500
+                                        hover:shadow-blue-500/20
+                                        active:scale-[0.99]
+                                        disabled:cursor-not-allowed
+                                        disabled:opacity-50
+                                    "
+                >
+
+                  {loading ? (
+
+                    <>
+                      <span
                         className="
-                                                    h-11
-                                                    w-full
-
-                                                    rounded-xl
-
-                                                    border
-                                                    border-slate-200
-
-                                                    bg-slate-50/70
-
-                                                    px-3.5
-                                                    pr-11
-
-                                                    text-sm
-
-                                                    text-slate-900
-
-                                                    outline-none
-
-                                                    transition
-
-                                                    placeholder:text-slate-400
-
-                                                    hover:border-slate-300
-
-                                                    focus:border-blue-500
-                                                    focus:bg-white
-                                                    focus:ring-4
-                                                    focus:ring-blue-500/10
-
-                                                    disabled:cursor-not-allowed
-                                                    disabled:opacity-60
-
-                                                    dark:border-zinc-800
-                                                    dark:bg-zinc-950/50
-                                                    dark:text-zinc-100
-                                                    dark:placeholder:text-zinc-600
-                                                    dark:hover:border-zinc-700
-                                                    dark:focus:border-blue-500
-                                                    dark:focus:bg-zinc-950
+                                                    h-4
+                                                    w-4
+                                                    animate-spin
+                                                    rounded-full
+                                                    border-2
+                                                    border-white/30
+                                                    border-t-white
                                                 "
                       />
 
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword((current) => !current)}
-                        disabled={loading}
-                        aria-label={
-                          showPassword ? "Hide password" : "Show password"
-                        }
-                        className="
-                                                    absolute
-                                                    right-2
-                                                    top-1/2
+                      Signing in...
+                    </>
 
-                                                    flex
-                                                    h-8
-                                                    w-8
+                  ) : (
 
-                                                    -translate-y-1/2
+                    "Sign in"
 
-                                                    items-center
-                                                    justify-center
+                  )}
 
-                                                    rounded-lg
+                </button>
 
-                                                    text-slate-400
+              </form>
 
-                                                    transition
 
-                                                    hover:bg-slate-100
-                                                    hover:text-slate-600
+              {/* =================================================
+                                SECURITY
+                            ================================================= */}
 
-                                                    disabled:cursor-not-allowed
-                                                    disabled:opacity-50
-
-                                                    dark:text-zinc-600
-                                                    dark:hover:bg-zinc-800
-                                                    dark:hover:text-zinc-300
-                                                "
-                      >
-                        {showPassword ? (
-                          <HiOutlineEyeSlash size={17} />
-                        ) : (
-                          <HiOutlineEye size={17} />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Submit */}
-
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="
-                                            group
-
-                                            flex
-                                            h-11
-                                            w-full
-                                            items-center
-                                            justify-center
-                                            gap-2
-
-                                            rounded-xl
-
-                                            bg-gradient-to-r
-                                            from-blue-600
-                                            to-indigo-600
-
-                                            px-4
-
-                                            text-xs
-                                            font-semibold
-
-                                            text-white
-
-                                            shadow-lg
-                                            shadow-blue-600/20
-
-                                            transition-all
-                                            duration-200
-
-                                            hover:-translate-y-0.5
-                                            hover:shadow-xl
-                                            hover:shadow-blue-600/25
-
-                                            active:translate-y-0
-
-                                            disabled:cursor-not-allowed
-                                            disabled:opacity-60
-                                            disabled:hover:translate-y-0
-                                        "
-                  >
-                    {loading ? (
-                      <>
-                        <span
-                          className="
-                                                        h-4
-                                                        w-4
-
-                                                        animate-spin
-
-                                                        rounded-full
-
-                                                        border-2
-                                                        border-white/30
-                                                        border-t-white
-                                                    "
-                        />
-                        Signing in...
-                      </>
-                    ) : (
-                      <>
-                        Sign in
-                        <HiOutlineArrowRight
-                          className="
-                                                        h-4
-                                                        w-4
-
-                                                        transition-transform
-                                                        duration-200
-
-                                                        group-hover:translate-x-1
-                                                    "
-                        />
-                      </>
-                    )}
-                  </button>
-                </form>
-
-                {/* Security footer */}
+              <div
+                className="
+                                    mt-7
+                                    border-t
+                                    border-white/[0.07]
+                                    pt-5
+                                "
+              >
 
                 <div
                   className="
-                                        mt-6
-
                                         flex
                                         items-center
                                         justify-center
-                                        gap-1.5
-
-                                        border-t
-                                        border-slate-100
-
-                                        pt-5
-
-                                        text-[9px]
-                                        font-medium
-
-                                        text-slate-400
-
-                                        dark:border-zinc-800
-                                        dark:text-zinc-600
+                                        gap-2
                                     "
                 >
-                  <HiOutlineShieldCheck size={12} />
-                  Secure internal workspace
+
+                  <HiOutlineLockClosed
+                    className="
+                                            h-4
+                                            w-4
+                                            text-blue-500/70
+                                        "
+                  />
+
+
+                  <span
+                    className="
+                                            text-xs
+                                            text-slate-600
+                                        "
+                  >
+                    Authorized access only
+                  </span>
+
                 </div>
+
               </div>
-            </section>
+
+            </div>
+
           </div>
-        </main>
 
-        {/* =============================================================
-                    FOOTER
-                ============================================================= */}
 
-        <footer
-          className="
-                        flex
-                        items-center
-                        justify-center
+          {/* =================================================
+                        FOOTER
+                    ================================================= */}
 
-                        px-5
-                        pb-5
+          <div
+            className="
+                            mt-6
+                            flex
+                            items-center
+                            justify-between
+                            px-1
+                        "
+          >
 
-                        text-center
+            <span
+              className="
+                                text-[11px]
+                                text-slate-700
+                            "
+            >
+              Team Work
+            </span>
 
-                        text-[9px]
-                        font-medium
 
-                        text-slate-400
+            <span
+              className="
+                                text-[11px]
+                                text-slate-700
+                            "
+            >
+              © {new Date().getFullYear()}
+            </span>
 
-                        dark:text-zinc-600
-                    "
-        >
-          © {new Date().getFullYear()} Team Work
-          {" · "}
-          Internal Team Portal
-        </footer>
-      </div>
+          </div>
 
-      {/* =================================================================
-                ANIMATIONS
-            ================================================================= */}
+        </div>
 
-      <style>{`
-                @keyframes loginContentIn {
-                    from {
-                        opacity: 0;
-                        transform: translateX(-12px);
-                    }
+      </section>
 
-                    to {
-                        opacity: 1;
-                        transform: translateX(0);
-                    }
-                }
-
-                @keyframes loginFormIn {
-                    from {
-                        opacity: 0;
-                        transform: translateY(10px);
-                    }
-
-                    to {
-                        opacity: 1;
-                        transform: translateY(0);
-                    }
-                }
-
-                @media (prefers-reduced-motion: reduce) {
-                    * {
-                        animation-duration: 0.01ms !important;
-                        animation-iteration-count: 1 !important;
-                        transition-duration: 0.01ms !important;
-                        scroll-behavior: auto !important;
-                    }
-                }
-            `}</style>
-    </div>
+    </main>
   );
 }
