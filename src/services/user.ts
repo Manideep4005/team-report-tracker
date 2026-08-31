@@ -20,12 +20,15 @@ export interface ManagedUser {
     id: string;
     name: string;
     email: string;
+
     roleId: string;
 
     role: UserRole;
 
     createdAt: string;
     updatedAt: string;
+
+    deletedAt?: string | null;
 }
 
 
@@ -52,7 +55,7 @@ export interface UpdateUserPayload {
 
 
 /* ================================================================
-   API RESPONSES
+   RESPONSES
 ================================================================ */
 
 export interface UsersResponse {
@@ -87,6 +90,13 @@ export interface DeleteUserResponse {
 }
 
 
+export interface RestoreUserResponse {
+    success: boolean;
+    message: string;
+    data: ManagedUser;
+}
+
+
 export interface ResetUserPasswordResponse {
     success: boolean;
     message: string;
@@ -94,7 +104,7 @@ export interface ResetUserPasswordResponse {
 
 
 /* ================================================================
-   GET USERS
+   GET ACTIVE USERS
 ================================================================ */
 
 export async function getUsers() {
@@ -102,6 +112,21 @@ export async function getUsers() {
     const { data } =
         await api.get<UsersResponse>(
             "/api/users"
+        );
+
+    return data;
+}
+
+
+/* ================================================================
+   GET INACTIVE USERS
+================================================================ */
+
+export async function getInactiveUsers() {
+
+    const { data } =
+        await api.get<UsersResponse>(
+            "/api/users/inactive"
         );
 
     return data;
@@ -173,6 +198,23 @@ export async function deleteUser(
     const { data } =
         await api.delete<DeleteUserResponse>(
             `/api/users/${id}`
+        );
+
+    return data;
+}
+
+
+/* ================================================================
+   RESTORE USER
+================================================================ */
+
+export async function restoreUser(
+    id: string
+) {
+
+    const { data } =
+        await api.post<RestoreUserResponse>(
+            `/api/users/${id}/restore`
         );
 
     return data;

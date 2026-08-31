@@ -1,5 +1,12 @@
 import api from "./api";
 
+export interface ReportUser {
+  id: string;
+  name: string;
+  email: string;
+  deletedAt: string | null;
+}
+
 export async function getDashboard(
   date?: string
 ) {
@@ -69,6 +76,55 @@ export async function getAllReports(
 ) {
   const { data } = await api.get(
     "/api/reports/all",
+    {
+      params: {
+        ...(date ? { date } : {}),
+        page,
+        limit,
+      },
+    }
+  );
+
+  return data;
+}
+
+/*
+|--------------------------------------------------------------------------
+| REPORT USERS
+|--------------------------------------------------------------------------
+| GET /api/reports/users
+|
+| Returns users who have reports, including soft-deleted users
+| with historical reports.
+|--------------------------------------------------------------------------
+*/
+
+export async function getUsersForReports() {
+  const { data } = await api.get(
+    "/api/reports/users"
+  );
+
+  return data;
+}
+
+/*
+|--------------------------------------------------------------------------
+| USER-SPECIFIC REPORTS
+|--------------------------------------------------------------------------
+| GET /api/reports/user/:userId
+|
+| Used only when a particular user is selected.
+|--------------------------------------------------------------------------
+*/
+
+export async function getUserReports(
+  userId: string,
+  date?: string,
+  page = 1,
+  limit = 10
+) {
+  const { data } = await api.get(
+    `/api/reports/user/${userId}`,
     {
       params: {
         ...(date ? { date } : {}),

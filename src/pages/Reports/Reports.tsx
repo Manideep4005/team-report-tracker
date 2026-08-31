@@ -7,12 +7,20 @@ import {
   HiOutlineXMark,
   HiOutlineChevronLeft,
   HiOutlineChevronRight,
+  HiOutlineUsers,
+  HiOutlineChevronDown,
 } from "react-icons/hi2";
 
 import { format } from "date-fns";
 import { toast } from "sonner";
 
-import { getAllReports } from "../../services/report";
+import {
+  getAllReports,
+  getUsersForReports,
+  getUserReports,
+  type ReportUser,
+} from "../../services/report";
+
 import DayPickerInput from "../../components/DayPickerInput";
 
 /* ================================================================
@@ -30,12 +38,8 @@ interface ReportItem {
     id: string;
     name: string;
     email: string;
+    deletedAt: string | null;
   };
-}
-
-interface DateGroup {
-  date: string;
-  reports: ReportItem[];
 }
 
 interface Pagination {
@@ -47,9 +51,19 @@ interface Pagination {
   hasPreviousPage: boolean;
 }
 
-interface AllReportsResponse {
+interface ReportsResponse {
   reports: ReportItem[];
   pagination: Pagination;
+}
+
+interface UsersResponse {
+  success: boolean;
+  data: ReportUser[];
+}
+
+interface DateGroup {
+  date: string;
+  reports: ReportItem[];
 }
 
 /* ================================================================
@@ -58,8 +72,10 @@ interface AllReportsResponse {
 
 const REPORTS_PER_PAGE = 10;
 
+const ALL_USERS = "all";
+
 /* ================================================================
-   REPORTS
+   SCREEN
 ================================================================ */
 
 export default function Reports() {
@@ -69,13 +85,45 @@ export default function Reports() {
   const [page, setPage] =
     useState(1);
 
+  const [selectedUserId, setSelectedUserId] =
+    useState(ALL_USERS);
+
   const dateParam = date
     ? format(date, "yyyy-MM-dd")
     : undefined;
 
 
   /* ==============================================================
-     QUERY
+     USERS
+  ============================================================== */
+
+  const {
+    data: usersData,
+    isLoading: usersLoading,
+  } = useQuery<UsersResponse>({
+    queryKey: ["report-users"],
+
+    queryFn: async () => {
+      return getUsersForReports();
+    },
+
+    staleTime: 5 * 60 * 1000,
+  });
+
+
+  const users =
+    usersData?.data ?? [];
+
+
+  const selectedUser =
+    users.find(
+      (user) =>
+        user.id === selectedUserId
+    );
+
+
+  /* ==============================================================
+     REPORTS
   ============================================================== */
 
   const {
@@ -83,17 +131,34 @@ export default function Reports() {
     isLoading,
     isError,
     isFetching,
-  } = useQuery<AllReportsResponse>({
+  } = useQuery<ReportsResponse>({
     queryKey: [
-      "all-reports",
+      "reports",
+      selectedUserId,
       dateParam,
       page,
       REPORTS_PER_PAGE,
     ],
 
     queryFn: async () => {
+
+      if (
+        selectedUserId === ALL_USERS
+      ) {
+        const response =
+          await getAllReports(
+            dateParam,
+            page,
+            REPORTS_PER_PAGE
+          );
+
+        return response.data;
+      }
+
+
       const response =
-        await getAllReports(
+        await getUserReports(
+          selectedUserId,
           dateParam,
           page,
           REPORTS_PER_PAGE
@@ -206,7 +271,7 @@ export default function Reports() {
 
 
   /* ==============================================================
-     COPY REPORTS
+     COPY
   ============================================================== */
 
   const handleCopy = async (
@@ -243,11 +308,6 @@ export default function Reports() {
 
     setDate(newDate);
 
-    /*
-     * Always go back to page 1
-     * when changing the filter.
-     */
-
     setPage(1);
   };
 
@@ -259,6 +319,32 @@ export default function Reports() {
   const handleClearDate = () => {
 
     setDate(null);
+
+    setPage(1);
+  };
+
+
+  /* ==============================================================
+     USER CHANGE
+  ============================================================== */
+
+  const handleUserChange = (
+    userId: string
+  ) => {
+
+    setSelectedUserId(userId);
+
+    setPage(1);
+  };
+
+
+  /* ==============================================================
+     CLEAR USER
+  ============================================================== */
+
+  const handleClearUser = () => {
+
+    setSelectedUserId(ALL_USERS);
 
     setPage(1);
   };
@@ -303,6 +389,16 @@ export default function Reports() {
 
 
   /* ==============================================================
+     TITLE
+  ============================================================== */
+
+  const screenTitle =
+    selectedUser
+      ? `${selectedUser.name} 's Reports`
+      : "Team Reports";
+
+
+  /* ==============================================================
      RENDER
   ============================================================== */
 
@@ -311,7 +407,7 @@ export default function Reports() {
       className="
         mx-auto
         w-full
-        max-w-[1040px]
+        max-w-[1100px]
 
         px-4
         py-5
@@ -325,15 +421,11 @@ export default function Reports() {
     >
 
       {/* =========================================================
-          PAGE HEADER
+          HEADER
       ========================================================= */}
 
       <div
         className="
-          flex
-          flex-col
-          gap-5
-
           border-b
           border-slate-200/80
 
@@ -341,137 +433,238 @@ export default function Reports() {
 
           dark:border-zinc-800/80
 
-          sm:gap-6
           sm:pb-6
-
-          lg:flex-row
-          lg:items-end
-          lg:justify-between
         "
       >
-
-        {/* =======================================================
-            TITLE
-        ======================================================= */}
-
-        <div className="min-w-0">
-
-          <h1
-            className="
-              text-[26px]
-              font-bold
-              tracking-[-0.035em]
-
-              text-slate-950
-
-              dark:text-white
-
-              sm:text-3xl
-            "
-          >
-            Team Reports
-          </h1>
-
-
-          <p
-            className="
-              mt-1.5
-
-              text-sm
-
-              text-slate-500
-
-              dark:text-zinc-500
-            "
-          >
-            Browse the team's daily work reports.
-          </p>
-
-        </div>
-
-
-        {/* =======================================================
-            FILTERS
-        ======================================================= */}
 
         <div
           className="
             flex
-            w-full
             flex-col
-            gap-2
+            gap-5
 
-            sm:w-auto
-            sm:flex-row
-            sm:flex-wrap
-            sm:items-center
-            sm:justify-end
+            lg:flex-row
+            lg:items-end
+            lg:justify-between
           "
         >
 
           {/* =====================================================
-              REPORT COUNT
+              TITLE
           ===================================================== */}
 
-          {!isLoading &&
-            totalReports > 0 && (
+          <div className="min-w-0">
 
-              <div
+            <div
+              className="
+                flex
+                min-w-0
+                items-center
+                gap-2
+              "
+            >
+
+              <HiOutlineUsers
                 className="
-                  inline-flex
-
-                  h-10
-                  w-fit
+                  h-5
+                  w-5
                   shrink-0
 
-                  items-center
+                  text-indigo-500
 
-                  rounded-xl
-
-                  border
-                  border-indigo-100
-
-                  bg-indigo-50
-
-                  px-3.5
-
-                  text-xs
-                  font-bold
-
-                  text-indigo-600
-
-                  dark:border-indigo-500/20
-                  dark:bg-indigo-500/10
                   dark:text-indigo-400
                 "
-              >
-                {totalReports}{" "}
-                {totalReports === 1
-                  ? "Report"
-                  : "Reports"}
-              </div>
+              />
 
-            )}
+              <h1
+                className="
+                  min-w-0
+
+                  truncate
+
+                  text-[25px]
+                  font-bold
+                  tracking-[-0.035em]
+
+                  text-slate-950
+
+                  dark:text-white
+
+                  sm:text-3xl
+                "
+              >
+                {screenTitle}
+              </h1>
+
+            </div>
+
+
+            <p
+              className="
+                mt-1.5
+
+                text-sm
+
+                text-slate-500
+
+                dark:text-zinc-500
+              "
+            >
+
+              {selectedUser
+                ? `Viewing all reports submitted by ${selectedUser.name}.`
+                : "Browse the team's daily work reports."}
+
+            </p>
+
+          </div>
 
 
           {/* =====================================================
-              DATE PICKER
+              FILTER AREA
           ===================================================== */}
 
           <div
             className="
+              grid
               w-full
-              min-w-0
+              grid-cols-1
+              gap-2
 
-              sm:w-auto
+              sm:grid-cols-2
+
+              lg:w-auto
+              lg:grid-cols-[minmax(210px,240px)_auto_auto]
             "
           >
 
+            {/* ===================================================
+                USER SELECTOR
+            =================================================== */}
+
             <div
               className="
-                w-full
+                relative
+                min-w-0
+              "
+            >
 
-                sm:w-auto
+              <select
+                value={selectedUserId}
+                onChange={(event) =>
+                  handleUserChange(
+                    event.target.value
+                  )
+                }
+
+                disabled={usersLoading}
+
+                className="
+                  block
+
+                  h-10
+                  w-full
+                  min-w-0
+
+                  appearance-none
+
+                  rounded-xl
+
+                  border
+                  border-slate-200
+
+                  bg-white
+
+                  pl-3.5
+                  pr-10
+
+                  text-xs
+                  font-semibold
+
+                  text-slate-700
+
+                  shadow-sm
+
+                  outline-none
+
+                  transition
+
+                  focus:border-indigo-400
+                  focus:ring-2
+                  focus:ring-indigo-100
+
+                  disabled:cursor-not-allowed
+                  disabled:opacity-60
+
+                  dark:border-zinc-800
+                  dark:bg-zinc-900
+                  dark:text-zinc-300
+
+                  dark:focus:border-indigo-500
+                  dark:focus:ring-indigo-500/10
+
+                  sm:text-sm
+                "
+              >
+
+                <option value={ALL_USERS}>
+                  All users
+                </option>
+
+
+                {users.map(
+                  (user) => (
+
+                    <option
+                      key={
+                        user.id
+                      }
+
+                      value={
+                        user.id
+                      }
+                    >
+                      {user.name}
+                      {user.deletedAt
+                        ? " — Inactive"
+                        : ""}
+                    </option>
+
+                  )
+                )}
+
+              </select>
+
+
+              <HiOutlineChevronDown
+                className="
+                  pointer-events-none
+
+                  absolute
+                  right-3
+                  top-1/2
+
+                  h-4
+                  w-4
+
+                  -translate-y-1/2
+
+                  text-slate-400
+
+                  dark:text-zinc-500
+                "
+              />
+
+            </div>
+
+
+            {/* ===================================================
+                DATE
+            =================================================== */}
+
+            <div
+              className="
+                min-w-0
               "
             >
 
@@ -485,81 +678,218 @@ export default function Reports() {
 
             </div>
 
+
+            {/* ===================================================
+                CLEAR
+            =================================================== */}
+
+            <button
+              type="button"
+
+              onClick={() => {
+                handleClearDate();
+                handleClearUser();
+              }}
+
+              disabled={
+                !date &&
+                selectedUserId ===
+                ALL_USERS
+              }
+
+              className="
+                inline-flex
+
+                h-10
+                w-full
+
+                items-center
+                justify-center
+                gap-1.5
+
+                rounded-xl
+
+                border
+                border-slate-200
+
+                bg-white
+
+                px-3.5
+
+                text-xs
+                font-semibold
+
+                text-slate-600
+
+                shadow-sm
+
+                transition
+
+                hover:border-slate-300
+                hover:bg-slate-50
+                hover:text-slate-900
+
+                disabled:cursor-not-allowed
+                disabled:opacity-35
+
+                dark:border-zinc-800
+                dark:bg-zinc-900
+                dark:text-zinc-400
+
+                dark:hover:border-zinc-700
+                dark:hover:bg-zinc-800
+                dark:hover:text-zinc-200
+
+                sm:w-auto
+              "
+            >
+
+              <HiOutlineXMark
+                className="
+                  h-4
+                  w-4
+                "
+              />
+
+              Clear
+
+            </button>
+
           </div>
 
+        </div>
 
-          {/* =====================================================
-              CLEAR
-          ===================================================== */}
 
-          <button
-            type="button"
+        {/* =======================================================
+            ACTIVE FILTER / COUNT
+        ======================================================= */}
 
-            onClick={
-              handleClearDate
-            }
+        <div
+          className="
+            mt-4
 
-            disabled={!date}
+            flex
+            min-w-0
+            flex-wrap
+            items-center
+            gap-2
+          "
+        >
 
-            className="
-              inline-flex
+          {!isLoading &&
+            totalReports > 0 && (
 
-              h-10
-              w-full
-              shrink-0
+              <div
+                className="
+                  inline-flex
 
-              items-center
-              justify-center
-              gap-1.5
+                  h-8
+                  items-center
 
-              rounded-xl
+                  rounded-lg
 
-              border
-              border-slate-200
+                  border
+                  border-indigo-100
 
-              bg-white
+                  bg-indigo-50
 
-              px-3.5
+                  px-3
 
-              text-xs
-              font-semibold
+                  text-[11px]
+                  font-bold
 
-              text-slate-600
+                  text-indigo-600
 
-              shadow-sm
+                  dark:border-indigo-500/20
+                  dark:bg-indigo-500/10
+                  dark:text-indigo-400
+                "
+              >
 
-              transition
-              duration-200
+                {totalReports}{" "}
+                {totalReports === 1
+                  ? "Report"
+                  : "Reports"}
 
-              hover:border-slate-300
-              hover:bg-slate-50
-              hover:text-slate-900
+              </div>
 
-              disabled:cursor-not-allowed
-              disabled:opacity-35
+            )}
 
-              dark:border-zinc-800
-              dark:bg-zinc-900
-              dark:text-zinc-400
 
-              dark:hover:border-zinc-700
-              dark:hover:bg-zinc-800
-              dark:hover:text-zinc-200
+          {selectedUser && (
 
-              sm:w-auto
-            "
-          >
-
-            <HiOutlineXMark
+            <div
               className="
-                h-4
-                w-4
+                inline-flex
+                min-w-0
+                max-w-full
+
+                items-center
+                gap-1.5
+
+                rounded-lg
+
+                border
+                border-slate-200
+
+                bg-slate-50
+
+                px-2.5
+                py-1
+
+                text-[11px]
+                font-semibold
+
+                text-slate-600
+
+                dark:border-zinc-800
+                dark:bg-zinc-900
+                dark:text-zinc-400
               "
-            />
+            >
 
-            Clear
+              <span className="truncate">
+                {selectedUser.name}
+              </span>
 
-          </button>
+
+              {selectedUser.deletedAt && (
+
+                <span
+                  className="
+                    shrink-0
+
+                    rounded-md
+
+                    border
+                    border-amber-200
+
+                    bg-amber-50
+
+                    px-1.5
+                    py-0.5
+
+                    text-[9px]
+                    font-bold
+
+                    uppercase
+                    tracking-wide
+
+                    text-amber-700
+
+                    dark:border-amber-500/20
+                    dark:bg-amber-500/10
+                    dark:text-amber-400
+                  "
+                >
+                  Inactive
+                </span>
+
+              )}
+
+            </div>
+
+          )}
 
         </div>
 
@@ -578,10 +908,6 @@ export default function Reports() {
         "
       >
 
-        {/* =======================================================
-            LOADING
-        ======================================================= */}
-
         {isLoading ? (
 
           <SkeletonList />
@@ -593,10 +919,6 @@ export default function Reports() {
         ) : groupedReports.length > 0 ? (
 
           <>
-
-            {/* ===================================================
-                DATE GROUPS
-            =================================================== */}
 
             <div
               className="
@@ -633,10 +955,6 @@ export default function Reports() {
             </div>
 
 
-            {/* ===================================================
-                PAGINATION
-            =================================================== */}
-
             {pagination &&
               pagination.totalPages >
               1 && (
@@ -664,6 +982,15 @@ export default function Reports() {
           <EmptyState
             hasDateFilter={
               Boolean(date)
+            }
+
+            hasUserFilter={
+              selectedUserId !==
+              ALL_USERS
+            }
+
+            userName={
+              selectedUser?.name
             }
           />
 
@@ -754,7 +1081,10 @@ function DateSection({
     reports
       .map(
         (report) =>
-          `${report.user.name}\n${report.description}`
+          `${report.user.name}${report.user.deletedAt
+            ? " [Inactive]"
+            : ""
+          }\n${report.description}`
       )
       .join("\n\n");
 
@@ -762,9 +1092,7 @@ function DateSection({
   return (
     <section className="w-full">
 
-      {/* ======================================================
-          DATE HEADER
-      ====================================================== */}
+      {/* DATE HEADER */}
 
       <div
         className="
@@ -780,8 +1108,6 @@ function DateSection({
         "
       >
 
-        {/* DATE */}
-
         <div
           className="
             flex
@@ -790,8 +1116,6 @@ function DateSection({
             gap-3
           "
         >
-
-          {/* DATE BADGE */}
 
           <div
             className="
@@ -858,8 +1182,6 @@ function DateSection({
           </div>
 
 
-          {/* DATE TEXT */}
-
           <div className="min-w-0">
 
             <h2
@@ -904,19 +1226,19 @@ function DateSection({
                 dark:text-zinc-600
               "
             >
+
               {reports.length}{" "}
               {reports.length === 1
                 ? "report"
                 : "reports"}{" "}
               submitted
+
             </p>
 
           </div>
 
         </div>
 
-
-        {/* DIVIDER */}
 
         <div
           className="
@@ -932,8 +1254,6 @@ function DateSection({
           "
         />
 
-
-        {/* COPY */}
 
         <button
           type="button"
@@ -972,7 +1292,6 @@ function DateSection({
             shadow-sm
 
             transition
-            duration-200
 
             hover:border-slate-300
             hover:bg-slate-50
@@ -1004,9 +1323,7 @@ function DateSection({
       </div>
 
 
-      {/* ======================================================
-          REPORT TIMELINE
-      ====================================================== */}
+      {/* TIMELINE */}
 
       <div
         className="
@@ -1036,9 +1353,11 @@ function DateSection({
               key={
                 report.id
               }
+
               report={
                 report
               }
+
             />
 
           )
@@ -1074,6 +1393,12 @@ function ReportCard({
       .toUpperCase();
 
 
+  const isDeleted =
+    Boolean(
+      report.user.deletedAt
+    );
+
+
   return (
     <article
       className="
@@ -1088,7 +1413,7 @@ function ReportCard({
       {/* TIMELINE DOT */}
 
       <span
-        className="
+        className={`
           absolute
 
           -left-[25px]
@@ -1102,17 +1427,25 @@ function ReportCard({
           border
           border-white
 
-          bg-indigo-500
-
           shadow-[0_0_0_3px_rgba(99,102,241,0.08)]
 
           dark:border-zinc-950
-          dark:bg-indigo-400
-
-          dark:shadow-[0_0_0_3px_rgba(129,140,248,0.08)]
 
           sm:-left-[34px]
-        "
+
+          ${isDeleted
+            ? `
+                  bg-amber-500
+                  dark:bg-amber-400
+                  dark:shadow-[0_0_0_3px_rgba(245,158,11,0.08)]
+                `
+            : `
+                  bg-indigo-500
+                  dark:bg-indigo-400
+                  dark:shadow-[0_0_0_3px_rgba(129,140,248,0.08)]
+                `
+          }
+        `}
       />
 
 
@@ -1148,18 +1481,16 @@ function ReportCard({
         "
       >
 
-        {/* ======================================================
-            USER HEADER
-        ====================================================== */}
+        {/* USER HEADER */}
 
         <div
-          className="
+          className={`
             flex
+            min-w-0
             items-center
             gap-3
 
             border-b
-            border-slate-100
 
             px-4
             py-3
@@ -1168,13 +1499,24 @@ function ReportCard({
 
             sm:px-5
             sm:py-3.5
-          "
+
+            ${isDeleted
+              ? `
+                    border-amber-100
+                    bg-amber-50/40
+                    dark:bg-amber-500/[0.025]
+                  `
+              : `
+                    border-slate-100
+                  `
+            }
+          `}
         >
 
           {/* AVATAR */}
 
           <div
-            className="
+            className={`
               flex
 
               h-9
@@ -1186,39 +1528,70 @@ function ReportCard({
 
               rounded-full
 
-              bg-indigo-50
-
               text-[10px]
               font-bold
 
-              text-indigo-600
-
-              dark:bg-indigo-500/10
-              dark:text-indigo-400
-            "
+              ${isDeleted
+                ? `
+                      bg-amber-100
+                      text-amber-700
+                      dark:bg-amber-500/10
+                      dark:text-amber-400
+                    `
+                : `
+                      bg-indigo-50
+                      text-indigo-600
+                      dark:bg-indigo-500/10
+                      dark:text-indigo-400
+                    `
+              }
+            `}
           >
             {initials}
           </div>
 
 
-          {/* USER */}
+          {/* USER DETAILS */}
 
-          <div className="min-w-0">
+          <div
+            className="
+              min-w-0
+              flex-1
+            "
+          >
 
-            <p
+            <div
               className="
-                truncate
-
-                text-xs
-                font-bold
-
-                text-slate-900
-
-                dark:text-white
+                flex
+                min-w-0
+                flex-wrap
+                items-center
+                gap-1.5
               "
             >
-              {report.user.name}
-            </p>
+
+              <p
+                className="
+                  min-w-0
+                  max-w-full
+
+                  truncate
+
+                  text-xs
+                  font-bold
+
+                  text-slate-900
+
+                  dark:text-white
+                "
+              >
+                {report.user.name}
+              </p>
+
+
+
+
+            </div>
 
 
             <p
@@ -1242,9 +1615,7 @@ function ReportCard({
         </div>
 
 
-        {/* ======================================================
-            DESCRIPTION
-        ====================================================== */}
+        {/* DESCRIPTION */}
 
         <div
           className="
@@ -1282,7 +1653,7 @@ function ReportCard({
 
 
 /* ================================================================
-   PAGINATION PAGE WINDOW
+   PAGINATION WINDOW
 ================================================================ */
 
 function getPageWindow(
@@ -1422,10 +1793,6 @@ function Pagination({
       "
     >
 
-      {/* =========================================================
-          SHOWING
-      ========================================================= */}
-
       <p
         className="
           text-[10px]
@@ -1469,15 +1836,14 @@ function Pagination({
       </p>
 
 
-      {/* =========================================================
-          CONTROLS
-      ========================================================= */}
-
       <div
         className="
           flex
+          max-w-full
           items-center
           gap-1
+
+          overflow-x-auto
 
           rounded-xl
 
@@ -1516,9 +1882,9 @@ function Pagination({
 
           className="
             flex
-
             h-7
             w-7
+            shrink-0
 
             items-center
             justify-center
@@ -1552,8 +1918,6 @@ function Pagination({
         </button>
 
 
-        {/* PAGE NUMBERS */}
-
         {pageWindow.map(
           (
             entry,
@@ -1576,6 +1940,7 @@ function Pagination({
 
                     h-7
                     w-5
+                    shrink-0
 
                     items-center
                     justify-center
@@ -1627,6 +1992,7 @@ function Pagination({
 
                   h-7
                   min-w-7
+                  shrink-0
 
                   items-center
                   justify-center
@@ -1645,21 +2011,21 @@ function Pagination({
 
                   ${isActive
                     ? `
-                        bg-indigo-600
-                        text-white
-                        shadow-sm
-                      `
+                          bg-indigo-600
+                          text-white
+                          shadow-sm
+                        `
                     : `
-                        text-slate-500
+                          text-slate-500
 
-                        hover:bg-slate-100
-                        hover:text-slate-800
+                          hover:bg-slate-100
+                          hover:text-slate-800
 
-                        dark:text-zinc-500
+                          dark:text-zinc-500
 
-                        dark:hover:bg-zinc-900
-                        dark:hover:text-zinc-200
-                      `
+                          dark:hover:bg-zinc-900
+                          dark:hover:text-zinc-200
+                        `
                   }
                 `}
               >
@@ -1694,9 +2060,9 @@ function Pagination({
 
           className="
             flex
-
             h-7
             w-7
+            shrink-0
 
             items-center
             justify-center
@@ -1759,8 +2125,6 @@ function SkeletonList() {
               section
             }
           >
-
-            {/* DATE */}
 
             <div
               className="
@@ -1830,8 +2194,6 @@ function SkeletonList() {
 
             </div>
 
-
-            {/* CARDS */}
 
             <div
               className="
@@ -2004,14 +2366,59 @@ function SkeletonList() {
 
 
 /* ================================================================
-   EMPTY STATE
+   EMPTY
 ================================================================ */
 
 function EmptyState({
   hasDateFilter,
+  hasUserFilter,
+  userName,
 }: {
   hasDateFilter: boolean;
+  hasUserFilter: boolean;
+  userName?: string;
 }) {
+
+  let title =
+    "No team reports found";
+
+  let description =
+    "There are no team reports available yet.";
+
+
+  if (
+    hasUserFilter &&
+    hasDateFilter
+  ) {
+
+    title =
+      "No reports found";
+
+    description =
+      `No reports were submitted by ${userName ?? "this user"} on the selected date.`;
+
+  } else if (
+    hasUserFilter
+  ) {
+
+    title =
+      "No reports found";
+
+    description =
+      `${userName ?? "This user"} has no reports available.`;
+
+  } else if (
+    hasDateFilter
+  ) {
+
+    title =
+      "No reports for this date";
+
+    description =
+      "Try selecting another date or clear the date filter.";
+
+  }
+
 
   return (
     <div
@@ -2088,11 +2495,7 @@ function EmptyState({
           dark:text-white
         "
       >
-
-        {hasDateFilter
-          ? "No reports for this date"
-          : "No team reports found"}
-
+        {title}
       </h3>
 
 
@@ -2100,7 +2503,7 @@ function EmptyState({
         className="
           mt-2
 
-          max-w-[320px]
+          max-w-[340px]
 
           text-xs
           leading-5
@@ -2110,32 +2513,8 @@ function EmptyState({
           dark:text-zinc-600
         "
       >
-
-        {hasDateFilter
-          ? "Try selecting another date or clear the date filter to view all reports."
-          : "There are no team reports available yet."}
-
+        {description}
       </p>
-
-
-      {hasDateFilter && (
-
-        <p
-          className="
-            mt-3
-
-            text-[11px]
-            font-medium
-
-            text-indigo-500
-
-            dark:text-indigo-400
-          "
-        >
-          Use "Clear" above to view all reports.
-        </p>
-
-      )}
 
     </div>
   );
@@ -2143,7 +2522,7 @@ function EmptyState({
 
 
 /* ================================================================
-   ERROR STATE
+   ERROR
 ================================================================ */
 
 function ErrorState() {
@@ -2234,7 +2613,7 @@ function ErrorState() {
           dark:text-zinc-500
         "
       >
-        Something went wrong while loading the team reports.
+        Something went wrong while loading the reports.
       </p>
 
     </div>
