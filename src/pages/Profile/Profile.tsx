@@ -1411,7 +1411,7 @@ function EducationEditor({
 
 
 /* ============================================================
-   SKILLS EDITOR
+   SKILLS EDITOR - FIXED: Allows commas and special characters
 ============================================================ */
 
 function SkillsEditor({
@@ -1430,20 +1430,33 @@ function SkillsEditor({
      * The actual resume data remains:
      *
      * {
-     *   "Frontend": ["React", "TypeScript"],
-     *   "Backend": ["Node.js"]
+     *   "Frontend": ["React, TypeScript, Tailwind"],
+     *   "Backend": ["Node.js, Express, PostgreSQL"]
      * }
      *
-     * These IDs are only used by React so typing in a category
-     * name never causes the row to remount or jump.
+     * Each skill value is stored as an array with a single string,
+     * allowing commas and special characters to be preserved.
      */
 
     const rowIdsRef = React.useRef<
         Map<string, string>
     >(new Map());
 
+    // Local input state for skills - stores the raw string value
+    const [localInputs, setLocalInputs] = React.useState<Record<string, string>>({});
 
-
+    // Update local inputs when value changes
+    React.useEffect(() => {
+        const newLocalInputs: Record<string, string> = {};
+        Object.entries(value).forEach(([category, skills]) => {
+            if (Array.isArray(skills) && skills.length > 0) {
+                newLocalInputs[category] = skills[0] || "";
+            } else {
+                newLocalInputs[category] = "";
+            }
+        });
+        setLocalInputs(newLocalInputs);
+    }, [value]);
 
 
     /*
@@ -1567,7 +1580,7 @@ function SkillsEditor({
 
         onChange({
             ...value,
-            [category]: [],
+            [category]: [""],
         });
 
     }
@@ -1622,7 +1635,6 @@ function SkillsEditor({
             );
 
 
-
         const next: ResumeContent["skills"] =
             {};
 
@@ -1674,6 +1686,18 @@ function SkillsEditor({
 
         onChange(next);
 
+        // Update local input for the new category name
+        if (next[newName] && next[newName].length > 0) {
+            setLocalInputs(prev => ({
+                ...prev,
+                [newName]: prev[oldName] || next[newName][0],
+            }));
+            // Remove old local input
+            const newLocalInputs = { ...localInputs };
+            delete newLocalInputs[oldName];
+            setLocalInputs(newLocalInputs);
+        }
+
     }
 
 
@@ -1681,20 +1705,17 @@ function SkillsEditor({
         category: string,
         raw: string
     ) {
+        // Update local input immediately for smooth typing
+        setLocalInputs(prev => ({
+            ...prev,
+            [category]: raw,
+        }));
 
+        // Store as array with single string - this preserves all characters
         onChange({
             ...value,
-
-            [category]:
-                raw
-                    .split(",")
-                    .map(
-                        item =>
-                            item.trim()
-                    )
-                    .filter(Boolean),
+            [category]: [raw],
         });
-
     }
 
 
@@ -1716,6 +1737,11 @@ function SkillsEditor({
 
 
         onChange(next);
+
+        // Clean up local input
+        const newLocalInputs = { ...localInputs };
+        delete newLocalInputs[category];
+        setLocalInputs(newLocalInputs);
 
     }
 
@@ -1788,28 +1814,18 @@ function SkillsEditor({
 
 
                                 {/* =================================================
-                                    SKILLS
+                                    SKILLS - Store as array with single string
                                 ================================================= */}
 
                                 <input
-                                    value={
-                                        Array.isArray(
-                                            value[category]
-                                        )
-                                            ? value[
-                                                category
-                                            ].join(", ")
-                                            : ""
-                                    }
-                                    onChange={(
-                                        event
-                                    ) =>
+                                    value={localInputs[category] || ""}
+                                    onChange={(event) =>
                                         updateSkills(
                                             category,
                                             event.target.value
                                         )
                                     }
-                                    placeholder="React, TypeScript, Node.js"
+                                    placeholder="JavaScript, TypeScript, React, Node.js"
                                     className="
                                         min-h-10
                                         rounded-lg
@@ -1896,7 +1912,7 @@ function SkillsEditor({
 
 
 /* ============================================================
-   PROJECTS EDITOR
+   PROJECTS EDITOR - FIXED: Technologies as array with single string
 ============================================================ */
 
 function ProjectsEditor({
@@ -1914,7 +1930,7 @@ function ProjectsEditor({
         const item: ResumeProject = {
             name: "",
             description: "",
-            technologies: [],
+            technologies: [""],
             url: "",
             github: "",
         };
@@ -1972,14 +1988,7 @@ function ProjectsEditor({
         updateProject(
             index,
             {
-                technologies:
-                    text
-                        .split(",")
-                        .map(
-                            item =>
-                                item.trim()
-                        )
-                        .filter(Boolean),
+                technologies: [text],
             }
         );
     }
@@ -2121,10 +2130,8 @@ function ProjectsEditor({
                                 value={
                                     Array.isArray(
                                         item.technologies
-                                    )
-                                        ? item.technologies.join(
-                                            ", "
-                                        )
+                                    ) && item.technologies.length > 0
+                                        ? item.technologies[0]
                                         : ""
                                 }
                                 placeholder="React, TypeScript, Node.js, PostgreSQL"

@@ -201,15 +201,18 @@ function normalizeContent(
                             ]
                         ) => [
                                 category,
-                                Array.isArray(skills)
-                                    ? skills.filter(
-                                        (
-                                            item
-                                        ) =>
-                                            typeof item ===
-                                            "string"
-                                    )
-                                    : [],
+                                // If it's a string, split into array, otherwise use as-is
+                                typeof skills === "string"
+                                    ? skills.split(",").map(s => s.trim()).filter(Boolean)
+                                    : Array.isArray(skills)
+                                        ? skills.filter(
+                                            (
+                                                item
+                                            ) =>
+                                                typeof item ===
+                                                "string"
+                                        )
+                                        : [],
                             ]
                     )
                 )
@@ -228,11 +231,11 @@ function normalizeContent(
                             item?.description ?? "",
 
                         technologies:
-                            Array.isArray(
-                                item?.technologies
-                            )
-                                ? item.technologies
-                                : [],
+                            typeof item?.technologies === "string"
+                                ? item.technologies.split(",").map(s => s.trim()).filter(Boolean)
+                                : Array.isArray(item?.technologies)
+                                    ? item.technologies
+                                    : [],
 
                         url:
                             item?.url ?? "",
@@ -1083,14 +1086,14 @@ function EducationEditor({
 
 
 /* ============================================================
-   SKILLS
+   SKILLS - FIXED: Values are stored as arrays but displayed as strings
 ============================================================ */
 
 function SkillsEditor({
     value,
     onChange,
 }: {
-    value: ResumeContent["skills"];
+    value: ResumeContent["skills"]; // Record<string, string[]>
     onChange: (
         value: ResumeContent["skills"]
     ) => void;
@@ -1102,19 +1105,33 @@ function SkillsEditor({
      * The actual resume data remains:
      *
      * {
-     *   "Frontend": ["React", "TypeScript"],
-     *   "Backend": ["Node.js"]
+     *   "Programming Languages": ["JavaScript, TypeScript, Python"],
+     *   "Frontend": ["React, Next.js, Tailwind CSS"]
      * }
      *
-     * These IDs are only used by React so typing in a category
-     * name never causes the row to remount or jump.
+     * Each skill value is stored as an array with a single string,
+     * allowing commas and special characters to be preserved.
      */
 
     const rowIdsRef = React.useRef<
         Map<string, string>
     >(new Map());
 
+    // Local input state for skills - stores the raw string value
+    const [localInputs, setLocalInputs] = React.useState<Record<string, string>>({});
 
+    // Update local inputs when value changes
+    React.useEffect(() => {
+        const newLocalInputs: Record<string, string> = {};
+        Object.entries(value).forEach(([category, skills]) => {
+            if (Array.isArray(skills) && skills.length > 0) {
+                newLocalInputs[category] = skills[0] || "";
+            } else {
+                newLocalInputs[category] = "";
+            }
+        });
+        setLocalInputs(newLocalInputs);
+    }, [value]);
 
 
     /*
@@ -1205,7 +1222,7 @@ function SkillsEditor({
     function addCategory() {
 
         let category =
-            "Technical Skills";
+            "Programming Languages";
 
         let counter = 1;
 
@@ -1238,7 +1255,7 @@ function SkillsEditor({
 
         onChange({
             ...value,
-            [category]: [],
+            [category]: [""],
         });
 
     }
@@ -1293,9 +1310,6 @@ function SkillsEditor({
             );
 
 
-
-
-
         const next: ResumeContent["skills"] =
             {};
 
@@ -1347,6 +1361,18 @@ function SkillsEditor({
 
         onChange(next);
 
+        // Update local input for the new category name
+        if (next[newName] && next[newName].length > 0) {
+            setLocalInputs(prev => ({
+                ...prev,
+                [newName]: prev[oldName] || next[newName][0],
+            }));
+            // Remove old local input
+            const newLocalInputs = { ...localInputs };
+            delete newLocalInputs[oldName];
+            setLocalInputs(newLocalInputs);
+        }
+
     }
 
 
@@ -1354,20 +1380,17 @@ function SkillsEditor({
         category: string,
         raw: string
     ) {
+        // Update local input immediately for smooth typing
+        setLocalInputs(prev => ({
+            ...prev,
+            [category]: raw,
+        }));
 
+        // Store as array with single string - this preserves all characters
         onChange({
             ...value,
-
-            [category]:
-                raw
-                    .split(",")
-                    .map(
-                        item =>
-                            item.trim()
-                    )
-                    .filter(Boolean),
+            [category]: [raw],
         });
-
     }
 
 
@@ -1389,6 +1412,11 @@ function SkillsEditor({
 
 
         onChange(next);
+
+        // Clean up local input
+        const newLocalInputs = { ...localInputs };
+        delete newLocalInputs[category];
+        setLocalInputs(newLocalInputs);
 
     }
 
@@ -1461,28 +1489,18 @@ function SkillsEditor({
 
 
                                 {/* =================================================
-                                    SKILLS
+                                    SKILLS - Store as array with single string
                                 ================================================= */}
 
                                 <input
-                                    value={
-                                        Array.isArray(
-                                            value[category]
-                                        )
-                                            ? value[
-                                                category
-                                            ].join(", ")
-                                            : ""
-                                    }
-                                    onChange={(
-                                        event
-                                    ) =>
+                                    value={localInputs[category] || ""}
+                                    onChange={(event) =>
                                         updateSkills(
                                             category,
                                             event.target.value
                                         )
                                     }
-                                    placeholder="React, TypeScript, Node.js"
+                                    placeholder="JavaScript, TypeScript, React, Node.js"
                                     className="
                                         min-h-10
                                         rounded-lg
@@ -1570,7 +1588,7 @@ function SkillsEditor({
 
 
 /* ============================================================
-   PROJECTS
+   PROJECTS - FIXED: Technologies as array with single string
 ============================================================ */
 
 function ProjectsEditor({
@@ -1583,6 +1601,22 @@ function ProjectsEditor({
     ) => void;
 }) {
 
+    // Local input state for technologies - stores the raw string
+    const [techInputs, setTechInputs] = React.useState<Record<number, string>>({});
+
+    // Update local inputs when value changes
+    React.useEffect(() => {
+        const newInputs: Record<number, string> = {};
+        value.forEach((project, index) => {
+            if (Array.isArray(project.technologies) && project.technologies.length > 0) {
+                newInputs[index] = project.technologies[0] || "";
+            } else {
+                newInputs[index] = "";
+            }
+        });
+        setTechInputs(newInputs);
+    }, [value]);
+
     function addProject() {
 
         onChange([
@@ -1590,7 +1624,7 @@ function ProjectsEditor({
             {
                 name: "",
                 description: "",
-                technologies: [],
+                technologies: [""],
                 url: "",
                 github: "",
             },
@@ -1635,6 +1669,26 @@ function ProjectsEditor({
             )
         );
 
+        // Clean up local input
+        const newInputs = { ...techInputs };
+        delete newInputs[index];
+        setTechInputs(newInputs);
+
+    }
+
+
+    function updateTechnologies(
+        index: number,
+        raw: string
+    ) {
+        // Update local input immediately for smooth typing
+        setTechInputs(prev => ({
+            ...prev,
+            [index]: raw,
+        }));
+
+        // Store as array with single string - this preserves all characters
+        updateProject(index, { technologies: [raw] });
     }
 
 
@@ -1736,38 +1790,47 @@ function ProjectsEditor({
                             />
 
 
-                            <Field
-                                label="Technologies"
-                                value={
-                                    Array.isArray(
-                                        item.technologies
-                                    )
-                                        ? item.technologies.join(
-                                            ", "
-                                        )
-                                        : ""
-                                }
-                                onChange={(value) =>
-                                    updateProject(
-                                        index,
-                                        {
-                                            technologies:
-                                                value
-                                                    .split(",")
-                                                    .map(
-                                                        item =>
-                                                            item.trim()
-                                                    )
-                                                    .filter(
-                                                        Boolean
-                                                    ),
+                            <div>
+                                <label className="block">
+                                    <span
+                                        className="
+                                            mb-1.5
+                                            block
+                                            text-xs
+                                            font-semibold
+                                            text-[var(--text-secondary)]
+                                        "
+                                    >
+                                        Technologies
+                                    </span>
+                                    <input
+                                        value={techInputs[index] || ""}
+                                        onChange={(event) =>
+                                            updateTechnologies(
+                                                index,
+                                                event.target.value
+                                            )
                                         }
-                                    )
-                                }
-                                placeholder={
-                                    "React, Node.js, PostgreSQL"
-                                }
-                            />
+                                        placeholder="React, Node.js, PostgreSQL, Redis, Docker"
+                                        className="
+                                            min-h-11
+                                            w-full
+                                            rounded-xl
+                                            border
+                                            border-[var(--border)]
+                                            bg-[var(--surface)]
+                                            px-3.5
+                                            text-sm
+                                            text-[var(--text-primary)]
+                                            outline-none
+                                            transition
+                                            focus:border-indigo-500
+                                            focus:ring-4
+                                            focus:ring-indigo-500/10
+                                        "
+                                    />
+                                </label>
+                            </div>
 
 
                             <div
@@ -1836,6 +1899,9 @@ function ProjectsEditor({
                     text-sm
                     font-semibold
                     text-indigo-600
+                    hover:bg-indigo-50
+                    dark:border-indigo-500/40
+                    dark:text-indigo-400
                 "
             >
                 + Add project
