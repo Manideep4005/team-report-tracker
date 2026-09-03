@@ -20,6 +20,8 @@ import PublicMonitorManagement
 import PublicMonitorView
     from "./pages/PublicMonitorView/PublicMonitorView";
 import Chat from "./pages/Chat/Chat";
+import Resume from "./pages/Resume/Resume";
+import Profile from "./pages/Profile/Profile";
 
 
 
@@ -190,6 +192,30 @@ function App() {
                     <ProtectedRoute>
                         <DashboardLayout>
                             <PublicMonitorManagement />
+                        </DashboardLayout>
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/resume"
+                element={
+                    <ProtectedRoute
+                    >
+                        <DashboardLayout>
+                            <Resume />
+                        </DashboardLayout>
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/profile"
+                element={
+                    <ProtectedRoute
+                    >
+                        <DashboardLayout>
+                            <Profile />
                         </DashboardLayout>
                     </ProtectedRoute>
                 }

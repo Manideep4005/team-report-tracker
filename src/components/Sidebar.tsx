@@ -14,6 +14,7 @@ import {
   HiOutlineSun,
   HiOutlineLink,
   HiOutlineChatBubbleLeftRight,
+  HiOutlineUserCircle,
 } from "react-icons/hi2";
 
 import { NavLink, useNavigate } from "react-router-dom";
@@ -238,6 +239,13 @@ export default function Sidebar({
   }
 
 
+  function handleProfile() {
+    setAccountOpen(false);
+    onClose();
+    navigate("/profile");
+  }
+
+
   /*
    * MANAGEMENT SECTION VISIBILITY
    *
@@ -385,6 +393,33 @@ export default function Sidebar({
             </NavLink>
 
           )}
+
+        {hasPermission("RESUME_VIEW") && (
+          <NavLink
+            to="/resume"
+            className={linkClass}
+            onClick={() => {
+              if (mobile) {
+                setAccountOpen(false);
+                onClose();
+              }
+            }}
+          >
+
+            <span className="sidebar-link-icon">
+
+              <HiOutlineDocumentText
+                size={18}
+              />
+
+            </span>
+
+            <span>
+              Resume
+            </span>
+
+          </NavLink>
+        )}
 
       </div>
 
@@ -809,6 +844,40 @@ export default function Sidebar({
 
             </div>
 
+            {/* Profile */}
+
+            <button
+              type="button"
+              onClick={
+                handleProfile
+              }
+              className="
+                sidebar-account-item
+              "
+            >
+
+              <span className="
+                sidebar-account-item-left
+              ">
+
+                <span className="
+                  sidebar-account-item-icon
+                ">
+
+                  <HiOutlineUserCircle
+                    size={17}
+                  />
+
+                </span>
+
+
+                <span>
+                  Profile
+                </span>
+
+              </span>
+
+            </button>
 
             {/* Change Password */}
 
@@ -844,6 +913,7 @@ export default function Sidebar({
               </span>
 
             </button>
+
 
 
             {/* Divider */}

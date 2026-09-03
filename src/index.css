@@ -358,5 +358,798 @@ html.theme-transition *::after {
 /* =========================================================
    SHARED COMPONENT STYLES
    ========================================================= */
+/* =========================================================
+   RESUME BUILDER
+   Uses only existing tokens from :root / .dark — no new
+   colors or fonts introduced.
+   ========================================================= */
+
+.resume-page {
+  min-width: 0;
+  width: 100%;
+  background: var(--background);
+}
+
+
+/* ---------------------------------------------------------
+   LOADING
+--------------------------------------------------------- */
+
+.resume-loading {
+  display: flex;
+  min-height: 60vh;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.resume-loading-spinner {
+  width: 22px;
+  height: 22px;
+  color: var(--brand);
+  animation: resume-spin 900ms linear infinite;
+}
+
+.resume-spin {
+  animation: resume-spin 900ms linear infinite;
+}
+
+@keyframes resume-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
+/* ---------------------------------------------------------
+   TOOLBAR
+--------------------------------------------------------- */
+
+.resume-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 25;
+
+  background: color-mix(in srgb, var(--background) 88%, transparent);
+  border-bottom: 1px solid var(--border-subtle);
+
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.resume-toolbar-inner {
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 14px 24px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.resume-title-group {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.resume-title-icon {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: var(--radius-md);
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+
+.resume-title-copy {
+  min-width: 0;
+}
+
+.resume-title {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.resume-subtitle {
+  margin: 2px 0 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.resume-toolbar-actions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Segmented tab control */
+
+.resume-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+
+  padding: 3px;
+  border-radius: var(--radius-md);
+  background: var(--surface-subtle);
+  border: 1px solid var(--border-subtle);
+}
+
+.resume-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  height: 32px;
+  padding: 0 12px;
+
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+
+  font-size: 12.5px;
+  font-weight: 600;
+
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
+}
+
+.resume-tab:hover {
+  color: var(--text-primary);
+}
+
+.resume-tab-active,
+.resume-tab-active:hover {
+  background: var(--surface);
+  color: var(--brand);
+  box-shadow: var(--shadow-xs);
+}
+
+.resume-toolbar-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.resume-btn {
+  min-height: 36px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+
+  padding: 0 14px;
+
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--text-secondary);
+
+  font-size: 12.5px;
+  font-weight: 600;
+
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease,
+    transform 150ms ease;
+}
+
+.resume-btn:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+
+.resume-btn:active {
+  transform: scale(0.98);
+}
+
+.resume-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.resume-btn-primary {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: white;
+}
+
+.resume-btn-primary:hover:not(:disabled) {
+  background: var(--brand-hover);
+  border-color: var(--brand-hover);
+  color: white;
+}
+
+.resume-btn-ghost {
+  background: var(--surface);
+}
+
+
+/* ---------------------------------------------------------
+   CONTENT SHELL
+--------------------------------------------------------- */
+
+.resume-content {
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 22px 24px 48px;
+}
+
+
+/* ---------------------------------------------------------
+   CREATE BANNER
+--------------------------------------------------------- */
+
+.resume-banner {
+  margin-bottom: 22px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+
+  padding: 16px 18px;
+
+  border: 1px solid color-mix(in srgb, var(--brand) 18%, var(--border));
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--brand-soft) 45%, var(--surface));
+}
+
+.resume-banner-copy {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.resume-banner-icon {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: var(--radius-sm);
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+
+.resume-banner-copy h2 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.resume-banner-copy p {
+  margin: 3px 0 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.resume-banner-cta {
+  flex-shrink: 0;
+  min-height: 38px;
+  padding: 0 16px;
+
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--brand);
+  color: white;
+
+  font-size: 12.5px;
+  font-weight: 700;
+
+  transition: background-color 150ms ease, transform 150ms ease;
+}
+
+.resume-banner-cta:hover {
+  background: var(--brand-hover);
+}
+
+.resume-banner-cta:active {
+  transform: scale(0.98);
+}
+
+.resume-banner-cta:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+
+/* ---------------------------------------------------------
+   WORKSPACE LAYOUT
+--------------------------------------------------------- */
+
+.resume-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(420px, 0.86fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.resume-editor-column {
+  min-width: 0;
+}
+
+.resume-preview-column {
+  min-width: 0;
+}
+
+.resume-preview-sticky {
+  position: sticky;
+  top: 92px;
+  max-height: calc(100vh - 112px);
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.resume-preview-standalone {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+
+/* ---------------------------------------------------------
+   EDITOR SECTIONS
+--------------------------------------------------------- */
+
+.resume-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.resume-section {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
+  overflow: hidden;
+}
+
+.resume-section-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.resume-section-icon {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: var(--radius-sm);
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+
+.resume-section-title {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.resume-section-description {
+  margin: 2px 0 0;
+  color: var(--text-muted);
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+
+.resume-section-body {
+  padding: 16px 18px 18px;
+}
+
+
+/* ---------------------------------------------------------
+   FIELDS
+--------------------------------------------------------- */
+
+.resume-field-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+}
+
+.resume-field-span-2 {
+  grid-column: span 2;
+}
+
+.resume-field {
+  display: block;
+  min-width: 0;
+}
+
+.resume-field-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.resume-field-input,
+.resume-field input {
+  height: 38px;
+  width: 100%;
+
+  padding: 0 12px;
+
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text-primary);
+
+  font-size: 12.5px;
+
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.resume-field-input:focus,
+.resume-field input:focus {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px var(--brand-soft);
+  outline: none;
+}
+
+.resume-textarea {
+  width: 100%;
+  resize: vertical;
+
+  padding: 10px 12px;
+
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text-primary);
+
+  font-size: 12.5px;
+  line-height: 1.55;
+
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.resume-textarea:focus {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px var(--brand-soft);
+  outline: none;
+}
+
+.resume-hint {
+  margin: 6px 0 0;
+  color: var(--text-subtle);
+  font-size: 11px;
+}
+
+
+/* ---------------------------------------------------------
+   REPEATABLE ENTRIES (experience / education / projects / skills)
+--------------------------------------------------------- */
+
+.resume-entries {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.resume-entry {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-subtle);
+  padding: 14px;
+}
+
+.resume-entry-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.resume-entry-title {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.resume-entry-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.resume-entry-textarea {
+  margin-top: 12px;
+}
+
+.resume-remove {
+  border: 0;
+  background: transparent;
+  padding: 0;
+
+  color: var(--danger);
+  font-size: 11px;
+  font-weight: 600;
+
+  transition: color 150ms ease;
+}
+
+.resume-remove:hover {
+  color: color-mix(in srgb, var(--danger) 80%, black);
+}
+
+.resume-checkbox-row {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.resume-skill-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.resume-skill-row .resume-field-input {
+  flex: 1;
+}
+
+.resume-add-button {
+  width: 100%;
+
+  padding: 12px;
+
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  background: transparent;
+
+  color: var(--brand);
+  font-size: 12px;
+  font-weight: 600;
+
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.resume-add-button:hover {
+  background: var(--brand-soft);
+  border-color: var(--brand);
+}
+
+
+/* ---------------------------------------------------------
+   PREVIEW CARD + SCALING
+--------------------------------------------------------- */
+
+.resume-preview-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-subtle);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.resume-preview-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--surface);
+}
+
+.resume-eyebrow {
+  margin: 0 0 3px;
+  color: var(--brand);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.resume-preview-card-header h2 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.resume-preview-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 22px;
+  padding: 0 8px;
+
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-subtle);
+
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.resume-preview-card-body {
+  padding: 16px;
+}
+
+.resume-scale-outer {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+.resume-scale-inner {
+  transform-origin: top left;
+}
+
+
+/* ---------------------------------------------------------
+   RESPONSIVE
+--------------------------------------------------------- */
+
+@media (max-width: 1180px) {
+  .resume-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .resume-preview-column {
+    display: none;
+  }
+}
+
+@media (max-width: 860px) {
+  .resume-field-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .resume-toolbar-inner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 12px 16px;
+  }
+
+  .resume-toolbar-actions {
+    justify-content: space-between;
+  }
+
+  .resume-title {
+    white-space: normal;
+  }
+}
+
+@media (max-width: 560px) {
+  .resume-content {
+    padding: 14px 14px 32px;
+  }
+
+  .resume-toolbar-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .resume-tabs,
+  .resume-toolbar-buttons {
+    width: 100%;
+  }
+
+  .resume-tabs {
+    justify-content: stretch;
+  }
+
+  .resume-tab {
+    flex: 1;
+  }
+
+  .resume-toolbar-buttons {
+    justify-content: stretch;
+  }
+
+  .resume-btn {
+    flex: 1;
+  }
+
+  .resume-banner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .resume-banner-cta {
+    width: 100%;
+  }
+
+  .resume-field-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .resume-field-span-2 {
+    grid-column: span 1;
+  }
+
+  .resume-section-header,
+  .resume-section-body {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .resume-preview-card-body {
+    padding: 10px;
+  }
+}
+
+@media (max-width: 420px) {
+  .resume-title-icon {
+    width: 34px;
+    height: 34px;
+  }
+
+  .resume-title {
+    font-size: 14.5px;
+  }
+
+  .resume-subtitle {
+    font-size: 11px;
+  }
+}
 
 @import "./styles/components.css";
