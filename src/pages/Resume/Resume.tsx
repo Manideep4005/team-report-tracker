@@ -1,48 +1,96 @@
-import {
-    useEffect,
-    useState,
-} from "react";
+import { useEffect, useState } from "react";
+
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
-    useMutation,
-    useQuery,
-    useQueryClient,
-} from "@tanstack/react-query";
-
-import {
-    HiOutlineAcademicCap,
-    HiOutlineArrowDownTray,
-    HiOutlineArrowPath,
-    HiOutlineBriefcase,
-    HiOutlineCheck,
-    HiOutlineDocumentText,
-    HiOutlineEye,
-    HiOutlineFolderOpen,
-    HiOutlineUser,
-    HiOutlineWrenchScrewdriver,
-    HiOutlineArrowUpTray,
-    HiOutlineXMark,
+  HiOutlineAcademicCap,
+  HiOutlineArrowDownTray,
+  HiOutlineArrowPath,
+  HiOutlineBriefcase,
+  HiOutlineCheck,
+  HiOutlineDocumentText,
+  HiOutlineEye,
+  HiOutlineFolderOpen,
+  HiOutlineUser,
+  HiOutlineWrenchScrewdriver,
+  HiOutlineArrowUpTray,
+  HiOutlineXMark,
 } from "react-icons/hi2";
 
 import { toast } from "sonner";
 
 import {
-    getResumeProfile,
-    getResumeCustomization,
-    createCustomizationFromProfile,
-    saveResumeCustomization,
-    downloadResumePdf,
+  getResumeProfile,
+  getResumeCustomization,
+  createCustomizationFromProfile,
+  saveResumeCustomization,
+  downloadResumePdf,
 } from "../../services/resume";
 
-import {
-    emptyResumeContent,
-    type ResumeContent,
-} from "../../types/resume";
+import { emptyResumeContent, type ResumeContent } from "../../types/resume";
 
-import ResumePreview
-    from "./components/ResumePreview";
+import ResumePreview from "./components/ResumePreview";
 import React from "react";
 
+/* ============================================================
+   NORMALIZE SKILLS ORDER
+
+   Skills are stored as category -> string[] plus an optional
+   "__order" metadata array. The metadata controls category order
+   without changing the existing skill data shape.
+============================================================ */
+
+function normalizeSkills(value: unknown): ResumeContent["skills"] {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return {};
+  }
+
+  const data = value as Record<string, unknown>;
+
+  const categories = Object.keys(data).filter(
+    (category) => category !== "__order",
+  );
+
+  const storedOrder = Array.isArray(data.__order)
+    ? data.__order.filter(
+        (category): category is string =>
+          typeof category === "string" &&
+          category.trim().length > 0 &&
+          category !== "__order",
+      )
+    : [];
+
+  const orderedCategories = [
+    ...storedOrder.filter((category) => categories.includes(category)),
+    ...categories.filter((category) => !storedOrder.includes(category)),
+  ];
+
+  const result: ResumeContent["skills"] = {};
+
+  orderedCategories.forEach((category) => {
+    const skills = data[category];
+
+    const normalized =
+      typeof skills === "string"
+        ? skills
+            .split(",")
+            .map((item) => item.trim())
+            .filter(Boolean)
+        : Array.isArray(skills)
+          ? skills.filter((item): item is string => typeof item === "string")
+          : [];
+
+    if (normalized.length > 0) {
+      result[category] = normalized;
+    }
+  });
+
+  result.__order = orderedCategories.filter((category) =>
+    Object.prototype.hasOwnProperty.call(result, category),
+  );
+
+  return result;
+}
 
 /* ============================================================
    NORMALIZE CONTENT
@@ -50,254 +98,143 @@ import React from "react";
    Everything inside the builder must conform to ResumeContent.
 ============================================================ */
 
-function normalizeContent(
-    value: unknown
-): ResumeContent {
-
-    if (
-        !value ||
-        typeof value !== "object"
-    ) {
-
-        return {
-            ...emptyResumeContent,
-            experience: [],
-            education: [],
-            skills: {},
-            projects: [],
-        };
-
-    }
-
-    const data =
-        value as Record<string, any>;
-
-
+function normalizeContent(value: unknown): ResumeContent {
+  if (!value || typeof value !== "object") {
     return {
-
-        fullName:
-            typeof data.fullName === "string"
-                ? data.fullName
-                : "",
-
-        email:
-            typeof data.email === "string"
-                ? data.email
-                : "",
-
-        headline:
-            typeof data.headline === "string"
-                ? data.headline
-                : "",
-
-        phone:
-            typeof data.phone === "string"
-                ? data.phone
-                : "",
-
-        location:
-            typeof data.location === "string"
-                ? data.location
-                : "",
-
-        website:
-            typeof data.website === "string"
-                ? data.website
-                : "",
-
-        linkedin:
-            typeof data.linkedin === "string"
-                ? data.linkedin
-                : "",
-
-        github:
-            typeof data.github === "string"
-                ? data.github
-                : "",
-
-        summary:
-            typeof data.summary === "string"
-                ? data.summary
-                : "",
-
-
-        experience:
-            Array.isArray(data.experience)
-                ? data.experience.map(
-                    (item: any) => ({
-                        company:
-                            item?.company ?? "",
-
-                        position:
-                            item?.position ?? "",
-
-                        location:
-                            item?.location ?? "",
-
-                        startDate:
-                            item?.startDate ?? "",
-
-                        endDate:
-                            item?.endDate ?? "",
-
-                        currentlyWorking:
-                            Boolean(
-                                item?.currentlyWorking
-                            ),
-
-                        description:
-                            Array.isArray(
-                                item?.description
-                            )
-                                ? item.description
-                                : [],
-                    })
-                )
-                : [],
-
-
-        education:
-            Array.isArray(data.education)
-                ? data.education.map(
-                    (item: any) => ({
-                        institution:
-                            item?.institution ?? "",
-
-                        degree:
-                            item?.degree ?? "",
-
-                        fieldOfStudy:
-                            item?.fieldOfStudy ?? "",
-
-                        startDate:
-                            item?.startDate ?? "",
-
-                        endDate:
-                            item?.endDate ?? "",
-
-                        grade:
-                            item?.grade ?? "",
-
-                        location:
-                            item?.location ?? "",
-                    })
-                )
-                : [],
-
-
-        skills:
-            data.skills &&
-                typeof data.skills === "object" &&
-                !Array.isArray(data.skills)
-
-                ? Object.fromEntries(
-                    Object.entries(
-                        data.skills
-                    ).map(
-                        (
-                            [
-                                category,
-                                skills,
-                            ]
-                        ) => [
-                                category,
-                                // If it's a string, split into array, otherwise use as-is
-                                typeof skills === "string"
-                                    ? skills.split(",").map(s => s.trim()).filter(Boolean)
-                                    : Array.isArray(skills)
-                                        ? skills.filter(
-                                            (
-                                                item
-                                            ) =>
-                                                typeof item ===
-                                                "string"
-                                        )
-                                        : [],
-                            ]
-                    )
-                )
-
-                : {},
-
-
-        projects:
-            Array.isArray(data.projects)
-                ? data.projects.map(
-                    (item: any) => ({
-                        name:
-                            item?.name ?? "",
-
-                        description:
-                            item?.description ?? "",
-
-                        technologies:
-                            typeof item?.technologies === "string"
-                                ? item.technologies.split(",").map(s => s.trim()).filter(Boolean)
-                                : Array.isArray(item?.technologies)
-                                    ? item.technologies
-                                    : [],
-
-                        url:
-                            item?.url ?? "",
-
-                        github:
-                            item?.github ?? "",
-                    })
-                )
-                : [],
-
+      ...emptyResumeContent,
+      experience: [],
+      education: [],
+      skills: {},
+      projects: [],
     };
+  }
 
+  const data = value as Record<string, any>;
+
+  return {
+    fullName: typeof data.fullName === "string" ? data.fullName : "",
+
+    email: typeof data.email === "string" ? data.email : "",
+
+    headline: typeof data.headline === "string" ? data.headline : "",
+
+    phone: typeof data.phone === "string" ? data.phone : "",
+
+    location: typeof data.location === "string" ? data.location : "",
+
+    website: typeof data.website === "string" ? data.website : "",
+
+    linkedin: typeof data.linkedin === "string" ? data.linkedin : "",
+
+    github: typeof data.github === "string" ? data.github : "",
+
+    summary: typeof data.summary === "string" ? data.summary : "",
+
+    experience: Array.isArray(data.experience)
+      ? data.experience.map((item: any) => ({
+          company: item?.company ?? "",
+
+          position: item?.position ?? "",
+
+          location: item?.location ?? "",
+
+          startDate: item?.startDate ?? "",
+
+          endDate: item?.endDate ?? "",
+
+          currentlyWorking: Boolean(item?.currentlyWorking),
+
+          description: Array.isArray(item?.description) ? item.description : [],
+        }))
+      : [],
+
+    education: Array.isArray(data.education)
+      ? data.education.map((item: any) => ({
+          institution: item?.institution ?? "",
+
+          degree: item?.degree ?? "",
+
+          fieldOfStudy: item?.fieldOfStudy ?? "",
+
+          startDate: item?.startDate ?? "",
+
+          endDate: item?.endDate ?? "",
+
+          grade: item?.grade ?? "",
+
+          location: item?.location ?? "",
+        }))
+      : [],
+
+    skills:
+      data.skills &&
+      typeof data.skills === "object" &&
+      !Array.isArray(data.skills)
+        ? normalizeSkills(data.skills)
+        : {},
+
+    projects: Array.isArray(data.projects)
+      ? data.projects.map((item: any) => ({
+          name: item?.name ?? "",
+
+          description: item?.description ?? "",
+
+          technologies:
+            typeof item?.technologies === "string"
+              ? item.technologies
+                  .split(",")
+                  .map((s) => s.trim())
+                  .filter(Boolean)
+              : Array.isArray(item?.technologies)
+                ? item.technologies
+                : [],
+
+          url: item?.url ?? "",
+
+          github: item?.github ?? "",
+        }))
+      : [],
+  };
 }
-
 
 /* ============================================================
    FIELD
 ============================================================ */
 
 function Field({
-    label,
-    value,
-    placeholder,
-    onChange,
-    multiline = false,
+  label,
+  value,
+  placeholder,
+  onChange,
+  multiline = false,
 }: {
-    label: string;
-    value: string;
-    placeholder?: string;
-    onChange: (value: string) => void;
-    multiline?: boolean;
+  label: string;
+  value: string;
+  placeholder?: string;
+  onChange: (value: string) => void;
+  multiline?: boolean;
 }) {
-
-    return (
-
-        <label className="block">
-
-            <span
-                className="
+  return (
+    <label className="block">
+      <span
+        className="
                     mb-1.5
                     block
                     text-xs
                     font-semibold
                     text-[var(--text-secondary)]
                 "
-            >
-                {label}
-            </span>
+      >
+        {label}
+      </span>
 
-
-            {multiline ? (
-
-                <textarea
-                    value={value}
-                    placeholder={placeholder}
-                    onChange={(event) =>
-                        onChange(
-                            event.target.value
-                        )
-                    }
-                    rows={5}
-                    className="
+      {multiline ? (
+        <textarea
+          value={value}
+          placeholder={placeholder}
+          onChange={(event) => onChange(event.target.value)}
+          rows={5}
+          className="
                         min-h-32
                         w-full
                         resize-y
@@ -315,19 +252,13 @@ function Field({
                         focus:ring-4
                         focus:ring-indigo-500/10
                     "
-                />
-
-            ) : (
-
-                <input
-                    value={value}
-                    placeholder={placeholder}
-                    onChange={(event) =>
-                        onChange(
-                            event.target.value
-                        )
-                    }
-                    className="
+        />
+      ) : (
+        <input
+          value={value}
+          placeholder={placeholder}
+          onChange={(event) => onChange(event.target.value)}
+          className="
                         min-h-11
                         w-full
                         rounded-xl
@@ -343,47 +274,39 @@ function Field({
                         focus:ring-4
                         focus:ring-indigo-500/10
                     "
-                />
-
-            )}
-
-        </label>
-
-    );
-
+        />
+      )}
+    </label>
+  );
 }
-
 
 /* ============================================================
    SECTION
 ============================================================ */
 
 function EditorSection({
-    icon,
-    title,
-    description,
-    children,
+  icon,
+  title,
+  description,
+  children,
 }: {
-    icon: React.ReactNode;
-    title: string;
-    description: string;
-    children: React.ReactNode;
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  children: React.ReactNode;
 }) {
-
-    return (
-
-        <section
-            className="
+  return (
+    <section
+      className="
                 rounded-2xl
                 border
                 border-[var(--border)]
                 bg-[var(--surface)]
                 shadow-sm
             "
-        >
-
-            <div
-                className="
+    >
+      <div
+        className="
                     flex
                     items-center
                     gap-3
@@ -393,10 +316,9 @@ function EditorSection({
                     py-4
                     sm:px-6
                 "
-            >
-
-                <div
-                    className="
+      >
+        <div
+          className="
                         flex
                         size-9
                         shrink-0
@@ -408,135 +330,90 @@ function EditorSection({
                         dark:bg-indigo-500/10
                         dark:text-indigo-400
                     "
-                >
-                    {icon}
-                </div>
+        >
+          {icon}
+        </div>
 
-
-                <div className="min-w-0">
-
-                    <h2
-                        className="
+        <div className="min-w-0">
+          <h2
+            className="
                             text-sm
                             font-bold
                             text-[var(--text-primary)]
                         "
-                    >
-                        {title}
-                    </h2>
+          >
+            {title}
+          </h2>
 
-                    <p
-                        className="
+          <p
+            className="
                             mt-0.5
                             text-xs
                             text-[var(--text-muted)]
                         "
-                    >
-                        {description}
-                    </p>
+          >
+            {description}
+          </p>
+        </div>
+      </div>
 
-                </div>
-
-            </div>
-
-
-            <div className="p-5 sm:p-6">
-
-                {children}
-
-            </div>
-
-        </section>
-
-    );
-
+      <div className="p-5 sm:p-6">{children}</div>
+    </section>
+  );
 }
-
 
 /* ============================================================
    EXPERIENCE EDITOR
 ============================================================ */
 
 function ExperienceEditor({
-    value,
-    onChange,
+  value,
+  onChange,
 }: {
-    value: ResumeContent["experience"];
-    onChange: (
-        value: ResumeContent["experience"]
-    ) => void;
+  value: ResumeContent["experience"];
+  onChange: (value: ResumeContent["experience"]) => void;
 }) {
+  function addExperience() {
+    onChange([
+      ...value,
+      {
+        company: "",
+        position: "",
+        location: "",
+        startDate: "",
+        endDate: "",
+        currentlyWorking: false,
+        description: [],
+      },
+    ]);
+  }
 
-    function addExperience() {
+  function updateExperience(
+    index: number,
+    patch: Partial<ResumeContent["experience"][number]>,
+  ) {
+    onChange(
+      value.map((item, itemIndex) =>
+        itemIndex === index
+          ? {
+              ...item,
+              ...patch,
+            }
+          : item,
+      ),
+    );
+  }
 
-        onChange([
-            ...value,
-            {
-                company: "",
-                position: "",
-                location: "",
-                startDate: "",
-                endDate: "",
-                currentlyWorking: false,
-                description: [],
-            },
-        ]);
+  function removeExperience(index: number) {
+    onChange(value.filter((_, itemIndex) => itemIndex !== index));
+  }
 
-    }
-
-
-    function updateExperience(
-        index: number,
-        patch: Partial<
-            ResumeContent["experience"][number]
-        >
-    ) {
-
-        onChange(
-            value.map(
-                (
-                    item,
-                    itemIndex
-                ) =>
-                    itemIndex === index
-                        ? {
-                            ...item,
-                            ...patch,
-                        }
-                        : item
-            )
-        );
-
-    }
-
-
-    function removeExperience(
-        index: number
-    ) {
-
-        onChange(
-            value.filter(
-                (_, itemIndex) =>
-                    itemIndex !== index
-            )
-        );
-
-    }
-
-
-    return (
-
-        <div className="space-y-4">
-
-            {value.map(
-                (
-                    item,
-                    index
-                ) => (
-
-                    <div
-                        key={index}
-                        className="
+  return (
+    <div className="space-y-4">
+      {value.map((item, index) => (
+        <div
+          key={index}
+          className="
                             rounded-xl
                             border
                             border-[var(--border)]
@@ -544,146 +421,102 @@ function ExperienceEditor({
                             p-4
                             sm:p-5
                         "
-                    >
-
-                        <div
-                            className="
+        >
+          <div
+            className="
                                 mb-4
                                 flex
                                 items-center
                                 justify-between
                                 gap-3
                             "
-                        >
-
-                            <p
-                                className="
+          >
+            <p
+              className="
                                     text-xs
                                     font-bold
                                     uppercase
                                     tracking-wider
                                     text-[var(--text-muted)]
                                 "
-                            >
-                                Experience {index + 1}
-                            </p>
+            >
+              Experience {index + 1}
+            </p>
 
-
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    removeExperience(index)
-                                }
-                                className="
+            <button
+              type="button"
+              onClick={() => removeExperience(index)}
+              className="
                                     text-xs
                                     font-semibold
                                     text-red-600
                                     hover:text-red-700
                                 "
-                            >
-                                Remove
-                            </button>
+            >
+              Remove
+            </button>
+          </div>
 
-                        </div>
-
-
-                        <div
-                            className="
+          <div
+            className="
                                 grid
                                 gap-4
                                 sm:grid-cols-2
                             "
-                        >
+          >
+            <Field
+              label="Position"
+              value={item.position}
+              onChange={(value) =>
+                updateExperience(index, {
+                  position: value,
+                })
+              }
+            />
 
-                            <Field
-                                label="Position"
-                                value={
-                                    item.position
-                                }
-                                onChange={(value) =>
-                                    updateExperience(
-                                        index,
-                                        {
-                                            position:
-                                                value,
-                                        }
-                                    )
-                                }
-                            />
+            <Field
+              label="Company"
+              value={item.company}
+              onChange={(value) =>
+                updateExperience(index, {
+                  company: value,
+                })
+              }
+            />
 
+            <Field
+              label="Location"
+              value={item.location ?? ""}
+              onChange={(value) =>
+                updateExperience(index, {
+                  location: value,
+                })
+              }
+            />
 
-                            <Field
-                                label="Company"
-                                value={
-                                    item.company
-                                }
-                                onChange={(value) =>
-                                    updateExperience(
-                                        index,
-                                        {
-                                            company:
-                                                value,
-                                        }
-                                    )
-                                }
-                            />
+            <Field
+              label="Start date"
+              value={item.startDate}
+              onChange={(value) =>
+                updateExperience(index, {
+                  startDate: value,
+                })
+              }
+            />
 
+            <Field
+              label="End date"
+              value={item.endDate ?? ""}
+              onChange={(value) =>
+                updateExperience(index, {
+                  endDate: value,
+                })
+              }
+            />
+          </div>
 
-                            <Field
-                                label="Location"
-                                value={
-                                    item.location ?? ""
-                                }
-                                onChange={(value) =>
-                                    updateExperience(
-                                        index,
-                                        {
-                                            location:
-                                                value,
-                                        }
-                                    )
-                                }
-                            />
-
-
-                            <Field
-                                label="Start date"
-                                value={
-                                    item.startDate
-                                }
-                                onChange={(value) =>
-                                    updateExperience(
-                                        index,
-                                        {
-                                            startDate:
-                                                value,
-                                        }
-                                    )
-                                }
-                            />
-
-
-                            <Field
-                                label="End date"
-                                value={
-                                    item.endDate ?? ""
-                                }
-                                onChange={(value) =>
-                                    updateExperience(
-                                        index,
-                                        {
-                                            endDate:
-                                                value,
-                                        }
-                                    )
-                                }
-                            />
-
-                        </div>
-
-
-                        <label
-                            className="
+          <label
+            className="
                                 mt-4
                                 flex
                                 items-center
@@ -691,75 +524,42 @@ function ExperienceEditor({
                                 text-sm
                                 text-[var(--text-secondary)]
                             "
-                        >
+          >
+            <input
+              type="checkbox"
+              checked={Boolean(item.currentlyWorking)}
+              onChange={(event) =>
+                updateExperience(index, {
+                  currentlyWorking: event.target.checked,
+                })
+              }
+            />
+            Currently working here
+          </label>
 
-                            <input
-                                type="checkbox"
-                                checked={
-                                    Boolean(
-                                        item.currentlyWorking
-                                    )
-                                }
-                                onChange={(event) =>
-                                    updateExperience(
-                                        index,
-                                        {
-                                            currentlyWorking:
-                                                event.target.checked,
-                                        }
-                                    )
-                                }
-                            />
+          <div className="mt-4">
+            <Field
+              label="Description"
+              multiline
+              value={item.description.join("\n")}
+              placeholder={"One achievement per line"}
+              onChange={(value) =>
+                updateExperience(index, {
+                  description: value
+                    .split("\n")
+                    .map((item) => item.trim())
+                    .filter(Boolean),
+                })
+              }
+            />
+          </div>
+        </div>
+      ))}
 
-                            Currently working here
-
-                        </label>
-
-
-                        <div className="mt-4">
-
-                            <Field
-                                label="Description"
-                                multiline
-                                value={
-                                    item.description.join(
-                                        "\n"
-                                    )
-                                }
-                                placeholder={
-                                    "One achievement per line"
-                                }
-                                onChange={(value) =>
-                                    updateExperience(
-                                        index,
-                                        {
-                                            description:
-                                                value
-                                                    .split("\n")
-                                                    .map(
-                                                        item =>
-                                                            item.trim()
-                                                    )
-                                                    .filter(
-                                                        Boolean
-                                                    ),
-                                        }
-                                    )
-                                }
-                            />
-
-                        </div>
-
-                    </div>
-
-                )
-            )}
-
-
-            <button
-                type="button"
-                onClick={addExperience}
-                className="
+      <button
+        type="button"
+        onClick={addExperience}
+        className="
                     inline-flex
                     min-h-10
                     items-center
@@ -778,101 +578,65 @@ function ExperienceEditor({
                     dark:text-indigo-400
                     dark:hover:bg-indigo-500/10
                 "
-            >
-                + Add experience
-            </button>
-
-        </div>
-
-    );
-
+      >
+        + Add experience
+      </button>
+    </div>
+  );
 }
-
 
 /* ============================================================
    EDUCATION
 ============================================================ */
 
 function EducationEditor({
-    value,
-    onChange,
+  value,
+  onChange,
 }: {
-    value: ResumeContent["education"];
-    onChange: (
-        value: ResumeContent["education"]
-    ) => void;
+  value: ResumeContent["education"];
+  onChange: (value: ResumeContent["education"]) => void;
 }) {
+  function addEducation() {
+    onChange([
+      ...value,
+      {
+        institution: "",
+        degree: "",
+        fieldOfStudy: "",
+        startDate: "",
+        endDate: "",
+        grade: "",
+        location: "",
+      },
+    ]);
+  }
 
-    function addEducation() {
+  function updateEducation(
+    index: number,
+    patch: Partial<ResumeContent["education"][number]>,
+  ) {
+    onChange(
+      value.map((item, itemIndex) =>
+        itemIndex === index
+          ? {
+              ...item,
+              ...patch,
+            }
+          : item,
+      ),
+    );
+  }
 
-        onChange([
-            ...value,
-            {
-                institution: "",
-                degree: "",
-                fieldOfStudy: "",
-                startDate: "",
-                endDate: "",
-                grade: "",
-                location: "",
-            },
-        ]);
+  function removeEducation(index: number) {
+    onChange(value.filter((_, itemIndex) => itemIndex !== index));
+  }
 
-    }
-
-
-    function updateEducation(
-        index: number,
-        patch: Partial<
-            ResumeContent["education"][number]
-        >
-    ) {
-
-        onChange(
-            value.map(
-                (
-                    item,
-                    itemIndex
-                ) =>
-                    itemIndex === index
-                        ? {
-                            ...item,
-                            ...patch,
-                        }
-                        : item
-            )
-        );
-
-    }
-
-
-    function removeEducation(
-        index: number
-    ) {
-
-        onChange(
-            value.filter(
-                (_, itemIndex) =>
-                    itemIndex !== index
-            )
-        );
-
-    }
-
-
-    return (
-
-        <div className="space-y-4">
-
-            {value.map(
-                (
-                    item,
-                    index
-                ) => (
-
-                    <div
-                        key={index}
-                        className="
+  return (
+    <div className="space-y-4">
+      {value.map((item, index) => (
+        <div
+          key={index}
+          className="
                             rounded-xl
                             border
                             border-[var(--border)]
@@ -880,185 +644,124 @@ function EducationEditor({
                             p-4
                             sm:p-5
                         "
-                    >
-
-                        <div
-                            className="
+        >
+          <div
+            className="
                                 mb-4
                                 flex
                                 items-center
                                 justify-between
                             "
-                        >
-
-                            <p
-                                className="
+          >
+            <p
+              className="
                                     text-xs
                                     font-bold
                                     uppercase
                                     tracking-wider
                                     text-[var(--text-muted)]
                                 "
-                            >
-                                Education {index + 1}
-                            </p>
+            >
+              Education {index + 1}
+            </p>
 
-
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    removeEducation(index)
-                                }
-                                className="
+            <button
+              type="button"
+              onClick={() => removeEducation(index)}
+              className="
                                     text-xs
                                     font-semibold
                                     text-red-600
                                 "
-                            >
-                                Remove
-                            </button>
+            >
+              Remove
+            </button>
+          </div>
 
-                        </div>
-
-
-                        <div
-                            className="
+          <div
+            className="
                                 grid
                                 gap-4
                                 sm:grid-cols-2
                             "
-                        >
+          >
+            <Field
+              label="Institution"
+              value={item.institution}
+              onChange={(value) =>
+                updateEducation(index, {
+                  institution: value,
+                })
+              }
+            />
 
-                            <Field
-                                label="Institution"
-                                value={
-                                    item.institution
-                                }
-                                onChange={(value) =>
-                                    updateEducation(
-                                        index,
-                                        {
-                                            institution:
-                                                value,
-                                        }
-                                    )
-                                }
-                            />
+            <Field
+              label="Degree"
+              value={item.degree}
+              onChange={(value) =>
+                updateEducation(index, {
+                  degree: value,
+                })
+              }
+            />
 
+            <Field
+              label="Field of study"
+              value={item.fieldOfStudy ?? ""}
+              onChange={(value) =>
+                updateEducation(index, {
+                  fieldOfStudy: value,
+                })
+              }
+            />
 
-                            <Field
-                                label="Degree"
-                                value={
-                                    item.degree
-                                }
-                                onChange={(value) =>
-                                    updateEducation(
-                                        index,
-                                        {
-                                            degree:
-                                                value,
-                                        }
-                                    )
-                                }
-                            />
+            <Field
+              label="Location"
+              value={item.location ?? ""}
+              onChange={(value) =>
+                updateEducation(index, {
+                  location: value,
+                })
+              }
+            />
 
+            <Field
+              label="Start date"
+              value={item.startDate ?? ""}
+              onChange={(value) =>
+                updateEducation(index, {
+                  startDate: value,
+                })
+              }
+            />
 
-                            <Field
-                                label="Field of study"
-                                value={
-                                    item.fieldOfStudy ?? ""
-                                }
-                                onChange={(value) =>
-                                    updateEducation(
-                                        index,
-                                        {
-                                            fieldOfStudy:
-                                                value,
-                                        }
-                                    )
-                                }
-                            />
+            <Field
+              label="End date"
+              value={item.endDate ?? ""}
+              onChange={(value) =>
+                updateEducation(index, {
+                  endDate: value,
+                })
+              }
+            />
 
+            <Field
+              label="Grade"
+              value={item.grade ?? ""}
+              onChange={(value) =>
+                updateEducation(index, {
+                  grade: value,
+                })
+              }
+            />
+          </div>
+        </div>
+      ))}
 
-                            <Field
-                                label="Location"
-                                value={
-                                    item.location ?? ""
-                                }
-                                onChange={(value) =>
-                                    updateEducation(
-                                        index,
-                                        {
-                                            location:
-                                                value,
-                                        }
-                                    )
-                                }
-                            />
-
-
-                            <Field
-                                label="Start date"
-                                value={
-                                    item.startDate ?? ""
-                                }
-                                onChange={(value) =>
-                                    updateEducation(
-                                        index,
-                                        {
-                                            startDate:
-                                                value,
-                                        }
-                                    )
-                                }
-                            />
-
-
-                            <Field
-                                label="End date"
-                                value={
-                                    item.endDate ?? ""
-                                }
-                                onChange={(value) =>
-                                    updateEducation(
-                                        index,
-                                        {
-                                            endDate:
-                                                value,
-                                        }
-                                    )
-                                }
-                            />
-
-
-                            <Field
-                                label="Grade"
-                                value={
-                                    item.grade ?? ""
-                                }
-                                onChange={(value) =>
-                                    updateEducation(
-                                        index,
-                                        {
-                                            grade:
-                                                value,
-                                        }
-                                    )
-                                }
-                            />
-
-                        </div>
-
-                    </div>
-
-                )
-            )}
-
-
-            <button
-                type="button"
-                onClick={addEducation}
-                className="
+      <button
+        type="button"
+        onClick={addEducation}
+        className="
                     inline-flex
                     min-h-10
                     items-center
@@ -1074,403 +777,292 @@ function EducationEditor({
                     dark:border-indigo-500/40
                     dark:text-indigo-400
                 "
-            >
-                + Add education
-            </button>
-
-        </div>
-
-    );
-
+      >
+        + Add education
+      </button>
+    </div>
+  );
 }
-
 
 /* ============================================================
    SKILLS - FIXED: Values are stored as arrays but displayed as strings
 ============================================================ */
 
 function SkillsEditor({
-    value,
-    onChange,
+  value,
+  onChange,
 }: {
-    value: ResumeContent["skills"]; // Record<string, string[]>
-    onChange: (
-        value: ResumeContent["skills"]
-    ) => void;
+  value: ResumeContent["skills"]; // Record<string, string[]>
+  onChange: (value: ResumeContent["skills"]) => void;
 }) {
+  /*
+   * Stable IDs for the UI rows.
+   *
+   * The actual resume data remains:
+   *
+   * {
+   *   "Programming Languages": ["JavaScript, TypeScript, Python"],
+   *   "Frontend": ["React, Next.js, Tailwind CSS"]
+   * }
+   *
+   * Each skill value is stored as an array with a single string,
+   * allowing commas and special characters to be preserved.
+   */
 
-    /*
-     * Stable IDs for the UI rows.
-     *
-     * The actual resume data remains:
-     *
-     * {
-     *   "Programming Languages": ["JavaScript, TypeScript, Python"],
-     *   "Frontend": ["React, Next.js, Tailwind CSS"]
-     * }
-     *
-     * Each skill value is stored as an array with a single string,
-     * allowing commas and special characters to be preserved.
-     */
+  const rowIdsRef = React.useRef<Map<string, string>>(new Map());
 
-    const rowIdsRef = React.useRef<
-        Map<string, string>
-    >(new Map());
+  // Local input state for skills - stores the raw string value
+  const [localInputs, setLocalInputs] = React.useState<Record<string, string>>(
+    {},
+  );
 
-    // Local input state for skills - stores the raw string value
-    const [localInputs, setLocalInputs] = React.useState<Record<string, string>>({});
+  // Update local inputs when value changes
+  React.useEffect(() => {
+    const newLocalInputs: Record<string, string> = {};
+    Object.entries(value).forEach(([category, skills]) => {
+      if (category === "__order") return;
 
-    // Update local inputs when value changes
-    React.useEffect(() => {
-        const newLocalInputs: Record<string, string> = {};
-        Object.entries(value).forEach(([category, skills]) => {
-            if (Array.isArray(skills) && skills.length > 0) {
-                newLocalInputs[category] = skills[0] || "";
-            } else {
-                newLocalInputs[category] = "";
-            }
-        });
-        setLocalInputs(newLocalInputs);
-    }, [value]);
+      if (Array.isArray(skills) && skills.length > 0) {
+        newLocalInputs[category] = skills[0] || "";
+      } else {
+        newLocalInputs[category] = "";
+      }
+    });
+    setLocalInputs(newLocalInputs);
+  }, [value]);
 
+  /*
+   * Get a stable ID for a category.
+   *
+   * The ID is generated once and then reused even when
+   * the category name changes.
+   */
+  function getRowId(category: string): string {
+    const existing = rowIdsRef.current.get(category);
 
-    /*
-     * Get a stable ID for a category.
-     *
-     * The ID is generated once and then reused even when
-     * the category name changes.
-     */
-    function getRowId(
-        category: string
-    ): string {
-
-        const existing =
-            rowIdsRef.current.get(
-                category
-            );
-
-        if (existing) {
-            return existing;
-        }
-
-        const id =
-            `skill-${Date.now()}-${Math.random()
-                .toString(36)
-                .slice(2)}`;
-
-        rowIdsRef.current.set(
-            category,
-            id
-        );
-
-        return id;
+    if (existing) {
+      return existing;
     }
 
+    const id = `skill-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
-    /*
-     * Make sure every existing category has a stable ID.
-     */
-    const categories =
-        React.useMemo(
-            () => {
+    rowIdsRef.current.set(category, id);
 
-                Object.keys(value).forEach(
-                    category => {
-                        getRowId(category);
-                    }
-                );
+    return id;
+  }
 
-                return Object.keys(value);
-
-            },
-            [value]
-        );
-
-
-    /*
-     * Remove IDs that no longer exist.
-     */
-    React.useEffect(
-        () => {
-
-            const currentCategories =
-                new Set(
-                    Object.keys(value)
-                );
-
-            rowIdsRef.current.forEach(
-                (_, category) => {
-
-                    if (
-                        !currentCategories.has(
-                            category
-                        )
-                    ) {
-                        rowIdsRef.current.delete(
-                            category
-                        );
-                    }
-
-                }
-            );
-
-        },
-        [value]
+  /*
+   * Make sure every existing category has a stable ID.
+   */
+  const categories = React.useMemo(() => {
+    const allCategories = Object.keys(value).filter(
+      (category) => category !== "__order",
     );
 
+    const storedOrder = Array.isArray(value.__order)
+      ? value.__order.filter(
+          (category) => typeof category === "string" && category !== "__order",
+        )
+      : [];
 
-    function addCategory() {
+    const orderedCategories = [
+      ...storedOrder.filter((category) => allCategories.includes(category)),
+      ...allCategories.filter((category) => !storedOrder.includes(category)),
+    ];
 
-        let category =
-            "Programming Languages";
+    orderedCategories.forEach((category) => {
+      getRowId(category);
+    });
 
-        let counter = 1;
+    return orderedCategories;
+  }, [value]);
 
-        while (
-            Object.prototype.hasOwnProperty.call(
-                value,
-                category
-            )
-        ) {
+  /*
+   * Remove IDs that no longer exist.
+   */
+  React.useEffect(() => {
+    const currentCategories = new Set(
+      Object.keys(value).filter((category) => category !== "__order"),
+    );
 
-            counter += 1;
+    rowIdsRef.current.forEach((_, category) => {
+      if (!currentCategories.has(category)) {
+        rowIdsRef.current.delete(category);
+      }
+    });
+  }, [value]);
 
-            category =
-                `Skills ${counter}`;
+  function addCategory() {
+    let category = "Programming Languages";
 
-        }
+    let counter = 1;
 
+    while (Object.prototype.hasOwnProperty.call(value, category)) {
+      counter += 1;
 
-        const id =
-            `skill-${Date.now()}-${Math.random()
-                .toString(36)
-                .slice(2)}`;
-
-
-        rowIdsRef.current.set(
-            category,
-            id
-        );
-
-
-        onChange({
-            ...value,
-            [category]: [""],
-        });
-
+      category = `Skills ${counter}`;
     }
 
+    const id = `skill-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
-    function renameCategory(
-        oldName: string,
-        newName: string
+    rowIdsRef.current.set(category, id);
+
+    const currentOrder = categories.filter((item) => item !== category);
+
+    onChange({
+      ...value,
+      [category]: [""],
+      __order: [...currentOrder, category],
+    });
+  }
+
+  function renameCategory(oldName: string, newName: string) {
+    /*
+     * Don't do anything when the name hasn't changed.
+     */
+    if (newName === oldName) {
+      return;
+    }
+
+    /*
+     * If the user temporarily clears the field,
+     * keep the existing category in the data.
+     *
+     * The input will visually continue showing the
+     * category because we maintain a local draft below.
+     */
+    if (!newName.trim()) {
+      return;
+    }
+
+    /*
+     * Don't allow duplicate category names.
+     */
+    if (
+      newName !== oldName &&
+      Object.prototype.hasOwnProperty.call(value, newName)
     ) {
-
-        /*
-         * Don't do anything when the name hasn't changed.
-         */
-        if (
-            newName === oldName
-        ) {
-            return;
-        }
-
-
-        /*
-         * If the user temporarily clears the field,
-         * keep the existing category in the data.
-         *
-         * The input will visually continue showing the
-         * category because we maintain a local draft below.
-         */
-        if (
-            !newName.trim()
-        ) {
-            return;
-        }
-
-
-        /*
-         * Don't allow duplicate category names.
-         */
-        if (
-            newName !== oldName &&
-            Object.prototype.hasOwnProperty.call(
-                value,
-                newName
-            )
-        ) {
-            return;
-        }
-
-
-        const rowId =
-            rowIdsRef.current.get(
-                oldName
-            );
-
-
-        const next: ResumeContent["skills"] =
-            {};
-
-
-        Object.entries(value).forEach(
-            (
-                [
-                    category,
-                    categorySkills,
-                ]
-            ) => {
-
-                if (
-                    category === oldName
-                ) {
-
-                    next[newName] =
-                        categorySkills;
-
-                } else {
-
-                    next[category] =
-                        categorySkills;
-
-                }
-
-            }
-        );
-
-
-        /*
-         * Move the stable ID from the old category
-         * name to the new category name.
-         */
-        rowIdsRef.current.delete(
-            oldName
-        );
-
-
-        if (rowId) {
-
-            rowIdsRef.current.set(
-                newName,
-                rowId
-            );
-
-        }
-
-
-        onChange(next);
-
-        // Update local input for the new category name
-        if (next[newName] && next[newName].length > 0) {
-            setLocalInputs(prev => ({
-                ...prev,
-                [newName]: prev[oldName] || next[newName][0],
-            }));
-            // Remove old local input
-            const newLocalInputs = { ...localInputs };
-            delete newLocalInputs[oldName];
-            setLocalInputs(newLocalInputs);
-        }
-
+      return;
     }
 
+    const rowId = rowIdsRef.current.get(oldName);
 
-    function updateSkills(
-        category: string,
-        raw: string
-    ) {
-        // Update local input immediately for smooth typing
-        setLocalInputs(prev => ({
-            ...prev,
-            [category]: raw,
-        }));
+    const next: ResumeContent["skills"] = {};
 
-        // Store as array with single string - this preserves all characters
-        onChange({
-            ...value,
-            [category]: [raw],
-        });
+    Object.entries(value).forEach(([category, categorySkills]) => {
+      if (category === "__order") {
+        return;
+      }
+
+      if (category === oldName) {
+        next[newName] = categorySkills;
+      } else {
+        next[category] = categorySkills;
+      }
+    });
+
+    /*
+     * Preserve the existing category position
+     * when the category is renamed.
+     */
+    const currentOrder = categories;
+
+    next.__order = currentOrder.map((category) =>
+      category === oldName ? newName : category,
+    );
+
+    /*
+     * Move the stable ID from the old category
+     * name to the new category name.
+     */
+    rowIdsRef.current.delete(oldName);
+
+    if (rowId) {
+      rowIdsRef.current.set(newName, rowId);
     }
 
+    onChange(next);
 
-    function removeCategory(
-        category: string
-    ) {
-
-        rowIdsRef.current.delete(
-            category
-        );
-
-
-        const next = {
-            ...value,
-        };
-
-
-        delete next[category];
-
-
-        onChange(next);
-
-        // Clean up local input
-        const newLocalInputs = { ...localInputs };
-        delete newLocalInputs[category];
-        setLocalInputs(newLocalInputs);
-
+    // Update local input for the new category name
+    if (next[newName] && next[newName].length > 0) {
+      setLocalInputs((prev) => ({
+        ...prev,
+        [newName]: prev[oldName] || next[newName][0],
+      }));
+      // Remove old local input
+      const newLocalInputs = { ...localInputs };
+      delete newLocalInputs[oldName];
+      setLocalInputs(newLocalInputs);
     }
+  }
 
+  function updateSkills(category: string, raw: string) {
+    // Update local input immediately for smooth typing
+    setLocalInputs((prev) => ({
+      ...prev,
+      [category]: raw,
+    }));
 
-    return (
+    // Store as array with single string - this preserves all characters
+    onChange({
+      ...value,
+      [category]: [raw],
+    });
+  }
 
-        <div className="space-y-4">
+  function removeCategory(category: string) {
+    rowIdsRef.current.delete(category);
 
-            {categories.map(
-                category => {
+    const next: ResumeContent["skills"] = {
+      ...value,
+    };
 
-                    const rowId =
-                        getRowId(
-                            category
-                        );
+    delete next[category];
 
+    next.__order = categories.filter((item) => item !== category);
 
-                    return (
+    onChange(next);
 
-                        <div
-                            key={rowId}
-                            className="
+    // Clean up local input
+    const newLocalInputs = { ...localInputs };
+    delete newLocalInputs[category];
+    setLocalInputs(newLocalInputs);
+  }
+
+  return (
+    <div className="space-y-4">
+      {categories.map((category) => {
+        const rowId = getRowId(category);
+
+        return (
+          <div
+            key={rowId}
+            className="
                                 rounded-xl
                                 border
                                 border-[var(--border)]
                                 bg-[var(--surface-subtle)]
                                 p-4
                             "
-                        >
-
-                            <div
-                                className="
+          >
+            <div
+              className="
                                     grid
                                     gap-3
                                     sm:grid-cols-[220px_1fr_auto]
                                 "
-                            >
-
-                                {/* =================================================
+            >
+              {/* =================================================
                                     CATEGORY
                                 ================================================= */}
 
-                                <input
-                                    value={category}
-                                    onChange={(
-                                        event
-                                    ) =>
-                                        renameCategory(
-                                            category,
-                                            event.target.value
-                                        )
-                                    }
-                                    placeholder="Category"
-                                    className="
+              <input
+                value={category}
+                onChange={(event) =>
+                  renameCategory(category, event.target.value)
+                }
+                placeholder="Category"
+                className="
                                         min-h-10
                                         rounded-lg
                                         border
@@ -1485,23 +1077,17 @@ function SkillsEditor({
                                         focus:ring-2
                                         focus:ring-indigo-500/20
                                     "
-                                />
+              />
 
-
-                                {/* =================================================
+              {/* =================================================
                                     SKILLS - Store as array with single string
                                 ================================================= */}
 
-                                <input
-                                    value={localInputs[category] || ""}
-                                    onChange={(event) =>
-                                        updateSkills(
-                                            category,
-                                            event.target.value
-                                        )
-                                    }
-                                    placeholder="JavaScript, TypeScript, React, Node.js"
-                                    className="
+              <input
+                value={localInputs[category] || ""}
+                onChange={(event) => updateSkills(category, event.target.value)}
+                placeholder="JavaScript, TypeScript, React, Node.js"
+                className="
                                         min-h-10
                                         rounded-lg
                                         border
@@ -1515,49 +1101,38 @@ function SkillsEditor({
                                         focus:ring-2
                                         focus:ring-indigo-500/20
                                     "
-                                />
+              />
 
-
-                                {/* =================================================
+              {/* =================================================
                                     REMOVE
                                 ================================================= */}
 
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        removeCategory(
-                                            category
-                                        )
-                                    }
-                                    className="
+              <button
+                type="button"
+                onClick={() => removeCategory(category)}
+                className="
                                         text-xs
                                         font-semibold
                                         text-red-600
                                         transition-colors
                                         hover:text-red-700
                                     "
-                                >
-                                    Remove
-                                </button>
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        );
+      })}
 
-                            </div>
-
-                        </div>
-
-                    );
-
-                }
-            )}
-
-
-            {/* =================================================
+      {/* =================================================
                 ADD CATEGORY
             ================================================= */}
 
-            <button
-                type="button"
-                onClick={addCategory}
-                className="
+      <button
+        type="button"
+        onClick={addCategory}
+        className="
                     inline-flex
                     min-h-10
                     items-center
@@ -1575,136 +1150,100 @@ function SkillsEditor({
                     dark:text-indigo-400
                     dark:hover:bg-indigo-500/10
                 "
-            >
-                + Add skill category
-            </button>
-
-        </div>
-
-    );
-
+      >
+        + Add skill category
+      </button>
+    </div>
+  );
 }
-
-
 
 /* ============================================================
    PROJECTS - FIXED: Technologies as array with single string
 ============================================================ */
 
 function ProjectsEditor({
-    value,
-    onChange,
+  value,
+  onChange,
 }: {
-    value: ResumeContent["projects"];
-    onChange: (
-        value: ResumeContent["projects"]
-    ) => void;
+  value: ResumeContent["projects"];
+  onChange: (value: ResumeContent["projects"]) => void;
 }) {
+  // Local input state for technologies - stores the raw string
+  const [techInputs, setTechInputs] = React.useState<Record<number, string>>(
+    {},
+  );
 
-    // Local input state for technologies - stores the raw string
-    const [techInputs, setTechInputs] = React.useState<Record<number, string>>({});
+  // Update local inputs when value changes
+  React.useEffect(() => {
+    const newInputs: Record<number, string> = {};
+    value.forEach((project, index) => {
+      if (
+        Array.isArray(project.technologies) &&
+        project.technologies.length > 0
+      ) {
+        newInputs[index] = project.technologies[0] || "";
+      } else {
+        newInputs[index] = "";
+      }
+    });
+    setTechInputs(newInputs);
+  }, [value]);
 
-    // Update local inputs when value changes
-    React.useEffect(() => {
-        const newInputs: Record<number, string> = {};
-        value.forEach((project, index) => {
-            if (Array.isArray(project.technologies) && project.technologies.length > 0) {
-                newInputs[index] = project.technologies[0] || "";
-            } else {
-                newInputs[index] = "";
+  function addProject() {
+    onChange([
+      ...value,
+      {
+        name: "",
+        description: "",
+        technologies: [""],
+        url: "",
+        github: "",
+      },
+    ]);
+  }
+
+  function updateProject(
+    index: number,
+    patch: Partial<ResumeContent["projects"][number]>,
+  ) {
+    onChange(
+      value.map((item, itemIndex) =>
+        itemIndex === index
+          ? {
+              ...item,
+              ...patch,
             }
-        });
-        setTechInputs(newInputs);
-    }, [value]);
+          : item,
+      ),
+    );
+  }
 
-    function addProject() {
+  function removeProject(index: number) {
+    onChange(value.filter((_, itemIndex) => itemIndex !== index));
 
-        onChange([
-            ...value,
-            {
-                name: "",
-                description: "",
-                technologies: [""],
-                url: "",
-                github: "",
-            },
-        ]);
+    // Clean up local input
+    const newInputs = { ...techInputs };
+    delete newInputs[index];
+    setTechInputs(newInputs);
+  }
 
-    }
+  function updateTechnologies(index: number, raw: string) {
+    // Update local input immediately for smooth typing
+    setTechInputs((prev) => ({
+      ...prev,
+      [index]: raw,
+    }));
 
+    // Store as array with single string - this preserves all characters
+    updateProject(index, { technologies: [raw] });
+  }
 
-    function updateProject(
-        index: number,
-        patch: Partial<
-            ResumeContent["projects"][number]
-        >
-    ) {
-
-        onChange(
-            value.map(
-                (
-                    item,
-                    itemIndex
-                ) =>
-                    itemIndex === index
-                        ? {
-                            ...item,
-                            ...patch,
-                        }
-                        : item
-            )
-        );
-
-    }
-
-
-    function removeProject(
-        index: number
-    ) {
-
-        onChange(
-            value.filter(
-                (_, itemIndex) =>
-                    itemIndex !== index
-            )
-        );
-
-        // Clean up local input
-        const newInputs = { ...techInputs };
-        delete newInputs[index];
-        setTechInputs(newInputs);
-
-    }
-
-
-    function updateTechnologies(
-        index: number,
-        raw: string
-    ) {
-        // Update local input immediately for smooth typing
-        setTechInputs(prev => ({
-            ...prev,
-            [index]: raw,
-        }));
-
-        // Store as array with single string - this preserves all characters
-        updateProject(index, { technologies: [raw] });
-    }
-
-
-    return (
-
-        <div className="space-y-4">
-
-            {value.map(
-                (
-                    item,
-                    index
-                ) => (
-
-                    <div
-                        key={index}
-                        className="
+  return (
+    <div className="space-y-4">
+      {value.map((item, index) => (
+        <div
+          key={index}
+          className="
                             rounded-xl
                             border
                             border-[var(--border)]
@@ -1712,107 +1251,82 @@ function ProjectsEditor({
                             p-4
                             sm:p-5
                         "
-                    >
-
-                        <div
-                            className="
+        >
+          <div
+            className="
                                 mb-4
                                 flex
                                 items-center
                                 justify-between
                             "
-                        >
-
-                            <p
-                                className="
+          >
+            <p
+              className="
                                     text-xs
                                     font-bold
                                     uppercase
                                     tracking-wider
                                     text-[var(--text-muted)]
                                 "
-                            >
-                                Project {index + 1}
-                            </p>
+            >
+              Project {index + 1}
+            </p>
 
-
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    removeProject(index)
-                                }
-                                className="
+            <button
+              type="button"
+              onClick={() => removeProject(index)}
+              className="
                                     text-xs
                                     font-semibold
                                     text-red-600
                                 "
-                            >
-                                Remove
-                            </button>
+            >
+              Remove
+            </button>
+          </div>
 
-                        </div>
+          <div className="grid gap-4">
+            <Field
+              label="Project name"
+              value={item.name}
+              onChange={(value) =>
+                updateProject(index, {
+                  name: value,
+                })
+              }
+            />
 
+            <Field
+              label="Description"
+              multiline
+              value={item.description ?? ""}
+              onChange={(value) =>
+                updateProject(index, {
+                  description: value,
+                })
+              }
+            />
 
-                        <div className="grid gap-4">
-
-                            <Field
-                                label="Project name"
-                                value={
-                                    item.name
-                                }
-                                onChange={(value) =>
-                                    updateProject(
-                                        index,
-                                        {
-                                            name:
-                                                value,
-                                        }
-                                    )
-                                }
-                            />
-
-
-                            <Field
-                                label="Description"
-                                multiline
-                                value={
-                                    item.description ?? ""
-                                }
-                                onChange={(value) =>
-                                    updateProject(
-                                        index,
-                                        {
-                                            description:
-                                                value,
-                                        }
-                                    )
-                                }
-                            />
-
-
-                            <div>
-                                <label className="block">
-                                    <span
-                                        className="
+            <div>
+              <label className="block">
+                <span
+                  className="
                                             mb-1.5
                                             block
                                             text-xs
                                             font-semibold
                                             text-[var(--text-secondary)]
                                         "
-                                    >
-                                        Technologies
-                                    </span>
-                                    <input
-                                        value={techInputs[index] || ""}
-                                        onChange={(event) =>
-                                            updateTechnologies(
-                                                index,
-                                                event.target.value
-                                            )
-                                        }
-                                        placeholder="React, Node.js, PostgreSQL, Redis, Docker"
-                                        className="
+                >
+                  Technologies
+                </span>
+                <input
+                  value={techInputs[index] || ""}
+                  onChange={(event) =>
+                    updateTechnologies(index, event.target.value)
+                  }
+                  placeholder="React, Node.js, PostgreSQL, Redis, Docker"
+                  className="
                                             min-h-11
                                             w-full
                                             rounded-xl
@@ -1828,66 +1342,45 @@ function ProjectsEditor({
                                             focus:ring-4
                                             focus:ring-indigo-500/10
                                         "
-                                    />
-                                </label>
-                            </div>
+                />
+              </label>
+            </div>
 
-
-                            <div
-                                className="
+            <div
+              className="
                                     grid
                                     gap-4
                                     sm:grid-cols-2
                                 "
-                            >
+            >
+              <Field
+                label="Project URL"
+                value={item.url ?? ""}
+                onChange={(value) =>
+                  updateProject(index, {
+                    url: value,
+                  })
+                }
+              />
 
-                                <Field
-                                    label="Project URL"
-                                    value={
-                                        item.url ?? ""
-                                    }
-                                    onChange={(value) =>
-                                        updateProject(
-                                            index,
-                                            {
-                                                url:
-                                                    value,
-                                            }
-                                        )
-                                    }
-                                />
+              <Field
+                label="GitHub"
+                value={item.github ?? ""}
+                onChange={(value) =>
+                  updateProject(index, {
+                    github: value,
+                  })
+                }
+              />
+            </div>
+          </div>
+        </div>
+      ))}
 
-
-                                <Field
-                                    label="GitHub"
-                                    value={
-                                        item.github ?? ""
-                                    }
-                                    onChange={(value) =>
-                                        updateProject(
-                                            index,
-                                            {
-                                                github:
-                                                    value,
-                                            }
-                                        )
-                                    }
-                                />
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                )
-            )}
-
-
-            <button
-                type="button"
-                onClick={addProject}
-                className="
+      <button
+        type="button"
+        onClick={addProject}
+        className="
                     inline-flex
                     min-h-10
                     items-center
@@ -1903,36 +1396,31 @@ function ProjectsEditor({
                     dark:border-indigo-500/40
                     dark:text-indigo-400
                 "
-            >
-                + Add project
-            </button>
-
-        </div>
-
-    );
-
+      >
+        + Add project
+      </button>
+    </div>
+  );
 }
-
 
 /* ============================================================
    PREVIEW MODAL
 ============================================================ */
 
 function PreviewModal({
-    isOpen,
-    onClose,
-    content,
+  isOpen,
+  onClose,
+  content,
 }: {
-    isOpen: boolean;
-    onClose: () => void;
-    content: ResumeContent;
+  isOpen: boolean;
+  onClose: () => void;
+  content: ResumeContent;
 }) {
+  if (!isOpen) return null;
 
-    if (!isOpen) return null;
-
-    return (
-        <div
-            className="
+  return (
+    <div
+      className="
                 fixed
                 inset-0
                 z-50
@@ -1941,21 +1429,21 @@ function PreviewModal({
                 justify-center
                 p-4
             "
-        >
-            {/* Backdrop */}
-            <div
-                className="
+    >
+      {/* Backdrop */}
+      <div
+        className="
                     absolute
                     inset-0
                     bg-black/50
                     backdrop-blur-sm
                 "
-                onClick={onClose}
-            />
+        onClick={onClose}
+      />
 
-            {/* Modal */}
-            <div
-                className="
+      {/* Modal */}
+      <div
+        className="
                     relative
                     w-full
                     max-w-4xl
@@ -1965,10 +1453,10 @@ function PreviewModal({
                     shadow-2xl
                     overflow-hidden
                 "
-            >
-                {/* Header */}
-                <div
-                    className="
+      >
+        {/* Header */}
+        <div
+          className="
                         flex
                         items-center
                         justify-between
@@ -1977,31 +1465,31 @@ function PreviewModal({
                         px-6
                         py-4
                     "
-                >
-                    <div>
-                        <h2
-                            className="
+        >
+          <div>
+            <h2
+              className="
                                 text-lg
                                 font-bold
                                 text-[var(--text-primary)]
                             "
-                        >
-                            Resume Preview
-                        </h2>
-                        <p
-                            className="
+            >
+              Resume Preview
+            </h2>
+            <p
+              className="
                                 text-sm
                                 text-[var(--text-muted)]
                             "
-                        >
-                            A live preview of your resume
-                        </p>
-                    </div>
+            >
+              A live preview of your resume
+            </p>
+          </div>
 
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="
+          <button
+            type="button"
+            onClick={onClose}
+            className="
                             inline-flex
                             size-10
                             items-center
@@ -2012,111 +1500,74 @@ function PreviewModal({
                             hover:bg-[var(--surface-hover)]
                             hover:text-[var(--text-primary)]
                         "
-                    >
-                        <HiOutlineXMark size={22} />
-                    </button>
-                </div>
+          >
+            <HiOutlineXMark size={22} />
+          </button>
+        </div>
 
-                {/* Content */}
-                <div
-                    className="
+        {/* Content */}
+        <div
+          className="
                         overflow-auto
                         p-6
                         bg-slate-100
                         dark:bg-zinc-950
                         max-h-[calc(90vh-80px)]
                     "
-                >
-                    <div className="mx-auto max-w-3xl">
-                        <ResumePreview
-                            resume={content}
-                        />
-                    </div>
-                </div>
-            </div>
+        >
+          <div className="mx-auto max-w-3xl">
+            <ResumePreview resume={content} />
+          </div>
         </div>
-    );
-
+      </div>
+    </div>
+  );
 }
-
 
 /* ============================================================
    MAIN
 ============================================================ */
 
 export default function Resume() {
+  const queryClient = useQueryClient();
 
-    const queryClient =
-        useQueryClient();
+  const [content, setContent] = useState<ResumeContent>({
+    ...emptyResumeContent,
+  });
 
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
-    const [
-        content,
-        setContent,
-    ] = useState<ResumeContent>({
-        ...emptyResumeContent,
-    });
+  const [isDownloading, setIsDownloading] = useState(false);
 
-
-    const [
-        isPreviewOpen,
-        setIsPreviewOpen,
-    ] = useState(false);
-
-
-    const [
-        isDownloading,
-        setIsDownloading,
-    ] = useState(false);
-
-
-    /* ========================================================
+  /* ========================================================
        MASTER PROFILE
     ======================================================== */
 
-    const profileQuery =
-        useQuery({
-            queryKey: [
-                "resume",
-                "profile",
-            ],
+  const profileQuery = useQuery({
+    queryKey: ["resume", "profile"],
 
-            queryFn:
-                async () => {
+    queryFn: async () => {
+      const response = await getResumeProfile();
 
-                    const response =
-                        await getResumeProfile();
+      return response.data.data;
+    },
+  });
 
-                    return response.data.data;
-
-                },
-        });
-
-
-    /* ========================================================
+  /* ========================================================
        CUSTOMIZATION
     ======================================================== */
 
-    const customizationQuery =
-        useQuery({
-            queryKey: [
-                "resume",
-                "customization",
-            ],
+  const customizationQuery = useQuery({
+    queryKey: ["resume", "customization"],
 
-            queryFn:
-                async () => {
+    queryFn: async () => {
+      const response = await getResumeCustomization();
 
-                    const response =
-                        await getResumeCustomization();
+      return response.data.data;
+    },
+  });
 
-                    return response.data.data;
-
-                },
-        });
-
-
-    /* ========================================================
+  /* ========================================================
        IMPORTANT:
 
        Do NOT populate customization from profile automatically.
@@ -2129,402 +1580,214 @@ export default function Resume() {
        and resume customization.
     ======================================================== */
 
-    useEffect(() => {
+  useEffect(() => {
+    const customization = customizationQuery.data;
 
-        const customization =
-            customizationQuery.data;
+    if (customization?.content) {
+      setContent(normalizeContent(customization.content));
+    }
+  }, [customizationQuery.data]);
 
-
-        if (
-            customization?.content
-        ) {
-
-            setContent(
-                normalizeContent(
-                    customization.content
-                )
-            );
-
-        }
-
-    }, [
-        customizationQuery.data,
-    ]);
-
-
-    /* ========================================================
+  /* ========================================================
        IMPORT MASTER PROFILE (Initial creation)
     ======================================================== */
 
-    const importMutation =
-        useMutation({
+  const importMutation = useMutation({
+    mutationFn: createCustomizationFromProfile,
 
-            mutationFn:
-                createCustomizationFromProfile,
+    onSuccess: async (response) => {
+      const imported = response.data.data;
 
-            onSuccess:
-                async (response) => {
+      if (imported?.content) {
+        setContent(normalizeContent(imported.content));
+      }
 
-                    const imported =
-                        response.data.data;
+      await queryClient.invalidateQueries({
+        queryKey: ["resume", "customization"],
+      });
 
+      toast.success("Profile data imported into this resume.");
+    },
 
-                    if (
-                        imported?.content
-                    ) {
+    onError: (error: any) => {
+      toast.error(
+        error?.response?.data?.message || "Unable to import profile data.",
+      );
+    },
+  });
 
-                        setContent(
-                            normalizeContent(
-                                imported.content
-                            )
-                        );
-
-                    }
-
-
-                    await queryClient.invalidateQueries({
-                        queryKey: [
-                            "resume",
-                            "customization",
-                        ],
-                    });
-
-
-                    toast.success(
-                        "Profile data imported into this resume."
-                    );
-
-                },
-
-            onError:
-                (error: any) => {
-
-                    toast.error(
-                        error?.response?.data?.message ||
-                        "Unable to import profile data."
-                    );
-
-                },
-
-        });
-
-
-    /* ========================================================
+  /* ========================================================
        IMPORT FROM MASTER PROFILE (Replace existing)
     ======================================================== */
 
-    const importFromMasterMutation =
-        useMutation({
+  const importFromMasterMutation = useMutation({
+    mutationFn: async () => {
+      // First, get the master profile data
+      const profileResponse = await getResumeProfile();
 
-            mutationFn:
-                async () => {
+      const profile = profileResponse.data.data;
 
-                    // First, get the master profile data
-                    const profileResponse =
-                        await getResumeProfile();
+      if (!profile) {
+        throw new Error("No profile data found.");
+      }
 
-                    const profile =
-                        profileResponse.data.data;
+      // Then save it as the new customization
+      const content = normalizeContent(profile);
 
-                    if (
-                        !profile
-                    ) {
+      const response = await saveResumeCustomization(content);
 
-                        throw new Error(
-                            "No profile data found."
-                        );
+      return {
+        ...response,
+        content,
+      };
+    },
 
-                    }
+    onSuccess: async (response) => {
+      if (response?.content) {
+        setContent(response.content);
+      }
 
+      await queryClient.invalidateQueries({
+        queryKey: ["resume", "customization"],
+      });
 
-                    // Then save it as the new customization
-                    const content =
-                        normalizeContent(
-                            profile
-                        );
+      toast.success("Resume data replaced with master profile data.");
+    },
 
+    onError: (error: any) => {
+      toast.error(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Unable to import from master profile.",
+      );
+    },
+  });
 
-                    const response =
-                        await saveResumeCustomization(
-                            content
-                        );
-
-
-                    return {
-                        ...response,
-                        content,
-                    };
-
-                },
-
-            onSuccess:
-                async (response) => {
-
-                    if (
-                        response?.content
-                    ) {
-
-                        setContent(
-                            response.content
-                        );
-
-                    }
-
-
-                    await queryClient.invalidateQueries({
-                        queryKey: [
-                            "resume",
-                            "customization",
-                        ],
-                    });
-
-
-                    toast.success(
-                        "Resume data replaced with master profile data."
-                    );
-
-                },
-
-            onError:
-                (error: any) => {
-
-                    toast.error(
-                        error?.response?.data?.message ||
-                        error?.message ||
-                        "Unable to import from master profile."
-                    );
-
-                },
-
-        });
-
-
-    /* ========================================================
+  /* ========================================================
        SAVE
     ======================================================== */
 
-    const saveMutation =
-        useMutation({
+  const saveMutation = useMutation({
+    mutationFn: saveResumeCustomization,
 
-            mutationFn:
-                saveResumeCustomization,
+    onSuccess: async (response) => {
+      await queryClient.invalidateQueries({
+        queryKey: ["resume", "customization"],
+      });
 
-            onSuccess:
-                async (response) => {
+      toast.success(response.data.message || "Resume saved successfully.");
+    },
 
-                    await queryClient.invalidateQueries({
-                        queryKey: [
-                            "resume",
-                            "customization",
-                        ],
-                    });
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Unable to save resume.");
+    },
+  });
 
-
-                    toast.success(
-                        response.data.message ||
-                        "Resume saved successfully."
-                    );
-
-                },
-
-            onError:
-                (error: any) => {
-
-                    toast.error(
-                        error?.response?.data?.message ||
-                        "Unable to save resume."
-                    );
-
-                },
-
-        });
-
-
-    /* ========================================================
+  /* ========================================================
        UPDATE
     ======================================================== */
 
-    function updateContent(
-        patch: Partial<ResumeContent>
-    ) {
+  function updateContent(patch: Partial<ResumeContent>) {
+    setContent((previous) => ({
+      ...previous,
+      ...patch,
+    }));
+  }
 
-        setContent(
-            previous => ({
-                ...previous,
-                ...patch,
-            })
-        );
-
-    }
-
-
-    /* ========================================================
+  /* ========================================================
        SAVE HANDLER
     ======================================================== */
 
-    function handleSave() {
+  function handleSave() {
+    if (!customizationQuery.data) {
+      toast.error("Import your profile data first.");
 
-        if (
-            !customizationQuery.data
-        ) {
-
-            toast.error(
-                "Import your profile data first."
-            );
-
-            return;
-
-        }
-
-
-        saveMutation.mutate(
-            content
-        );
-
+      return;
     }
 
+    saveMutation.mutate(content);
+  }
 
-    /* ========================================================
+  /* ========================================================
        DOWNLOAD PDF with Loading State
     ======================================================== */
 
-    async function handleDownload() {
+  async function handleDownload() {
+    if (isDownloading) return;
 
-        if (isDownloading) return;
+    setIsDownloading(true);
 
-        setIsDownloading(true);
+    try {
+      const response = await downloadResumePdf();
 
-        try {
+      const blob = new Blob([response.data], {
+        type: "application/pdf",
+      });
 
-            const response =
-                await downloadResumePdf();
+      const url = window.URL.createObjectURL(blob);
 
+      const anchor = document.createElement("a");
 
-            const blob =
-                new Blob(
-                    [
-                        response.data,
-                    ],
-                    {
-                        type:
-                            "application/pdf",
-                    }
-                );
+      const filename = (content.fullName || "resume")
+        .trim()
+        .replace(/[^a-zA-Z0-9]+/g, "-")
+        .toLowerCase();
 
+      anchor.href = url;
 
-            const url =
-                window.URL.createObjectURL(
-                    blob
-                );
+      anchor.download = `${filename || "resume"}.pdf`;
 
+      document.body.appendChild(anchor);
 
-            const anchor =
-                document.createElement(
-                    "a"
-                );
+      anchor.click();
 
+      anchor.remove();
 
-            const filename =
-                (
-                    content.fullName ||
-                    "resume"
-                )
-                    .trim()
-                    .replace(
-                        /[^a-zA-Z0-9]+/g,
-                        "-"
-                    )
-                    .toLowerCase();
+      window.URL.revokeObjectURL(url);
 
-
-            anchor.href =
-                url;
-
-            anchor.download =
-                `${filename || "resume"}.pdf`;
-
-
-            document.body.appendChild(
-                anchor
-            );
-
-            anchor.click();
-
-            anchor.remove();
-
-
-            window.URL.revokeObjectURL(
-                url
-            );
-
-            toast.success("Resume downloaded successfully!");
-
-        } catch (
-        error: any
-        ) {
-
-            toast.error(
-                error?.response?.data?.message ||
-                "Unable to download resume."
-            );
-
-        } finally {
-
-            setIsDownloading(false);
-
-        }
-
+      toast.success("Resume downloaded successfully!");
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.message || "Unable to download resume.",
+      );
+    } finally {
+      setIsDownloading(false);
     }
+  }
 
-
-    /* ========================================================
+  /* ========================================================
        LOADING
     ======================================================== */
 
-    if (
-        profileQuery.isLoading ||
-        customizationQuery.isLoading
-    ) {
-
-        return (
-
-            <div
-                className="
+  if (profileQuery.isLoading || customizationQuery.isLoading) {
+    return (
+      <div
+        className="
                     flex
                     min-h-[60vh]
                     items-center
                     justify-center
                 "
-            >
-
-                <HiOutlineArrowPath
-                    size={25}
-                    className="
+      >
+        <HiOutlineArrowPath
+          size={25}
+          className="
                         animate-spin
                         text-indigo-500
                     "
-                />
+        />
+      </div>
+    );
+  }
 
-            </div>
-
-        );
-
-    }
-
-
-    /* ========================================================
+  /* ========================================================
        ERROR
     ======================================================== */
 
-    if (
-        profileQuery.isError ||
-        customizationQuery.isError
-    ) {
-
-        return (
-
-            <div
-                className="
+  if (profileQuery.isError || customizationQuery.isError) {
+    return (
+      <div
+        className="
                     flex
                     min-h-[60vh]
                     flex-col
@@ -2533,42 +1796,37 @@ export default function Resume() {
                     px-6
                     text-center
                 "
-            >
+      >
+        <HiOutlineDocumentText size={35} className="text-red-500" />
 
-                <HiOutlineDocumentText
-                    size={35}
-                    className="text-red-500"
-                />
-
-                <h2
-                    className="
+        <h2
+          className="
                         mt-4
                         text-base
                         font-bold
                         text-[var(--text-primary)]
                     "
-                >
-                    Unable to load resume
-                </h2>
+        >
+          Unable to load resume
+        </h2>
 
-                <p
-                    className="
+        <p
+          className="
                         mt-1
                         text-sm
                         text-[var(--text-muted)]
                     "
-                >
-                    Please try again.
-                </p>
+        >
+          Please try again.
+        </p>
 
-
-                <button
-                    type="button"
-                    onClick={() => {
-                        profileQuery.refetch();
-                        customizationQuery.refetch();
-                    }}
-                    className="
+        <button
+          type="button"
+          onClick={() => {
+            profileQuery.refetch();
+            customizationQuery.refetch();
+          }}
+          className="
                         mt-5
                         inline-flex
                         min-h-10
@@ -2582,47 +1840,28 @@ export default function Resume() {
                         text-white
                         hover:bg-indigo-700
                     "
-                >
+        >
+          <HiOutlineArrowPath size={16} />
+          Try again
+        </button>
+      </div>
+    );
+  }
 
-                    <HiOutlineArrowPath size={16} />
+  const hasProfile = Boolean(profileQuery.data);
 
-                    Try again
+  const hasCustomization = Boolean(customizationQuery.data);
 
-                </button>
-
-            </div>
-
-        );
-
-    }
-
-
-    const hasProfile =
-        Boolean(
-            profileQuery.data
-        );
-
-
-    const hasCustomization =
-        Boolean(
-            customizationQuery.data
-        );
-
-
-    /* ========================================================
+  /* ========================================================
        NO CUSTOMIZATION
 
        This is where IMPORT belongs.
     ======================================================== */
 
-    if (
-        !hasCustomization
-    ) {
-
-        return (
-
-            <main
-                className="
+  if (!hasCustomization) {
+    return (
+      <main
+        className="
                     min-h-full
                     w-full
                     px-4
@@ -2632,18 +1871,16 @@ export default function Resume() {
                     lg:px-8
                     lg:py-8
                 "
-            >
-
-                <div
-                    className="
+      >
+        <div
+          className="
                         mx-auto
                         w-full
                         max-w-5xl
                     "
-                >
-
-                    <div
-                        className="
+        >
+          <div
+            className="
                             rounded-2xl
                             border
                             border-[var(--border)]
@@ -2652,10 +1889,9 @@ export default function Resume() {
                             shadow-sm
                             sm:p-8
                         "
-                    >
-
-                        <div
-                            className="
+          >
+            <div
+              className="
                                 flex
                                 size-12
                                 items-center
@@ -2666,45 +1902,38 @@ export default function Resume() {
                                 dark:bg-indigo-500/10
                                 dark:text-indigo-400
                             "
-                        >
-                            <HiOutlineDocumentText
-                                size={24}
-                            />
-                        </div>
+            >
+              <HiOutlineDocumentText size={24} />
+            </div>
 
-
-                        <h1
-                            className="
+            <h1
+              className="
                                 mt-5
                                 text-2xl
                                 font-bold
                                 tracking-tight
                                 text-[var(--text-primary)]
                             "
-                        >
-                            Create your resume
-                        </h1>
+            >
+              Create your resume
+            </h1>
 
-
-                        <p
-                            className="
+            <p
+              className="
                                 mt-2
                                 max-w-xl
                                 text-sm
                                 leading-6
                                 text-[var(--text-muted)]
                             "
-                        >
-                            Start with the information from your
-                            Profile, then customize this resume
-                            independently for the role you're applying for.
-                        </p>
+            >
+              Start with the information from your Profile, then customize this
+              resume independently for the role you're applying for.
+            </p>
 
-
-                        {!hasProfile ? (
-
-                            <div
-                                className="
+            {!hasProfile ? (
+              <div
+                className="
                                     mt-6
                                     rounded-xl
                                     border
@@ -2717,22 +1946,16 @@ export default function Resume() {
                                     dark:bg-amber-500/10
                                     dark:text-amber-300
                                 "
-                            >
-                                Complete your Profile first. Your
-                                resume is created from that information.
-                            </div>
-
-                        ) : (
-
-                            <button
-                                type="button"
-                                disabled={
-                                    importMutation.isPending
-                                }
-                                onClick={() =>
-                                    importMutation.mutate()
-                                }
-                                className="
+              >
+                Complete your Profile first. Your resume is created from that
+                information.
+              </div>
+            ) : (
+              <button
+                type="button"
+                disabled={importMutation.isPending}
+                onClick={() => importMutation.mutate()}
+                className="
                                     mt-6
                                     inline-flex
                                     min-h-11
@@ -2750,61 +1973,41 @@ export default function Resume() {
                                     disabled:pointer-events-none
                                     disabled:opacity-60
                                 "
-                            >
+              >
+                {importMutation.isPending ? (
+                  <HiOutlineArrowPath size={17} className="animate-spin" />
+                ) : (
+                  <HiOutlineUser size={17} />
+                )}
 
-                                {importMutation.isPending ? (
+                {importMutation.isPending
+                  ? "Importing..."
+                  : "Import from profile"}
+              </button>
+            )}
+          </div>
+        </div>
+      </main>
+    );
+  }
 
-                                    <HiOutlineArrowPath
-                                        size={17}
-                                        className="animate-spin"
-                                    />
-
-                                ) : (
-
-                                    <HiOutlineUser
-                                        size={17}
-                                    />
-
-                                )}
-
-                                {importMutation.isPending
-                                    ? "Importing..."
-                                    : "Import from profile"}
-
-                            </button>
-
-                        )}
-
-                    </div>
-
-                </div>
-
-            </main>
-
-        );
-
-    }
-
-
-    /* ========================================================
+  /* ========================================================
        BUILDER
     ======================================================== */
 
-    return (
-
-        <main
-            className="
+  return (
+    <main
+      className="
                 min-h-full
                 w-full
             "
-        >
-
-            {/* =================================================
+    >
+      {/* =================================================
                 STICKY TOOLBAR
             ================================================= */}
 
-            <div
-                className="
+      <div
+        className="
                     sticky
                     top-0
                     z-20
@@ -2813,10 +2016,9 @@ export default function Resume() {
                     bg-[var(--surface)]/95
                     backdrop-blur-xl
                 "
-            >
-
-                <div
-                    className="
+      >
+        <div
+          className="
                         mx-auto
                         flex
                         min-h-[68px]
@@ -2831,19 +2033,17 @@ export default function Resume() {
                         sm:px-6
                         lg:px-8
                     "
-                >
-
-                    <div
-                        className="
+        >
+          <div
+            className="
                             flex
                             min-w-0
                             items-center
                             gap-3
                         "
-                    >
-
-                        <div
-                            className="
+          >
+            <div
+              className="
                                 flex
                                 size-10
                                 shrink-0
@@ -2854,59 +2054,49 @@ export default function Resume() {
                                 text-white
                                 shadow-sm
                             "
-                        >
-                            <HiOutlineDocumentText
-                                size={20}
-                            />
-                        </div>
+            >
+              <HiOutlineDocumentText size={20} />
+            </div>
 
-
-                        <div className="min-w-0">
-
-                            <h1
-                                className="
+            <div className="min-w-0">
+              <h1
+                className="
                                     truncate
                                     text-base
                                     font-bold
                                     text-[var(--text-primary)]
                                     sm:text-lg
                                 "
-                            >
-                                Resume
-                            </h1>
+              >
+                Resume
+              </h1>
 
-                            <p
-                                className="
+              <p
+                className="
                                     truncate
                                     text-xs
                                     text-[var(--text-muted)]
                                 "
-                            >
-                                Customize your resume
-                            </p>
+              >
+                Customize your resume
+              </p>
+            </div>
+          </div>
 
-                        </div>
-
-                    </div>
-
-
-                    <div
-                        className="
+          <div
+            className="
                             flex
                             w-full
                             items-center
                             gap-2
                             sm:w-auto
                         "
-                    >
-
-                        {/* Preview Button - Opens Modal */}
-                        <button
-                            type="button"
-                            onClick={() =>
-                                setIsPreviewOpen(true)
-                            }
-                            className="
+          >
+            {/* Preview Button - Opens Modal */}
+            <button
+              type="button"
+              onClick={() => setIsPreviewOpen(true)}
+              className="
                                 inline-flex
                                 min-h-10
                                 flex-1
@@ -2922,30 +2112,18 @@ export default function Resume() {
                                 hover:bg-[var(--surface-hover)]
                                 sm:flex-none
                             "
-                        >
+            >
+              <HiOutlineEye size={16} />
 
-                            <HiOutlineEye
-                                size={16}
-                            />
+              <span className="hidden sm:inline">Preview</span>
+            </button>
 
-                            <span className="hidden sm:inline">
-                                Preview
-                            </span>
-
-                        </button>
-
-
-                        {/* Import from Master Profile Button */}
-                        <button
-                            type="button"
-                            onClick={() =>
-                                importFromMasterMutation.mutate()
-                            }
-                            disabled={
-                                importFromMasterMutation.isPending ||
-                                !hasProfile
-                            }
-                            className="
+            {/* Import from Master Profile Button */}
+            <button
+              type="button"
+              onClick={() => importFromMasterMutation.mutate()}
+              disabled={importFromMasterMutation.isPending || !hasProfile}
+              className="
                                 inline-flex
                                 min-h-10
                                 flex-1
@@ -2970,44 +2148,30 @@ export default function Resume() {
                                 dark:hover:bg-indigo-500/10
                                 sm:flex-none
                             "
-                            title={
-                                !hasProfile
-                                    ? "No profile data available"
-                                    : "Replace current resume with master profile data"
-                            }
-                        >
+              title={
+                !hasProfile
+                  ? "No profile data available"
+                  : "Replace current resume with master profile data"
+              }
+            >
+              {importFromMasterMutation.isPending ? (
+                <HiOutlineArrowPath size={16} className="animate-spin" />
+              ) : (
+                <HiOutlineArrowUpTray size={16} />
+              )}
 
-                            {importFromMasterMutation.isPending ? (
+              <span className="hidden sm:inline">
+                {importFromMasterMutation.isPending
+                  ? "Importing..."
+                  : "Import Master"}
+              </span>
+            </button>
 
-                                <HiOutlineArrowPath
-                                    size={16}
-                                    className="animate-spin"
-                                />
-
-                            ) : (
-
-                                <HiOutlineArrowUpTray
-                                    size={16}
-                                />
-
-                            )}
-
-                            <span className="hidden sm:inline">
-                                {importFromMasterMutation.isPending
-                                    ? "Importing..."
-                                    : "Import Master"}
-                            </span>
-
-                        </button>
-
-
-                        <button
-                            type="button"
-                            onClick={handleSave}
-                            disabled={
-                                saveMutation.isPending
-                            }
-                            className="
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saveMutation.isPending}
+              className="
                                 inline-flex
                                 min-h-10
                                 flex-1
@@ -3027,38 +2191,22 @@ export default function Resume() {
                                 disabled:opacity-60
                                 sm:flex-none
                             "
-                        >
+            >
+              {saveMutation.isPending ? (
+                <HiOutlineArrowPath size={16} className="animate-spin" />
+              ) : (
+                <HiOutlineCheck size={16} />
+              )}
 
-                            {saveMutation.isPending ? (
+              <span>{saveMutation.isPending ? "Saving" : "Save"}</span>
+            </button>
 
-                                <HiOutlineArrowPath
-                                    size={16}
-                                    className="animate-spin"
-                                />
-
-                            ) : (
-
-                                <HiOutlineCheck
-                                    size={16}
-                                />
-
-                            )}
-
-                            <span>
-                                {saveMutation.isPending
-                                    ? "Saving"
-                                    : "Save"}
-                            </span>
-
-                        </button>
-
-
-                        {/* PDF Download Button with Loading State */}
-                        <button
-                            type="button"
-                            onClick={handleDownload}
-                            disabled={isDownloading}
-                            className="
+            {/* PDF Download Button with Loading State */}
+            <button
+              type="button"
+              onClick={handleDownload}
+              disabled={isDownloading}
+              className="
                                 inline-flex
                                 min-h-10
                                 items-center
@@ -3078,48 +2226,29 @@ export default function Resume() {
                                 disabled:pointer-events-none
                                 disabled:opacity-60
                             "
-                        >
+            >
+              {isDownloading ? (
+                <>
+                  <HiOutlineArrowPath size={16} className="animate-spin" />
+                  <span className="hidden sm:inline">Downloading...</span>
+                </>
+              ) : (
+                <>
+                  <HiOutlineArrowDownTray size={16} />
+                  <span className="hidden sm:inline">PDF</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
 
-                            {isDownloading ? (
-
-                                <>
-                                    <HiOutlineArrowPath
-                                        size={16}
-                                        className="animate-spin"
-                                    />
-                                    <span className="hidden sm:inline">
-                                        Downloading...
-                                    </span>
-                                </>
-
-                            ) : (
-
-                                <>
-                                    <HiOutlineArrowDownTray
-                                        size={16}
-                                    />
-                                    <span className="hidden sm:inline">
-                                        PDF
-                                    </span>
-                                </>
-
-                            )}
-
-                        </button>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            {/* =================================================
+      {/* =================================================
                 BUILDER CONTENT - Only Editor (Preview is Modal)
             ================================================= */}
 
-            <div
-                className="
+      <div
+        className="
                     mx-auto
                     w-full
                     max-w-[1440px]
@@ -3130,293 +2259,196 @@ export default function Resume() {
                     lg:px-8
                     lg:py-8
                 "
-            >
-
-                <div
-                    className="
+      >
+        <div
+          className="
                         mx-auto
                         max-w-3xl
                         space-y-5
                     "
-                >
-
-                    <EditorSection
-                        icon={
-                            <HiOutlineUser
-                                size={18}
-                            />
-                        }
-                        title="Personal information"
-                        description="The contact information shown on your resume."
-                    >
-
-                        <div
-                            className="
+        >
+          <EditorSection
+            icon={<HiOutlineUser size={18} />}
+            title="Personal information"
+            description="The contact information shown on your resume."
+          >
+            <div
+              className="
                                 grid
                                 gap-4
                                 sm:grid-cols-2
                             "
-                        >
+            >
+              <Field
+                label="Full name"
+                value={content.fullName}
+                onChange={(value) =>
+                  updateContent({
+                    fullName: value,
+                  })
+                }
+              />
 
-                            <Field
-                                label="Full name"
-                                value={
-                                    content.fullName
-                                }
-                                onChange={(value) =>
-                                    updateContent({
-                                        fullName:
-                                            value,
-                                    })
-                                }
-                            />
+              <Field
+                label="Headline"
+                value={content.headline}
+                onChange={(value) =>
+                  updateContent({
+                    headline: value,
+                  })
+                }
+              />
 
+              <Field
+                label="Email"
+                value={content.email}
+                onChange={(value) =>
+                  updateContent({
+                    email: value,
+                  })
+                }
+              />
 
-                            <Field
-                                label="Headline"
-                                value={
-                                    content.headline
-                                }
-                                onChange={(value) =>
-                                    updateContent({
-                                        headline:
-                                            value,
-                                    })
-                                }
-                            />
+              <Field
+                label="Phone"
+                value={content.phone}
+                onChange={(value) =>
+                  updateContent({
+                    phone: value,
+                  })
+                }
+              />
 
+              <Field
+                label="Location"
+                value={content.location}
+                onChange={(value) =>
+                  updateContent({
+                    location: value,
+                  })
+                }
+              />
 
-                            <Field
-                                label="Email"
-                                value={
-                                    content.email
-                                }
-                                onChange={(value) =>
-                                    updateContent({
-                                        email:
-                                            value,
-                                    })
-                                }
-                            />
+              <Field
+                label="Website"
+                value={content.website}
+                onChange={(value) =>
+                  updateContent({
+                    website: value,
+                  })
+                }
+              />
 
+              <Field
+                label="LinkedIn"
+                value={content.linkedin}
+                onChange={(value) =>
+                  updateContent({
+                    linkedin: value,
+                  })
+                }
+              />
 
-                            <Field
-                                label="Phone"
-                                value={
-                                    content.phone
-                                }
-                                onChange={(value) =>
-                                    updateContent({
-                                        phone:
-                                            value,
-                                    })
-                                }
-                            />
-
-
-                            <Field
-                                label="Location"
-                                value={
-                                    content.location
-                                }
-                                onChange={(value) =>
-                                    updateContent({
-                                        location:
-                                            value,
-                                    })
-                                }
-                            />
-
-
-                            <Field
-                                label="Website"
-                                value={
-                                    content.website
-                                }
-                                onChange={(value) =>
-                                    updateContent({
-                                        website:
-                                            value,
-                                    })
-                                }
-                            />
-
-
-                            <Field
-                                label="LinkedIn"
-                                value={
-                                    content.linkedin
-                                }
-                                onChange={(value) =>
-                                    updateContent({
-                                        linkedin:
-                                            value,
-                                    })
-                                }
-                            />
-
-
-                            <Field
-                                label="GitHub"
-                                value={
-                                    content.github
-                                }
-                                onChange={(value) =>
-                                    updateContent({
-                                        github:
-                                            value,
-                                    })
-                                }
-                            />
-
-                        </div>
-
-                    </EditorSection>
-
-
-                    <EditorSection
-                        icon={
-                            <HiOutlineDocumentText
-                                size={18}
-                            />
-                        }
-                        title="Professional summary"
-                        description="A concise introduction tailored to this resume."
-                    >
-
-                        <Field
-                            label="Summary"
-                            multiline
-                            value={
-                                content.summary
-                            }
-                            onChange={(value) =>
-                                updateContent({
-                                    summary:
-                                        value,
-                                })
-                            }
-                        />
-
-                    </EditorSection>
-
-
-                    <EditorSection
-                        icon={
-                            <HiOutlineBriefcase
-                                size={18}
-                            />
-                        }
-                        title="Experience"
-                        description="Select and customize the experience you want to show."
-                    >
-
-                        <ExperienceEditor
-                            value={
-                                content.experience
-                            }
-                            onChange={(value) =>
-                                updateContent({
-                                    experience:
-                                        value,
-                                })
-                            }
-                        />
-
-                    </EditorSection>
-
-
-                    <EditorSection
-                        icon={
-                            <HiOutlineAcademicCap
-                                size={18}
-                            />
-                        }
-                        title="Education"
-                        description="Education entries included in this resume."
-                    >
-
-                        <EducationEditor
-                            value={
-                                content.education
-                            }
-                            onChange={(value) =>
-                                updateContent({
-                                    education:
-                                        value,
-                                })
-                            }
-                        />
-
-                    </EditorSection>
-
-
-                    <EditorSection
-                        icon={
-                            <HiOutlineWrenchScrewdriver
-                                size={18}
-                            />
-                        }
-                        title="Skills"
-                        description="Organize skills into categories for this resume."
-                    >
-
-                        <SkillsEditor
-                            value={
-                                content.skills
-                            }
-                            onChange={(value) =>
-                                updateContent({
-                                    skills:
-                                        value,
-                                })
-                            }
-                        />
-
-                    </EditorSection>
-
-
-                    <EditorSection
-                        icon={
-                            <HiOutlineFolderOpen
-                                size={18}
-                            />
-                        }
-                        title="Projects"
-                        description="Choose the projects relevant to this application."
-                    >
-
-                        <ProjectsEditor
-                            value={
-                                content.projects
-                            }
-                            onChange={(value) =>
-                                updateContent({
-                                    projects:
-                                        value,
-                                })
-                            }
-                        />
-
-                    </EditorSection>
-
-                </div>
-
+              <Field
+                label="GitHub"
+                value={content.github}
+                onChange={(value) =>
+                  updateContent({
+                    github: value,
+                  })
+                }
+              />
             </div>
+          </EditorSection>
 
+          <EditorSection
+            icon={<HiOutlineDocumentText size={18} />}
+            title="Professional summary"
+            description="A concise introduction tailored to this resume."
+          >
+            <Field
+              label="Summary"
+              multiline
+              value={content.summary}
+              onChange={(value) =>
+                updateContent({
+                  summary: value,
+                })
+              }
+            />
+          </EditorSection>
 
-            {/* =================================================
+          <EditorSection
+            icon={<HiOutlineBriefcase size={18} />}
+            title="Experience"
+            description="Select and customize the experience you want to show."
+          >
+            <ExperienceEditor
+              value={content.experience}
+              onChange={(value) =>
+                updateContent({
+                  experience: value,
+                })
+              }
+            />
+          </EditorSection>
+
+          <EditorSection
+            icon={<HiOutlineAcademicCap size={18} />}
+            title="Education"
+            description="Education entries included in this resume."
+          >
+            <EducationEditor
+              value={content.education}
+              onChange={(value) =>
+                updateContent({
+                  education: value,
+                })
+              }
+            />
+          </EditorSection>
+
+          <EditorSection
+            icon={<HiOutlineWrenchScrewdriver size={18} />}
+            title="Skills"
+            description="Organize skills into categories for this resume."
+          >
+            <SkillsEditor
+              value={content.skills}
+              onChange={(value) =>
+                updateContent({
+                  skills: value,
+                })
+              }
+            />
+          </EditorSection>
+
+          <EditorSection
+            icon={<HiOutlineFolderOpen size={18} />}
+            title="Projects"
+            description="Choose the projects relevant to this application."
+          >
+            <ProjectsEditor
+              value={content.projects}
+              onChange={(value) =>
+                updateContent({
+                  projects: value,
+                })
+              }
+            />
+          </EditorSection>
+        </div>
+      </div>
+
+      {/* =================================================
                 PREVIEW MODAL
             ================================================= */}
 
-            <PreviewModal
-                isOpen={isPreviewOpen}
-                onClose={() => setIsPreviewOpen(false)}
-                content={content}
-            />
-
-        </main>
-
-    );
-
+      <PreviewModal
+        isOpen={isPreviewOpen}
+        onClose={() => setIsPreviewOpen(false)}
+        content={content}
+      />
+    </main>
+  );
 }

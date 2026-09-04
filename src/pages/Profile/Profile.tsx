@@ -1,428 +1,273 @@
-import {
-    useEffect,
-    useState,
-    type ReactNode,
-} from "react";
+import { useEffect, useState, type ReactNode } from "react";
+
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
-    useMutation,
-    useQuery,
-    useQueryClient,
-} from "@tanstack/react-query";
-
-import {
-    HiOutlineAcademicCap,
-    HiOutlineArrowPath,
-    HiOutlineBriefcase,
-    HiOutlineCheck,
-    HiOutlineFolderOpen,
-    HiOutlineLink,
-    HiOutlinePlus,
-    HiOutlineTrash,
-    HiOutlineUser,
-    HiOutlineWrenchScrewdriver,
+  HiOutlineAcademicCap,
+  HiOutlineArrowPath,
+  HiOutlineBriefcase,
+  HiOutlineCheck,
+  HiOutlineFolderOpen,
+  HiOutlineLink,
+  HiOutlinePlus,
+  HiOutlineTrash,
+  HiOutlineUser,
+  HiOutlineWrenchScrewdriver,
 } from "react-icons/hi2";
 
 import { toast } from "sonner";
 
-import {
-    getResumeProfile,
-    saveResumeProfile,
-} from "../../services/resume";
+import { getResumeProfile, saveResumeProfile } from "../../services/resume";
 
 import {
-    emptyResumeContent,
-    type ResumeContent,
-    type ResumeExperience,
-    type ResumeEducation,
-    type ResumeProject,
-    type ResumeSkills,
+  emptyResumeContent,
+  type ResumeContent,
+  type ResumeExperience,
+  type ResumeEducation,
+  type ResumeProject,
+  type ResumeSkills,
 } from "../../types/resume";
 import React from "react";
-
-
 
 /* ============================================================
    HELPERS
 ============================================================ */
 
-function stringValue(
-    value: unknown
-): string {
-
-    return typeof value === "string"
-        ? value
-        : "";
+function stringValue(value: unknown): string {
+  return typeof value === "string" ? value : "";
 }
 
+function stringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
 
-function stringArray(
-    value: unknown
-): string[] {
-
-    if (!Array.isArray(value)) {
-        return [];
-    }
-
-    return value
-        .filter(
-            (
-                item
-            ): item is string =>
-                typeof item === "string"
-        )
-        .map(
-            item =>
-                item.trim()
-        )
-        .filter(Boolean);
+  return value
+    .filter((item): item is string => typeof item === "string")
+    .map((item) => item.trim())
+    .filter(Boolean);
 }
 
+function normalizeExperience(value: unknown): ResumeExperience[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
 
-function normalizeExperience(
-    value: unknown
-): ResumeExperience[] {
+  return value
+    .filter((item) => Boolean(item) && typeof item === "object")
+    .map((item) => {
+      const data = item as Record<string, unknown>;
 
-    if (!Array.isArray(value)) {
-        return [];
-    }
+      return {
+        company: stringValue(data.company),
 
-    return value
-        .filter(
-            item =>
-                Boolean(item) &&
-                typeof item === "object"
-        )
-        .map(
-            item => {
+        position: stringValue(data.position),
 
-                const data =
-                    item as Record<string, unknown>;
+        location: stringValue(data.location),
 
-                return {
-                    company:
-                        stringValue(
-                            data.company
-                        ),
+        startDate: stringValue(data.startDate),
 
-                    position:
-                        stringValue(
-                            data.position
-                        ),
+        endDate: stringValue(data.endDate),
 
-                    location:
-                        stringValue(
-                            data.location
-                        ),
+        currentlyWorking: Boolean(data.currentlyWorking ?? data.current),
 
-                    startDate:
-                        stringValue(
-                            data.startDate
-                        ),
-
-                    endDate:
-                        stringValue(
-                            data.endDate
-                        ),
-
-                    currentlyWorking:
-                        Boolean(
-                            data.currentlyWorking ??
-                            data.current
-                        ),
-
-                    description:
-                        stringArray(
-                            data.description
-                        ),
-                };
-            }
-        );
+        description: stringArray(data.description),
+      };
+    });
 }
 
+function normalizeEducation(value: unknown): ResumeEducation[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
 
-function normalizeEducation(
-    value: unknown
-): ResumeEducation[] {
+  return value
+    .filter((item) => Boolean(item) && typeof item === "object")
+    .map((item) => {
+      const data = item as Record<string, unknown>;
 
-    if (!Array.isArray(value)) {
-        return [];
-    }
+      return {
+        institution: stringValue(data.institution),
 
-    return value
-        .filter(
-            item =>
-                Boolean(item) &&
-                typeof item === "object"
-        )
-        .map(
-            item => {
+        degree: stringValue(data.degree),
 
-                const data =
-                    item as Record<string, unknown>;
+        /*
+         * Current frontend type is
+         * `fieldOfStudy`.
+         *
+         * Support old `field` data
+         * while converting it.
+         */
+        fieldOfStudy: stringValue(data.fieldOfStudy ?? data.field),
 
-                return {
-                    institution:
-                        stringValue(
-                            data.institution
-                        ),
+        startDate: stringValue(data.startDate),
 
-                    degree:
-                        stringValue(
-                            data.degree
-                        ),
+        endDate: stringValue(data.endDate),
 
-                    /*
-                     * Current frontend type is
-                     * `fieldOfStudy`.
-                     *
-                     * Support old `field` data
-                     * while converting it.
-                     */
-                    fieldOfStudy:
-                        stringValue(
-                            data.fieldOfStudy ??
-                            data.field
-                        ),
+        grade: stringValue(data.grade),
 
-                    startDate:
-                        stringValue(
-                            data.startDate
-                        ),
-
-                    endDate:
-                        stringValue(
-                            data.endDate
-                        ),
-
-                    grade:
-                        stringValue(
-                            data.grade
-                        ),
-
-                    location:
-                        stringValue(
-                            data.location
-                        ),
-                };
-            }
-        );
+        location: stringValue(data.location),
+      };
+    });
 }
 
+function normalizeProjects(value: unknown): ResumeProject[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
 
-function normalizeProjects(
-    value: unknown
-): ResumeProject[] {
+  return value
+    .filter((item) => Boolean(item) && typeof item === "object")
+    .map((item) => {
+      const data = item as Record<string, unknown>;
 
-    if (!Array.isArray(value)) {
-        return [];
-    }
+      return {
+        name: stringValue(data.name),
 
-    return value
-        .filter(
-            item =>
-                Boolean(item) &&
-                typeof item === "object"
-        )
-        .map(
-            item => {
+        /*
+         * Current type expects a string.
+         *
+         * If older data contains an array,
+         * convert it to readable text.
+         */
+        description: Array.isArray(data.description)
+          ? stringArray(data.description).join("\n")
+          : stringValue(data.description),
 
-                const data =
-                    item as Record<string, unknown>;
+        technologies: stringArray(data.technologies),
 
-                return {
-                    name:
-                        stringValue(
-                            data.name
-                        ),
+        url: stringValue(data.url),
 
-                    /*
-                     * Current type expects a string.
-                     *
-                     * If older data contains an array,
-                     * convert it to readable text.
-                     */
-                    description:
-                        Array.isArray(
-                            data.description
-                        )
-                            ? stringArray(
-                                data.description
-                            ).join("\n")
-                            : stringValue(
-                                data.description
-                            ),
-
-                    technologies:
-                        stringArray(
-                            data.technologies
-                        ),
-
-                    url:
-                        stringValue(
-                            data.url
-                        ),
-
-                    github:
-                        stringValue(
-                            data.github
-                        ),
-                };
-            }
-        );
+        github: stringValue(data.github),
+      };
+    });
 }
 
+function normalizeSkills(value: unknown): ResumeSkills {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return {};
+  }
 
-function normalizeSkills(
-    value: unknown
-): ResumeSkills {
+  const data = value as Record<string, unknown>;
 
-    if (
-        !value ||
-        typeof value !== "object" ||
-        Array.isArray(value)
-    ) {
-        return {};
+  /*
+   * Actual skill categories.
+   *
+   * __order is metadata, NOT a category.
+   */
+  const categories = Object.keys(data).filter(
+    (category) => category !== "__order",
+  );
+
+  /*
+   * Read saved category order.
+   *
+   * Old profiles may not have __order.
+   */
+  const storedOrder = Array.isArray(data.__order)
+    ? data.__order.filter(
+        (item): item is string =>
+          typeof item === "string" &&
+          item.trim().length > 0 &&
+          item !== "__order",
+      )
+    : [];
+
+  /*
+   * Explicitly ordered categories first.
+   *
+   * Any category that doesn't exist in __order
+   * is appended afterward.
+   */
+  const orderedCategories = [
+    ...storedOrder.filter((category) => categories.includes(category)),
+
+    ...categories.filter((category) => !storedOrder.includes(category)),
+  ];
+
+  const result: ResumeSkills = {};
+
+  /*
+   * Build the skills object in the
+   * correct order.
+   */
+  orderedCategories.forEach((category) => {
+    const normalized = stringArray(data[category]);
+
+    if (normalized.length > 0) {
+      result[category] = normalized;
     }
+  });
 
-    const result: ResumeSkills = {};
+  /*
+   * Preserve explicit category order.
+   */
+  result.__order = orderedCategories.filter((category) =>
+    Object.prototype.hasOwnProperty.call(result, category),
+  );
 
-    Object.entries(
-        value as Record<string, unknown>
-    ).forEach(
-        (
-            [category, skills]
-        ) => {
-
-            const normalized =
-                stringArray(
-                    skills
-                );
-
-            if (
-                normalized.length > 0
-            ) {
-                result[category] =
-                    normalized;
-            }
-        }
-    );
-
-    return result;
+  return result;
 }
 
-
-function normalizeProfile(
-    value: unknown
-): ResumeContent {
-
-    if (
-        !value ||
-        typeof value !== "object"
-    ) {
-        return {
-            ...emptyResumeContent,
-        };
-    }
-
-    const data =
-        value as Record<string, unknown>;
-
+function normalizeProfile(value: unknown): ResumeContent {
+  if (!value || typeof value !== "object") {
     return {
-
-        fullName:
-            stringValue(
-                data.fullName
-            ),
-
-        email:
-            stringValue(
-                data.email
-            ),
-
-        headline:
-            stringValue(
-                data.headline
-            ),
-
-        phone:
-            stringValue(
-                data.phone
-            ),
-
-        location:
-            stringValue(
-                data.location
-            ),
-
-        website:
-            stringValue(
-                data.website
-            ),
-
-        linkedin:
-            stringValue(
-                data.linkedin
-            ),
-
-        github:
-            stringValue(
-                data.github
-            ),
-
-        summary:
-            stringValue(
-                data.summary
-            ),
-
-        experience:
-            normalizeExperience(
-                data.experience
-            ),
-
-        education:
-            normalizeEducation(
-                data.education
-            ),
-
-        skills:
-            normalizeSkills(
-                data.skills
-            ),
-
-        projects:
-            normalizeProjects(
-                data.projects
-            ),
+      ...emptyResumeContent,
     };
-}
+  }
 
+  const data = value as Record<string, unknown>;
+
+  return {
+    fullName: stringValue(data.fullName),
+
+    email: stringValue(data.email),
+
+    headline: stringValue(data.headline),
+
+    phone: stringValue(data.phone),
+
+    location: stringValue(data.location),
+
+    website: stringValue(data.website),
+
+    linkedin: stringValue(data.linkedin),
+
+    github: stringValue(data.github),
+
+    summary: stringValue(data.summary),
+
+    experience: normalizeExperience(data.experience),
+
+    education: normalizeEducation(data.education),
+
+    skills: normalizeSkills(data.skills),
+
+    projects: normalizeProjects(data.projects),
+  };
+}
 
 /* ============================================================
    REUSABLE FIELD
 ============================================================ */
 
 function Field({
-    label,
-    value,
-    placeholder,
-    onChange,
-    type = "text",
+  label,
+  value,
+  placeholder,
+  onChange,
+  type = "text",
 }: {
-    label: string;
-    value: string;
-    placeholder?: string;
-    onChange: (
-        value: string
-    ) => void;
-    type?: string;
+  label: string;
+  value: string;
+  placeholder?: string;
+  onChange: (value: string) => void;
+  type?: string;
 }) {
-
-    return (
-        <label className="block min-w-0">
-
-            <span
-                className="
+  return (
+    <label className="block min-w-0">
+      <span
+        className="
                     mb-2
                     block
                     text-xs
@@ -431,21 +276,16 @@ function Field({
                     tracking-[0.08em]
                     text-[var(--text-secondary)]
                 "
-            >
-                {label}
-            </span>
+      >
+        {label}
+      </span>
 
-            <input
-                type={type}
-                value={value}
-                placeholder={placeholder}
-                onChange={
-                    event =>
-                        onChange(
-                            event.target.value
-                        )
-                }
-                className="
+      <input
+        type={type}
+        value={value}
+        placeholder={placeholder}
+        onChange={(event) => onChange(event.target.value)}
+        className="
                     min-h-11
                     w-full
                     rounded-xl
@@ -466,38 +306,32 @@ function Field({
                     dark:focus:border-indigo-400
                     dark:focus:ring-indigo-400/10
                 "
-            />
-
-        </label>
-    );
+      />
+    </label>
+  );
 }
-
 
 /* ============================================================
    TEXTAREA FIELD
 ============================================================ */
 
 function TextAreaField({
-    label,
-    value,
-    placeholder,
-    onChange,
-    rows = 5,
+  label,
+  value,
+  placeholder,
+  onChange,
+  rows = 5,
 }: {
-    label: string;
-    value: string;
-    placeholder?: string;
-    onChange: (
-        value: string
-    ) => void;
-    rows?: number;
+  label: string;
+  value: string;
+  placeholder?: string;
+  onChange: (value: string) => void;
+  rows?: number;
 }) {
-
-    return (
-        <label className="block">
-
-            <span
-                className="
+  return (
+    <label className="block">
+      <span
+        className="
                     mb-2
                     block
                     text-xs
@@ -506,21 +340,16 @@ function TextAreaField({
                     tracking-[0.08em]
                     text-[var(--text-secondary)]
                 "
-            >
-                {label}
-            </span>
+      >
+        {label}
+      </span>
 
-            <textarea
-                value={value}
-                placeholder={placeholder}
-                rows={rows}
-                onChange={
-                    event =>
-                        onChange(
-                            event.target.value
-                        )
-                }
-                className="
+      <textarea
+        value={value}
+        placeholder={placeholder}
+        rows={rows}
+        onChange={(event) => onChange(event.target.value)}
+        className="
                     w-full
                     resize-y
                     rounded-xl
@@ -542,32 +371,29 @@ function TextAreaField({
                     dark:focus:border-indigo-400
                     dark:focus:ring-indigo-400/10
                 "
-            />
-
-        </label>
-    );
+      />
+    </label>
+  );
 }
-
 
 /* ============================================================
    SECTION
 ============================================================ */
 
 function Section({
-    icon,
-    title,
-    description,
-    children,
+  icon,
+  title,
+  description,
+  children,
 }: {
-    icon: ReactNode;
-    title: string;
-    description: string;
-    children: ReactNode;
+  icon: ReactNode;
+  title: string;
+  description: string;
+  children: ReactNode;
 }) {
-
-    return (
-        <section
-            className="
+  return (
+    <section
+      className="
                 overflow-hidden
                 rounded-2xl
                 border
@@ -577,10 +403,9 @@ function Section({
                 transition-all
                 hover:shadow-md
             "
-        >
-
-            <div
-                className="
+    >
+      <div
+        className="
                     flex
                     items-start
                     gap-3
@@ -594,10 +419,9 @@ function Section({
                     sm:px-6
                     sm:py-5
                 "
-            >
-
-                <div
-                    className="
+      >
+        <div
+          className="
                         flex
                         size-10
                         shrink-0
@@ -610,169 +434,110 @@ function Section({
                         group-hover:bg-indigo-500/20
                         dark:text-indigo-400
                     "
-                >
-                    {icon}
-                </div>
+        >
+          {icon}
+        </div>
 
-                <div className="min-w-0">
-
-                    <h2
-                        className="
+        <div className="min-w-0">
+          <h2
+            className="
                             text-sm
                             font-bold
                             text-[var(--text-primary)]
                             sm:text-[15px]
                         "
-                    >
-                        {title}
-                    </h2>
+          >
+            {title}
+          </h2>
 
-                    <p
-                        className="
+          <p
+            className="
                             mt-1
                             text-xs
                             leading-5
                             text-[var(--text-muted)]
                             sm:text-sm
                         "
-                    >
-                        {description}
-                    </p>
+          >
+            {description}
+          </p>
+        </div>
+      </div>
 
-                </div>
-
-            </div>
-
-            <div
-                className="
+      <div
+        className="
                     space-y-5
                     p-4
                     sm:p-6
                 "
-            >
-                {children}
-            </div>
-
-        </section>
-    );
+      >
+        {children}
+      </div>
+    </section>
+  );
 }
-
 
 /* ============================================================
    EXPERIENCE EDITOR
 ============================================================ */
 
 function ExperienceEditor({
-    value,
-    onChange,
+  value,
+  onChange,
 }: {
-    value: ResumeContent["experience"];
-    onChange: (
-        value: ResumeContent["experience"]
-    ) => void;
+  value: ResumeContent["experience"];
+  onChange: (value: ResumeContent["experience"]) => void;
 }) {
+  function addExperience() {
+    const item: ResumeExperience = {
+      company: "",
+      position: "",
+      location: "",
+      startDate: "",
+      endDate: "",
+      currentlyWorking: false,
+      description: [],
+    };
 
-    function addExperience() {
+    onChange([...value, item]);
+  }
 
-        const item: ResumeExperience = {
-            company: "",
-            position: "",
-            location: "",
-            startDate: "",
-            endDate: "",
-            currentlyWorking: false,
-            description: [],
-        };
-
-        onChange([
-            ...value,
-            item,
-        ]);
-    }
-
-
-    function updateExperience(
-        index: number,
-        patch: Partial<ResumeExperience>
-    ) {
-
-        onChange(
-            value.map(
-                (
-                    item,
-                    itemIndex
-                ) =>
-                    itemIndex === index
-                        ? {
-                            ...item,
-                            ...patch,
-                        }
-                        : item
-            )
-        );
-    }
-
-
-    function removeExperience(
-        index: number
-    ) {
-
-        onChange(
-            value.filter(
-                (
-                    _,
-                    itemIndex
-                ) =>
-                    itemIndex !== index
-            )
-        );
-    }
-
-
-    function updateDescription(
-        index: number,
-        text: string
-    ) {
-
-        updateExperience(
-            index,
-            {
-                description:
-                    text
-                        .split(/\r?\n/)
-                        .map(
-                            line =>
-                                line
-                                    .replace(
-                                        /^[-•*]\s*/,
-                                        ""
-                                    )
-                                    .trim()
-                        )
-                        .filter(Boolean),
+  function updateExperience(index: number, patch: Partial<ResumeExperience>) {
+    onChange(
+      value.map((item, itemIndex) =>
+        itemIndex === index
+          ? {
+              ...item,
+              ...patch,
             }
-        );
-    }
+          : item,
+      ),
+    );
+  }
 
+  function removeExperience(index: number) {
+    onChange(value.filter((_, itemIndex) => itemIndex !== index));
+  }
 
-    return (
-        <div className="space-y-4">
+  function updateDescription(index: number, text: string) {
+    updateExperience(index, {
+      description: text
+        .split(/\r?\n/)
+        .map((line) => line.replace(/^[-•*]\s*/, "").trim())
+        .filter(Boolean),
+    });
+  }
 
-            {value.length === 0 && (
-                <EmptyEditorState
-                    text="No experience added yet."
-                />
-            )}
+  return (
+    <div className="space-y-4">
+      {value.length === 0 && (
+        <EmptyEditorState text="No experience added yet." />
+      )}
 
-            {value.map(
-                (
-                    item,
-                    index
-                ) => (
-
-                    <div
-                        key={index}
-                        className="
+      {value.map((item, index) => (
+        <div
+          key={index}
+          className="
                             rounded-2xl
                             border
                             border-[var(--border)]
@@ -782,50 +547,42 @@ function ExperienceEditor({
                             hover:border-[var(--border-strong)]
                             sm:p-5
                         "
-                    >
-
-                        <div
-                            className="
+        >
+          <div
+            className="
                                 mb-5
                                 flex
                                 items-start
                                 justify-between
                                 gap-3
                             "
-                        >
-
-                            <div>
-
-                                <p
-                                    className="
+          >
+            <div>
+              <p
+                className="
                                         text-sm
                                         font-semibold
                                         text-[var(--text-primary)]
                                     "
-                                >
-                                    Experience {index + 1}
-                                </p>
+              >
+                Experience {index + 1}
+              </p>
 
-                                <p
-                                    className="
+              <p
+                className="
                                         mt-0.5
                                         text-xs
                                         text-[var(--text-muted)]
                                     "
-                                >
-                                    Professional work experience
-                                </p>
+              >
+                Professional work experience
+              </p>
+            </div>
 
-                            </div>
-
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    removeExperience(
-                                        index
-                                    )
-                                }
-                                className="
+            <button
+              type="button"
+              onClick={() => removeExperience(index)}
+              className="
                                     inline-flex
                                     size-9
                                     shrink-0
@@ -837,117 +594,80 @@ function ExperienceEditor({
                                     hover:bg-red-500/10
                                     hover:text-red-500
                                 "
-                                aria-label="Remove experience"
-                            >
-                                <HiOutlineTrash
-                                    size={17}
-                                />
-                            </button>
+              aria-label="Remove experience"
+            >
+              <HiOutlineTrash size={17} />
+            </button>
+          </div>
 
-                        </div>
-
-
-                        <div
-                            className="
+          <div
+            className="
                                 grid
                                 grid-cols-1
                                 gap-4
                                 md:grid-cols-2
                             "
-                        >
+          >
+            <Field
+              label="Company"
+              value={item.company}
+              placeholder="Company name"
+              onChange={(company) =>
+                updateExperience(index, {
+                  company,
+                })
+              }
+            />
 
-                            <Field
-                                label="Company"
-                                value={
-                                    item.company
-                                }
-                                placeholder="Company name"
-                                onChange={
-                                    company =>
-                                        updateExperience(
-                                            index,
-                                            {
-                                                company,
-                                            }
-                                        )
-                                }
-                            />
+            <Field
+              label="Position"
+              value={item.position}
+              placeholder="Software Engineer"
+              onChange={(position) =>
+                updateExperience(index, {
+                  position,
+                })
+              }
+            />
 
-                            <Field
-                                label="Position"
-                                value={
-                                    item.position
-                                }
-                                placeholder="Software Engineer"
-                                onChange={
-                                    position =>
-                                        updateExperience(
-                                            index,
-                                            {
-                                                position,
-                                            }
-                                        )
-                                }
-                            />
+            <Field
+              label="Location"
+              value={item.location ?? ""}
+              placeholder="Hyderabad, India"
+              onChange={(location) =>
+                updateExperience(index, {
+                  location,
+                })
+              }
+            />
 
-                            <Field
-                                label="Location"
-                                value={
-                                    item.location ?? ""
-                                }
-                                placeholder="Hyderabad, India"
-                                onChange={
-                                    location =>
-                                        updateExperience(
-                                            index,
-                                            {
-                                                location,
-                                            }
-                                        )
-                                }
-                            />
+            <Field
+              label="Start date"
+              value={item.startDate}
+              placeholder="Jan 2024"
+              onChange={(startDate) =>
+                updateExperience(index, {
+                  startDate,
+                })
+              }
+            />
 
-                            <Field
-                                label="Start date"
-                                value={
-                                    item.startDate
-                                }
-                                placeholder="Jan 2024"
-                                onChange={
-                                    startDate =>
-                                        updateExperience(
-                                            index,
-                                            {
-                                                startDate,
-                                            }
-                                        )
-                                }
-                            />
+            {!item.currentlyWorking && (
+              <Field
+                label="End date"
+                value={item.endDate ?? ""}
+                placeholder="Present / Dec 2025"
+                onChange={(endDate) =>
+                  updateExperience(index, {
+                    endDate,
+                  })
+                }
+              />
+            )}
+          </div>
 
-                            {!item.currentlyWorking && (
-                                <Field
-                                    label="End date"
-                                    value={
-                                        item.endDate ?? ""
-                                    }
-                                    placeholder="Present / Dec 2025"
-                                    onChange={
-                                        endDate =>
-                                            updateExperience(
-                                                index,
-                                                {
-                                                    endDate,
-                                                }
-                                            )
-                                    }
-                                />
-                            )}
-
-                        </div>
-
-
-                        <label
-                            className="
+          <label
+            className="
                                 mt-4
                                 flex
                                 cursor-pointer
@@ -956,92 +676,63 @@ function ExperienceEditor({
                                 text-sm
                                 text-[var(--text-secondary)]
                             "
-                        >
+          >
+            <input
+              type="checkbox"
+              checked={Boolean(item.currentlyWorking)}
+              onChange={(event) =>
+                updateExperience(index, {
+                  currentlyWorking: event.target.checked,
 
-                            <input
-                                type="checkbox"
-                                checked={
-                                    Boolean(
-                                        item.currentlyWorking
-                                    )
-                                }
-                                onChange={
-                                    event =>
-                                        updateExperience(
-                                            index,
-                                            {
-                                                currentlyWorking:
-                                                    event.target.checked,
-
-                                                ...(event.target.checked
-                                                    ? {
-                                                        endDate: "",
-                                                    }
-                                                    : {}),
-                                            }
-                                        )
-                                }
-                                className="
+                  ...(event.target.checked
+                    ? {
+                        endDate: "",
+                      }
+                    : {}),
+                })
+              }
+              className="
                                     size-4
                                     rounded
                                     border-slate-300
                                     text-indigo-600
                                     focus:ring-indigo-500
                                 "
-                            />
+            />
 
-                            <span>
-                                I currently work here
-                            </span>
+            <span>I currently work here</span>
+          </label>
 
-                        </label>
+          <div className="mt-4">
+            <TextAreaField
+              label="Responsibilities"
+              value={
+                Array.isArray(item.description)
+                  ? item.description.join("\n")
+                  : ""
+              }
+              placeholder="One responsibility per line"
+              rows={5}
+              onChange={(text) => updateDescription(index, text)}
+            />
 
-
-                        <div className="mt-4">
-
-                            <TextAreaField
-                                label="Responsibilities"
-                                value={
-                                    Array.isArray(
-                                        item.description
-                                    )
-                                        ? item.description.join(
-                                            "\n"
-                                        )
-                                        : ""
-                                }
-                                placeholder="One responsibility per line"
-                                rows={5}
-                                onChange={
-                                    text =>
-                                        updateDescription(
-                                            index,
-                                            text
-                                        )
-                                }
-                            />
-
-                            <p
-                                className="
+            <p
+              className="
                                     mt-1.5
                                     text-xs
                                     text-[var(--text-muted)]
                                 "
-                            >
-                                Add one achievement or responsibility per line.
-                            </p>
+            >
+              Add one achievement or responsibility per line.
+            </p>
+          </div>
+        </div>
+      ))}
 
-                        </div>
-
-                    </div>
-                )
-            )}
-
-
-            <button
-                type="button"
-                onClick={addExperience}
-                className="
+      <button
+        type="button"
+        onClick={addExperience}
+        className="
                     inline-flex
                     min-h-10
                     w-full
@@ -1063,107 +754,66 @@ function ExperienceEditor({
                     dark:hover:bg-indigo-500/10
                     sm:w-auto
                 "
-            >
-                <HiOutlinePlus
-                    size={16}
-                />
-                Add experience
-            </button>
-
-        </div>
-    );
+      >
+        <HiOutlinePlus size={16} />
+        Add experience
+      </button>
+    </div>
+  );
 }
-
 
 /* ============================================================
    EDUCATION EDITOR
 ============================================================ */
 
 function EducationEditor({
-    value,
-    onChange,
+  value,
+  onChange,
 }: {
-    value: ResumeContent["education"];
-    onChange: (
-        value: ResumeContent["education"]
-    ) => void;
+  value: ResumeContent["education"];
+  onChange: (value: ResumeContent["education"]) => void;
 }) {
+  function addEducation() {
+    const item: ResumeEducation = {
+      institution: "",
+      degree: "",
+      fieldOfStudy: "",
+      startDate: "",
+      endDate: "",
+      grade: "",
+      location: "",
+    };
 
-    function addEducation() {
+    onChange([...value, item]);
+  }
 
-        const item: ResumeEducation = {
-            institution: "",
-            degree: "",
-            fieldOfStudy: "",
-            startDate: "",
-            endDate: "",
-            grade: "",
-            location: "",
-        };
+  function updateEducation(index: number, patch: Partial<ResumeEducation>) {
+    onChange(
+      value.map((item, itemIndex) =>
+        itemIndex === index
+          ? {
+              ...item,
+              ...patch,
+            }
+          : item,
+      ),
+    );
+  }
 
-        onChange([
-            ...value,
-            item,
-        ]);
-    }
+  function removeEducation(index: number) {
+    onChange(value.filter((_, itemIndex) => itemIndex !== index));
+  }
 
+  return (
+    <div className="space-y-4">
+      {value.length === 0 && (
+        <EmptyEditorState text="No education added yet." />
+      )}
 
-    function updateEducation(
-        index: number,
-        patch: Partial<ResumeEducation>
-    ) {
-
-        onChange(
-            value.map(
-                (
-                    item,
-                    itemIndex
-                ) =>
-                    itemIndex === index
-                        ? {
-                            ...item,
-                            ...patch,
-                        }
-                        : item
-            )
-        );
-    }
-
-
-    function removeEducation(
-        index: number
-    ) {
-
-        onChange(
-            value.filter(
-                (
-                    _,
-                    itemIndex
-                ) =>
-                    itemIndex !== index
-            )
-        );
-    }
-
-
-    return (
-        <div className="space-y-4">
-
-            {value.length === 0 && (
-                <EmptyEditorState
-                    text="No education added yet."
-                />
-            )}
-
-            {value.map(
-                (
-                    item,
-                    index
-                ) => (
-
-                    <div
-                        key={index}
-                        className="
+      {value.map((item, index) => (
+        <div
+          key={index}
+          className="
                             rounded-2xl
                             border
                             border-[var(--border)]
@@ -1173,50 +823,42 @@ function EducationEditor({
                             hover:border-[var(--border-strong)]
                             sm:p-5
                         "
-                    >
-
-                        <div
-                            className="
+        >
+          <div
+            className="
                                 mb-5
                                 flex
                                 items-start
                                 justify-between
                                 gap-3
                             "
-                        >
-
-                            <div>
-
-                                <p
-                                    className="
+          >
+            <div>
+              <p
+                className="
                                         text-sm
                                         font-semibold
                                         text-[var(--text-primary)]
                                     "
-                                >
-                                    Education {index + 1}
-                                </p>
+              >
+                Education {index + 1}
+              </p>
 
-                                <p
-                                    className="
+              <p
+                className="
                                         mt-0.5
                                         text-xs
                                         text-[var(--text-muted)]
                                     "
-                                >
-                                    Degrees and academic qualifications
-                                </p>
+              >
+                Degrees and academic qualifications
+              </p>
+            </div>
 
-                            </div>
-
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    removeEducation(
-                                        index
-                                    )
-                                }
-                                className="
+            <button
+              type="button"
+              onClick={() => removeEducation(index)}
+              className="
                                     inline-flex
                                     size-9
                                     shrink-0
@@ -1228,155 +870,104 @@ function EducationEditor({
                                     hover:bg-red-500/10
                                     hover:text-red-500
                                 "
-                                aria-label="Remove education"
-                            >
-                                <HiOutlineTrash
-                                    size={17}
-                                />
-                            </button>
+              aria-label="Remove education"
+            >
+              <HiOutlineTrash size={17} />
+            </button>
+          </div>
 
-                        </div>
-
-
-                        <div
-                            className="
+          <div
+            className="
                                 grid
                                 grid-cols-1
                                 gap-4
                                 md:grid-cols-2
                             "
-                        >
+          >
+            <Field
+              label="Institution"
+              value={item.institution}
+              placeholder="University / College"
+              onChange={(institution) =>
+                updateEducation(index, {
+                  institution,
+                })
+              }
+            />
 
-                            <Field
-                                label="Institution"
-                                value={
-                                    item.institution
-                                }
-                                placeholder="University / College"
-                                onChange={
-                                    institution =>
-                                        updateEducation(
-                                            index,
-                                            {
-                                                institution,
-                                            }
-                                        )
-                                }
-                            />
+            <Field
+              label="Degree"
+              value={item.degree}
+              placeholder="B.Tech"
+              onChange={(degree) =>
+                updateEducation(index, {
+                  degree,
+                })
+              }
+            />
 
-                            <Field
-                                label="Degree"
-                                value={
-                                    item.degree
-                                }
-                                placeholder="B.Tech"
-                                onChange={
-                                    degree =>
-                                        updateEducation(
-                                            index,
-                                            {
-                                                degree,
-                                            }
-                                        )
-                                }
-                            />
+            <Field
+              label="Field of study"
+              value={item.fieldOfStudy ?? ""}
+              placeholder="Computer Science"
+              onChange={(fieldOfStudy) =>
+                updateEducation(index, {
+                  fieldOfStudy,
+                })
+              }
+            />
 
-                            <Field
-                                label="Field of study"
-                                value={
-                                    item.fieldOfStudy ?? ""
-                                }
-                                placeholder="Computer Science"
-                                onChange={
-                                    fieldOfStudy =>
-                                        updateEducation(
-                                            index,
-                                            {
-                                                fieldOfStudy,
-                                            }
-                                        )
-                                }
-                            />
+            <Field
+              label="Location"
+              value={item.location ?? ""}
+              placeholder="Hyderabad, India"
+              onChange={(location) =>
+                updateEducation(index, {
+                  location,
+                })
+              }
+            />
 
-                            <Field
-                                label="Location"
-                                value={
-                                    item.location ?? ""
-                                }
-                                placeholder="Hyderabad, India"
-                                onChange={
-                                    location =>
-                                        updateEducation(
-                                            index,
-                                            {
-                                                location,
-                                            }
-                                        )
-                                }
-                            />
+            <Field
+              label="Start date"
+              value={item.startDate ?? ""}
+              placeholder="2019"
+              onChange={(startDate) =>
+                updateEducation(index, {
+                  startDate,
+                })
+              }
+            />
 
-                            <Field
-                                label="Start date"
-                                value={
-                                    item.startDate ?? ""
-                                }
-                                placeholder="2019"
-                                onChange={
-                                    startDate =>
-                                        updateEducation(
-                                            index,
-                                            {
-                                                startDate,
-                                            }
-                                        )
-                                }
-                            />
+            <Field
+              label="End date"
+              value={item.endDate ?? ""}
+              placeholder="2023"
+              onChange={(endDate) =>
+                updateEducation(index, {
+                  endDate,
+                })
+              }
+            />
 
-                            <Field
-                                label="End date"
-                                value={
-                                    item.endDate ?? ""
-                                }
-                                placeholder="2023"
-                                onChange={
-                                    endDate =>
-                                        updateEducation(
-                                            index,
-                                            {
-                                                endDate,
-                                            }
-                                        )
-                                }
-                            />
+            <Field
+              label="Grade"
+              value={item.grade ?? ""}
+              placeholder="8.5 CGPA"
+              onChange={(grade) =>
+                updateEducation(index, {
+                  grade,
+                })
+              }
+            />
+          </div>
+        </div>
+      ))}
 
-                            <Field
-                                label="Grade"
-                                value={
-                                    item.grade ?? ""
-                                }
-                                placeholder="8.5 CGPA"
-                                onChange={
-                                    grade =>
-                                        updateEducation(
-                                            index,
-                                            {
-                                                grade,
-                                            }
-                                        )
-                                }
-                            />
-
-                        </div>
-
-                    </div>
-                )
-            )}
-
-
-            <button
-                type="button"
-                onClick={addEducation}
-                className="
+      <button
+        type="button"
+        onClick={addEducation}
+        className="
                     inline-flex
                     min-h-10
                     w-full
@@ -1398,404 +989,286 @@ function EducationEditor({
                     dark:hover:bg-indigo-500/10
                     sm:w-auto
                 "
-            >
-                <HiOutlinePlus
-                    size={16}
-                />
-                Add education
-            </button>
-
-        </div>
-    );
+      >
+        <HiOutlinePlus size={16} />
+        Add education
+      </button>
+    </div>
+  );
 }
-
 
 /* ============================================================
    SKILLS EDITOR - FIXED: Allows commas and special characters
 ============================================================ */
 
 function SkillsEditor({
-    value,
-    onChange,
+  value,
+  onChange,
 }: {
-    value: ResumeContent["skills"];
-    onChange: (
-        value: ResumeContent["skills"]
-    ) => void;
+  value: ResumeContent["skills"];
+  onChange: (value: ResumeContent["skills"]) => void;
 }) {
+  /*
+   * Stable IDs for the UI rows.
+   *
+   * The actual resume data remains:
+   *
+   * {
+   *   "Frontend": ["React, TypeScript, Tailwind"],
+   *   "Backend": ["Node.js, Express, PostgreSQL"]
+   * }
+   *
+   * Each skill value is stored as an array with a single string,
+   * allowing commas and special characters to be preserved.
+   */
 
-    /*
-     * Stable IDs for the UI rows.
-     *
-     * The actual resume data remains:
-     *
-     * {
-     *   "Frontend": ["React, TypeScript, Tailwind"],
-     *   "Backend": ["Node.js, Express, PostgreSQL"]
-     * }
-     *
-     * Each skill value is stored as an array with a single string,
-     * allowing commas and special characters to be preserved.
-     */
+  const rowIdsRef = React.useRef<Map<string, string>>(new Map());
 
-    const rowIdsRef = React.useRef<
-        Map<string, string>
-    >(new Map());
+  // Local input state for skills - stores the raw string value
+  const [localInputs, setLocalInputs] = React.useState<Record<string, string>>(
+    {},
+  );
 
-    // Local input state for skills - stores the raw string value
-    const [localInputs, setLocalInputs] = React.useState<Record<string, string>>({});
+  // Update local inputs when value changes
+  React.useEffect(() => {
+    const newLocalInputs: Record<string, string> = {};
+    Object.entries(value).forEach(([category, skills]) => {
+      if (Array.isArray(skills) && skills.length > 0) {
+        newLocalInputs[category] = skills[0] || "";
+      } else {
+        newLocalInputs[category] = "";
+      }
+    });
+    setLocalInputs(newLocalInputs);
+  }, [value]);
 
-    // Update local inputs when value changes
-    React.useEffect(() => {
-        const newLocalInputs: Record<string, string> = {};
-        Object.entries(value).forEach(([category, skills]) => {
-            if (Array.isArray(skills) && skills.length > 0) {
-                newLocalInputs[category] = skills[0] || "";
-            } else {
-                newLocalInputs[category] = "";
-            }
-        });
-        setLocalInputs(newLocalInputs);
-    }, [value]);
+  /*
+   * Get a stable ID for a category.
+   *
+   * The ID is generated once and then reused even when
+   * the category name changes.
+   */
+  function getRowId(category: string): string {
+    const existing = rowIdsRef.current.get(category);
 
-
-    /*
-     * Get a stable ID for a category.
-     *
-     * The ID is generated once and then reused even when
-     * the category name changes.
-     */
-    function getRowId(
-        category: string
-    ): string {
-
-        const existing =
-            rowIdsRef.current.get(
-                category
-            );
-
-        if (existing) {
-            return existing;
-        }
-
-        const id =
-            `skill-${Date.now()}-${Math.random()
-                .toString(36)
-                .slice(2)}`;
-
-        rowIdsRef.current.set(
-            category,
-            id
-        );
-
-        return id;
+    if (existing) {
+      return existing;
     }
 
+    const id = `skill-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
-    /*
-     * Make sure every existing category has a stable ID.
-     */
-    const categories =
-        React.useMemo(
-            () => {
+    rowIdsRef.current.set(category, id);
 
-                Object.keys(value).forEach(
-                    category => {
-                        getRowId(category);
-                    }
-                );
+    return id;
+  }
 
-                return Object.keys(value);
-
-            },
-            [value]
-        );
-
-
-    /*
-     * Remove IDs that no longer exist.
-     */
-    React.useEffect(
-        () => {
-
-            const currentCategories =
-                new Set(
-                    Object.keys(value)
-                );
-
-            rowIdsRef.current.forEach(
-                (_, category) => {
-
-                    if (
-                        !currentCategories.has(
-                            category
-                        )
-                    ) {
-                        rowIdsRef.current.delete(
-                            category
-                        );
-                    }
-
-                }
-            );
-
-        },
-        [value]
+  /*
+   * Make sure every existing category has a stable ID.
+   */
+  const categories = React.useMemo(() => {
+    const allCategories = Object.keys(value).filter(
+      (category) => category !== "__order",
     );
 
+    const storedOrder = Array.isArray(value.__order)
+      ? value.__order.filter(
+          (category) => typeof category === "string" && category !== "__order",
+        )
+      : [];
 
-    function addCategory() {
+    const orderedCategories = [
+      ...storedOrder.filter((category) => allCategories.includes(category)),
 
-        let category =
-            "Technical Skills";
+      ...allCategories.filter((category) => !storedOrder.includes(category)),
+    ];
 
-        let counter = 1;
+    orderedCategories.forEach((category) => {
+      getRowId(category);
+    });
 
-        while (
-            Object.prototype.hasOwnProperty.call(
-                value,
-                category
-            )
-        ) {
+    return orderedCategories;
+  }, [value]);
 
-            counter += 1;
+  /*
+   * Remove IDs that no longer exist.
+   */
+  React.useEffect(() => {
+    const currentCategories = new Set(
+      Object.keys(value).filter((category) => category !== "__order"),
+    );
 
-            category =
-                `Skills ${counter}`;
+    rowIdsRef.current.forEach((_, category) => {
+      if (!currentCategories.has(category)) {
+        rowIdsRef.current.delete(category);
+      }
+    });
+  }, [value]);
 
-        }
+  function addCategory() {
+    let category = "Technical Skills";
 
+    let counter = 1;
 
-        const id =
-            `skill-${Date.now()}-${Math.random()
-                .toString(36)
-                .slice(2)}`;
+    while (Object.prototype.hasOwnProperty.call(value, category)) {
+      counter += 1;
 
-
-        rowIdsRef.current.set(
-            category,
-            id
-        );
-
-
-        onChange({
-            ...value,
-            [category]: [""],
-        });
-
+      category = `Skills ${counter}`;
     }
 
+    const id = `skill-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
-    function renameCategory(
-        oldName: string,
-        newName: string
+    rowIdsRef.current.set(category, id);
+
+    const currentOrder = categories.filter((item) => item !== category);
+
+    onChange({
+      ...value,
+
+      [category]: [""],
+
+      __order: [...currentOrder, category],
+    });
+  }
+
+  function renameCategory(oldName: string, newName: string) {
+    /*
+     * Don't do anything when the name hasn't changed.
+     */
+    if (newName === oldName) {
+      return;
+    }
+
+    /*
+     * If the user temporarily clears the field,
+     * keep the existing category in the data.
+     *
+     * The input will visually continue showing the
+     * category because we maintain a local draft below.
+     */
+    if (!newName.trim()) {
+      return;
+    }
+
+    /*
+     * Don't allow duplicate category names.
+     */
+    if (
+      newName !== oldName &&
+      Object.prototype.hasOwnProperty.call(value, newName)
     ) {
-
-        /*
-         * Don't do anything when the name hasn't changed.
-         */
-        if (
-            newName === oldName
-        ) {
-            return;
-        }
-
-
-        /*
-         * If the user temporarily clears the field,
-         * keep the existing category in the data.
-         *
-         * The input will visually continue showing the
-         * category because we maintain a local draft below.
-         */
-        if (
-            !newName.trim()
-        ) {
-            return;
-        }
-
-
-        /*
-         * Don't allow duplicate category names.
-         */
-        if (
-            newName !== oldName &&
-            Object.prototype.hasOwnProperty.call(
-                value,
-                newName
-            )
-        ) {
-            return;
-        }
-
-
-        const rowId =
-            rowIdsRef.current.get(
-                oldName
-            );
-
-
-        const next: ResumeContent["skills"] =
-            {};
-
-
-        Object.entries(value).forEach(
-            (
-                [
-                    category,
-                    categorySkills,
-                ]
-            ) => {
-
-                if (
-                    category === oldName
-                ) {
-
-                    next[newName] =
-                        categorySkills;
-
-                } else {
-
-                    next[category] =
-                        categorySkills;
-
-                }
-
-            }
-        );
-
-
-        /*
-         * Move the stable ID from the old category
-         * name to the new category name.
-         */
-        rowIdsRef.current.delete(
-            oldName
-        );
-
-
-        if (rowId) {
-
-            rowIdsRef.current.set(
-                newName,
-                rowId
-            );
-
-        }
-
-
-        onChange(next);
-
-        // Update local input for the new category name
-        if (next[newName] && next[newName].length > 0) {
-            setLocalInputs(prev => ({
-                ...prev,
-                [newName]: prev[oldName] || next[newName][0],
-            }));
-            // Remove old local input
-            const newLocalInputs = { ...localInputs };
-            delete newLocalInputs[oldName];
-            setLocalInputs(newLocalInputs);
-        }
-
+      return;
     }
 
+    const rowId = rowIdsRef.current.get(oldName);
 
-    function updateSkills(
-        category: string,
-        raw: string
-    ) {
-        // Update local input immediately for smooth typing
-        setLocalInputs(prev => ({
-            ...prev,
-            [category]: raw,
-        }));
+    const next: ResumeContent["skills"] = {};
 
-        // Store as array with single string - this preserves all characters
-        onChange({
-            ...value,
-            [category]: [raw],
-        });
+    Object.entries(value).forEach(([category, categorySkills]) => {
+      if (category === oldName) {
+        next[newName] = categorySkills;
+      } else {
+        next[category] = categorySkills;
+      }
+    });
+
+    const currentOrder = categories;
+
+    next.__order = currentOrder.map((category) =>
+      category === oldName ? newName : category,
+    );
+
+    /*
+     * Move the stable ID from the old category
+     * name to the new category name.
+     */
+    rowIdsRef.current.delete(oldName);
+
+    if (rowId) {
+      rowIdsRef.current.set(newName, rowId);
     }
 
+    onChange(next);
 
-    function removeCategory(
-        category: string
-    ) {
-
-        rowIdsRef.current.delete(
-            category
-        );
-
-
-        const next = {
-            ...value,
-        };
-
-
-        delete next[category];
-
-
-        onChange(next);
-
-        // Clean up local input
-        const newLocalInputs = { ...localInputs };
-        delete newLocalInputs[category];
-        setLocalInputs(newLocalInputs);
-
+    // Update local input for the new category name
+    if (next[newName] && next[newName].length > 0) {
+      setLocalInputs((prev) => ({
+        ...prev,
+        [newName]: prev[oldName] || next[newName][0],
+      }));
+      // Remove old local input
+      const newLocalInputs = { ...localInputs };
+      delete newLocalInputs[oldName];
+      setLocalInputs(newLocalInputs);
     }
+  }
 
+  function updateSkills(category: string, raw: string) {
+    // Update local input immediately for smooth typing
+    setLocalInputs((prev) => ({
+      ...prev,
+      [category]: raw,
+    }));
 
-    return (
+    // Store as array with single string - this preserves all characters
+    onChange({
+      ...value,
+      [category]: [raw],
+    });
+  }
 
-        <div className="space-y-4">
+  function removeCategory(category: string) {
+    rowIdsRef.current.delete(category);
 
-            {categories.map(
-                category => {
+    const next: ResumeSkills = {
+      ...value,
+    };
 
-                    const rowId =
-                        getRowId(
-                            category
-                        );
+    delete next[category];
 
+    next.__order = categories.filter((item) => item !== category);
 
-                    return (
+    onChange(next);
 
-                        <div
-                            key={rowId}
-                            className="
+    // Clean up local input
+    const newLocalInputs = { ...localInputs };
+    delete newLocalInputs[category];
+    setLocalInputs(newLocalInputs);
+  }
+
+  return (
+    <div className="space-y-4">
+      {categories.map((category) => {
+        const rowId = getRowId(category);
+
+        return (
+          <div
+            key={rowId}
+            className="
                                 rounded-xl
                                 border
                                 border-[var(--border)]
                                 bg-[var(--surface-subtle)]
                                 p-4
                             "
-                        >
-
-                            <div
-                                className="
+          >
+            <div
+              className="
                                     grid
                                     gap-3
                                     sm:grid-cols-[220px_1fr_auto]
                                 "
-                            >
-
-                                {/* =================================================
+            >
+              {/* =================================================
                                     CATEGORY
                                 ================================================= */}
 
-                                <input
-                                    value={category}
-                                    onChange={(
-                                        event
-                                    ) =>
-                                        renameCategory(
-                                            category,
-                                            event.target.value
-                                        )
-                                    }
-                                    placeholder="Category"
-                                    className="
+              <input
+                value={category}
+                onChange={(event) =>
+                  renameCategory(category, event.target.value)
+                }
+                placeholder="Category"
+                className="
                                         min-h-10
                                         rounded-lg
                                         border
@@ -1810,23 +1283,17 @@ function SkillsEditor({
                                         focus:ring-2
                                         focus:ring-indigo-500/20
                                     "
-                                />
+              />
 
-
-                                {/* =================================================
+              {/* =================================================
                                     SKILLS - Store as array with single string
                                 ================================================= */}
 
-                                <input
-                                    value={localInputs[category] || ""}
-                                    onChange={(event) =>
-                                        updateSkills(
-                                            category,
-                                            event.target.value
-                                        )
-                                    }
-                                    placeholder="JavaScript, TypeScript, React, Node.js"
-                                    className="
+              <input
+                value={localInputs[category] || ""}
+                onChange={(event) => updateSkills(category, event.target.value)}
+                placeholder="JavaScript, TypeScript, React, Node.js"
+                className="
                                         min-h-10
                                         rounded-lg
                                         border
@@ -1840,49 +1307,38 @@ function SkillsEditor({
                                         focus:ring-2
                                         focus:ring-indigo-500/20
                                     "
-                                />
+              />
 
-
-                                {/* =================================================
+              {/* =================================================
                                     REMOVE
                                 ================================================= */}
 
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        removeCategory(
-                                            category
-                                        )
-                                    }
-                                    className="
+              <button
+                type="button"
+                onClick={() => removeCategory(category)}
+                className="
                                         text-xs
                                         font-semibold
                                         text-red-600
                                         transition-colors
                                         hover:text-red-700
                                     "
-                                >
-                                    Remove
-                                </button>
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        );
+      })}
 
-                            </div>
-
-                        </div>
-
-                    );
-
-                }
-            )}
-
-
-            {/* =================================================
+      {/* =================================================
                 ADD CATEGORY
             ================================================= */}
 
-            <button
-                type="button"
-                onClick={addCategory}
-                className="
+      <button
+        type="button"
+        onClick={addCategory}
+        className="
                     inline-flex
                     min-h-10
                     items-center
@@ -1900,118 +1356,67 @@ function SkillsEditor({
                     dark:text-indigo-400
                     dark:hover:bg-indigo-500/10
                 "
-            >
-                + Add skill category
-            </button>
-
-        </div>
-
-    );
-
+      >
+        + Add skill category
+      </button>
+    </div>
+  );
 }
-
 
 /* ============================================================
    PROJECTS EDITOR - FIXED: Technologies as array with single string
 ============================================================ */
 
 function ProjectsEditor({
-    value,
-    onChange,
+  value,
+  onChange,
 }: {
-    value: ResumeContent["projects"];
-    onChange: (
-        value: ResumeContent["projects"]
-    ) => void;
+  value: ResumeContent["projects"];
+  onChange: (value: ResumeContent["projects"]) => void;
 }) {
+  function addProject() {
+    const item: ResumeProject = {
+      name: "",
+      description: "",
+      technologies: [""],
+      url: "",
+      github: "",
+    };
 
-    function addProject() {
+    onChange([...value, item]);
+  }
 
-        const item: ResumeProject = {
-            name: "",
-            description: "",
-            technologies: [""],
-            url: "",
-            github: "",
-        };
-
-        onChange([
-            ...value,
-            item,
-        ]);
-    }
-
-
-    function updateProject(
-        index: number,
-        patch: Partial<ResumeProject>
-    ) {
-
-        onChange(
-            value.map(
-                (
-                    item,
-                    itemIndex
-                ) =>
-                    itemIndex === index
-                        ? {
-                            ...item,
-                            ...patch,
-                        }
-                        : item
-            )
-        );
-    }
-
-
-    function removeProject(
-        index: number
-    ) {
-
-        onChange(
-            value.filter(
-                (
-                    _,
-                    itemIndex
-                ) =>
-                    itemIndex !== index
-            )
-        );
-    }
-
-
-    function updateTechnologies(
-        index: number,
-        text: string
-    ) {
-
-        updateProject(
-            index,
-            {
-                technologies: [text],
+  function updateProject(index: number, patch: Partial<ResumeProject>) {
+    onChange(
+      value.map((item, itemIndex) =>
+        itemIndex === index
+          ? {
+              ...item,
+              ...patch,
             }
-        );
-    }
+          : item,
+      ),
+    );
+  }
 
+  function removeProject(index: number) {
+    onChange(value.filter((_, itemIndex) => itemIndex !== index));
+  }
 
-    return (
-        <div className="space-y-4">
+  function updateTechnologies(index: number, text: string) {
+    updateProject(index, {
+      technologies: [text],
+    });
+  }
 
-            {value.length === 0 && (
-                <EmptyEditorState
-                    text="No projects added yet."
-                />
-            )}
+  return (
+    <div className="space-y-4">
+      {value.length === 0 && <EmptyEditorState text="No projects added yet." />}
 
-            {value.map(
-                (
-                    item,
-                    index
-                ) => (
-
-                    <div
-                        key={index}
-                        className="
+      {value.map((item, index) => (
+        <div
+          key={index}
+          className="
                             rounded-2xl
                             border
                             border-[var(--border)]
@@ -2021,50 +1426,42 @@ function ProjectsEditor({
                             hover:border-[var(--border-strong)]
                             sm:p-5
                         "
-                    >
-
-                        <div
-                            className="
+        >
+          <div
+            className="
                                 mb-5
                                 flex
                                 items-start
                                 justify-between
                                 gap-3
                             "
-                        >
-
-                            <div>
-
-                                <p
-                                    className="
+          >
+            <div>
+              <p
+                className="
                                         text-sm
                                         font-semibold
                                         text-[var(--text-primary)]
                                     "
-                                >
-                                    Project {index + 1}
-                                </p>
+              >
+                Project {index + 1}
+              </p>
 
-                                <p
-                                    className="
+              <p
+                className="
                                         mt-0.5
                                         text-xs
                                         text-[var(--text-muted)]
                                     "
-                                >
-                                    Projects available for resume customization
-                                </p>
+              >
+                Projects available for resume customization
+              </p>
+            </div>
 
-                            </div>
-
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    removeProject(
-                                        index
-                                    )
-                                }
-                                className="
+            <button
+              type="button"
+              onClick={() => removeProject(index)}
+              className="
                                     inline-flex
                                     size-9
                                     shrink-0
@@ -2076,131 +1473,85 @@ function ProjectsEditor({
                                     hover:bg-red-500/10
                                     hover:text-red-500
                                 "
-                                aria-label="Remove project"
-                            >
-                                <HiOutlineTrash
-                                    size={17}
-                                />
-                            </button>
+              aria-label="Remove project"
+            >
+              <HiOutlineTrash size={17} />
+            </button>
+          </div>
 
-                        </div>
+          <div className="space-y-4">
+            <Field
+              label="Project name"
+              value={item.name}
+              placeholder="Team Report Tracker"
+              onChange={(name) =>
+                updateProject(index, {
+                  name,
+                })
+              }
+            />
 
+            <TextAreaField
+              label="Description"
+              value={item.description ?? ""}
+              placeholder="Briefly describe what you built and what problem it solves."
+              rows={4}
+              onChange={(description) =>
+                updateProject(index, {
+                  description,
+                })
+              }
+            />
 
-                        <div className="space-y-4">
+            <Field
+              label="Technologies"
+              value={
+                Array.isArray(item.technologies) && item.technologies.length > 0
+                  ? item.technologies[0]
+                  : ""
+              }
+              placeholder="React, TypeScript, Node.js, PostgreSQL"
+              onChange={(text) => updateTechnologies(index, text)}
+            />
 
-                            <Field
-                                label="Project name"
-                                value={
-                                    item.name
-                                }
-                                placeholder="Team Report Tracker"
-                                onChange={
-                                    name =>
-                                        updateProject(
-                                            index,
-                                            {
-                                                name,
-                                            }
-                                        )
-                                }
-                            />
-
-
-                            <TextAreaField
-                                label="Description"
-                                value={
-                                    item.description ?? ""
-                                }
-                                placeholder="Briefly describe what you built and what problem it solves."
-                                rows={4}
-                                onChange={
-                                    description =>
-                                        updateProject(
-                                            index,
-                                            {
-                                                description,
-                                            }
-                                        )
-                                }
-                            />
-
-
-                            <Field
-                                label="Technologies"
-                                value={
-                                    Array.isArray(
-                                        item.technologies
-                                    ) && item.technologies.length > 0
-                                        ? item.technologies[0]
-                                        : ""
-                                }
-                                placeholder="React, TypeScript, Node.js, PostgreSQL"
-                                onChange={
-                                    text =>
-                                        updateTechnologies(
-                                            index,
-                                            text
-                                        )
-                                }
-                            />
-
-
-                            <div
-                                className="
+            <div
+              className="
                                     grid
                                     grid-cols-1
                                     gap-4
                                     md:grid-cols-2
                                 "
-                            >
+            >
+              <Field
+                label="Project URL"
+                value={item.url ?? ""}
+                placeholder="https://example.com"
+                onChange={(url) =>
+                  updateProject(index, {
+                    url,
+                  })
+                }
+              />
 
-                                <Field
-                                    label="Project URL"
-                                    value={
-                                        item.url ?? ""
-                                    }
-                                    placeholder="https://example.com"
-                                    onChange={
-                                        url =>
-                                            updateProject(
-                                                index,
-                                                {
-                                                    url,
-                                                }
-                                            )
-                                    }
-                                />
+              <Field
+                label="GitHub"
+                value={item.github ?? ""}
+                placeholder="https://github.com/..."
+                onChange={(github) =>
+                  updateProject(index, {
+                    github,
+                  })
+                }
+              />
+            </div>
+          </div>
+        </div>
+      ))}
 
-                                <Field
-                                    label="GitHub"
-                                    value={
-                                        item.github ?? ""
-                                    }
-                                    placeholder="https://github.com/..."
-                                    onChange={
-                                        github =>
-                                            updateProject(
-                                                index,
-                                                {
-                                                    github,
-                                                }
-                                            )
-                                    }
-                                />
-
-                            </div>
-
-                        </div>
-
-                    </div>
-                )
-            )}
-
-
-            <button
-                type="button"
-                onClick={addProject}
-                className="
+      <button
+        type="button"
+        onClick={addProject}
+        className="
                     inline-flex
                     min-h-10
                     w-full
@@ -2222,31 +1573,22 @@ function ProjectsEditor({
                     dark:hover:bg-indigo-500/10
                     sm:w-auto
                 "
-            >
-                <HiOutlinePlus
-                    size={16}
-                />
-                Add project
-            </button>
-
-        </div>
-    );
+      >
+        <HiOutlinePlus size={16} />
+        Add project
+      </button>
+    </div>
+  );
 }
-
 
 /* ============================================================
    EMPTY STATE
 ============================================================ */
 
-function EmptyEditorState({
-    text,
-}: {
-    text: string;
-}) {
-
-    return (
-        <div
-            className="
+function EmptyEditorState({ text }: { text: string }) {
+  return (
+    <div
+      className="
                 flex
                 min-h-20
                 items-center
@@ -2260,217 +1602,128 @@ function EmptyEditorState({
                 text-sm
                 text-[var(--text-muted)]
             "
-        >
-            {text}
-        </div>
-    );
+    >
+      {text}
+    </div>
+  );
 }
-
 
 /* ============================================================
    PROFILE PAGE
 ============================================================ */
 
 export default function Profile() {
+  const queryClient = useQueryClient();
 
-    const queryClient =
-        useQueryClient();
+  const [form, setForm] = useState<ResumeContent>(emptyResumeContent);
 
+  const profileQuery = useQuery({
+    queryKey: ["resume", "profile"],
 
-    const [
-        form,
-        setForm,
-    ] = useState<ResumeContent>(
-        emptyResumeContent
-    );
+    queryFn: async () => {
+      const response = await getResumeProfile();
 
+      return response.data.data;
+    },
+  });
 
-    const profileQuery =
-        useQuery({
-
-            queryKey: [
-                "resume",
-                "profile",
-            ],
-
-            queryFn:
-                async () => {
-
-                    const response =
-                        await getResumeProfile();
-
-                    return response.data.data;
-
-                },
-
-        });
-
-
-    /* ========================================================
+  /* ========================================================
        LOAD PROFILE
     ======================================================== */
 
-    useEffect(
-        () => {
+  useEffect(() => {
+    if (profileQuery.data) {
+      setForm(normalizeProfile(profileQuery.data));
 
-            if (
-                profileQuery.data
-            ) {
+      return;
+    }
 
-                setForm(
-                    normalizeProfile(
-                        profileQuery.data
-                    )
-                );
+    if (profileQuery.data === null) {
+      setForm({
+        ...emptyResumeContent,
+      });
+    }
+  }, [profileQuery.data]);
 
-                return;
-            }
-
-            if (
-                profileQuery.data === null
-            ) {
-
-                setForm({
-                    ...emptyResumeContent,
-                });
-            }
-
-        },
-        [
-            profileQuery.data,
-        ]
-    );
-
-
-    /* ========================================================
+  /* ========================================================
        SAVE
     ======================================================== */
 
-    const saveMutation =
-        useMutation({
+  const saveMutation = useMutation({
+    mutationFn: saveResumeProfile,
 
-            mutationFn:
-                saveResumeProfile,
+    onSuccess: async (response) => {
+      await queryClient.invalidateQueries({
+        queryKey: ["resume", "profile"],
+      });
 
-            onSuccess:
-                async response => {
+      toast.success(response?.data?.message || "Profile saved successfully.");
+    },
 
-                    await queryClient.invalidateQueries({
-                        queryKey: [
-                            "resume",
-                            "profile",
-                        ],
-                    });
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Unable to save profile.");
+    },
+  });
 
-                    toast.success(
-                        response?.data?.message ||
-                        "Profile saved successfully."
-                    );
+  function update(patch: Partial<ResumeContent>) {
+    setForm((previous) => ({
+      ...previous,
+      ...patch,
+    }));
+  }
 
-                },
+  function handleSave() {
+    saveMutation.mutate(form);
+  }
 
-            onError:
-                (
-                    error: any
-                ) => {
-
-                    toast.error(
-                        error?.response
-                            ?.data
-                            ?.message ||
-                        "Unable to save profile."
-                    );
-
-                },
-
-        });
-
-
-    function update(
-        patch: Partial<ResumeContent>
-    ) {
-
-        setForm(
-            previous => ({
-                ...previous,
-                ...patch,
-            })
-        );
-    }
-
-
-    function handleSave() {
-
-        saveMutation.mutate(
-            form
-        );
-    }
-
-
-    /* ========================================================
+  /* ========================================================
        LOADING
     ======================================================== */
 
-    if (
-        profileQuery.isLoading
-    ) {
-
-        return (
-            <main
-                className="
+  if (profileQuery.isLoading) {
+    return (
+      <main
+        className="
                     flex
                     min-h-[60vh]
                     items-center
                     justify-center
                     p-6
                 "
-            >
-
-                <div
-                    className="
+      >
+        <div
+          className="
                         flex
                         items-center
                         gap-3
                         text-sm
                         text-[var(--text-muted)]
                     "
-                >
+        >
+          <HiOutlineArrowPath size={20} className="animate-spin" />
+          Loading profile...
+        </div>
+      </main>
+    );
+  }
 
-                    <HiOutlineArrowPath
-                        size={20}
-                        className="animate-spin"
-                    />
-
-                    Loading profile...
-
-                </div>
-
-            </main>
-        );
-    }
-
-
-    /* ========================================================
+  /* ========================================================
        ERROR
     ======================================================== */
 
-    if (
-        profileQuery.isError
-    ) {
-
-        return (
-            <main
-                className="
+  if (profileQuery.isError) {
+    return (
+      <main
+        className="
                     flex
                     min-h-[60vh]
                     items-center
                     justify-center
                     p-6
                 "
-            >
-
-                <div
-                    className="
+      >
+        <div
+          className="
                         w-full
                         max-w-md
                         rounded-2xl
@@ -2481,35 +1734,31 @@ export default function Profile() {
                         text-center
                         shadow-sm
                     "
-                >
-
-                    <p
-                        className="
+        >
+          <p
+            className="
                             text-sm
                             font-semibold
                             text-[var(--text-primary)]
                         "
-                    >
-                        Unable to load your profile
-                    </p>
+          >
+            Unable to load your profile
+          </p>
 
-                    <p
-                        className="
+          <p
+            className="
                             mt-1
                             text-sm
                             text-[var(--text-muted)]
                         "
-                    >
-                        Something went wrong while loading
-                        your master profile.
-                    </p>
+          >
+            Something went wrong while loading your master profile.
+          </p>
 
-                    <button
-                        type="button"
-                        onClick={() =>
-                            profileQuery.refetch()
-                        }
-                        className="
+          <button
+            type="button"
+            onClick={() => profileQuery.refetch()}
+            className="
                             mt-5
                             inline-flex
                             min-h-10
@@ -2526,33 +1775,27 @@ export default function Profile() {
                             hover:bg-indigo-700
                             active:scale-[0.98]
                         "
-                    >
-                        <HiOutlineArrowPath
-                            size={16}
-                        />
-                        Try again
-                    </button>
+          >
+            <HiOutlineArrowPath size={16} />
+            Try again
+          </button>
+        </div>
+      </main>
+    );
+  }
 
-                </div>
-
-            </main>
-        );
-    }
-
-
-    /* ========================================================
+  /* ========================================================
        PAGE
     ======================================================== */
 
-    return (
-        <main className="w-full bg-[var(--background)]">
-
-            {/* ==================================================
+  return (
+    <main className="w-full bg-[var(--background)]">
+      {/* ==================================================
                 STICKY HEADER
             ================================================== */}
 
-            <div
-                className="
+      <div
+        className="
         sticky
         top-0
         z-20
@@ -2561,9 +1804,9 @@ export default function Profile() {
         bg-[var(--surface)]/95
         backdrop-blur-xl
     "
-            >
-                <div
-                    className="
+      >
+        <div
+          className="
             mx-auto
             flex
             w-full
@@ -2576,11 +1819,11 @@ export default function Profile() {
             sm:px-6
             lg:px-8
         "
-                >
-                    {/* Left */}
-                    <div className="flex min-w-0 items-center gap-3">
-                        <div
-                            className="
+        >
+          {/* Left */}
+          <div className="flex min-w-0 items-center gap-3">
+            <div
+              className="
                     flex
                     size-10
                     shrink-0
@@ -2590,13 +1833,13 @@ export default function Profile() {
                     bg-[var(--brand-soft)]
                     text-[var(--brand)]
                 "
-                        >
-                            <HiOutlineUser size={21} />
-                        </div>
+            >
+              <HiOutlineUser size={21} />
+            </div>
 
-                        <div className="min-w-0">
-                            <h1
-                                className="
+            <div className="min-w-0">
+              <h1
+                className="
                         truncate
                         text-lg
                         font-bold
@@ -2604,12 +1847,12 @@ export default function Profile() {
                         text-[var(--text-primary)]
                         sm:text-xl
                     "
-                            >
-                                Profile
-                            </h1>
+              >
+                Profile
+              </h1>
 
-                            <p
-                                className="
+              <p
+                className="
                         mt-0.5
                         hidden
                         truncate
@@ -2617,18 +1860,18 @@ export default function Profile() {
                         text-[var(--text-muted)]
                         sm:block
                     "
-                            >
-                                Manage the information used across your resumes
-                            </p>
-                        </div>
-                    </div>
+              >
+                Manage the information used across your resumes
+              </p>
+            </div>
+          </div>
 
-                    {/* Right */}
-                    <button
-                        type="button"
-                        onClick={handleSave}
-                        disabled={saveMutation.isPending}
-                        className="
+          {/* Right */}
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saveMutation.isPending}
+            className="
                 inline-flex
                 min-h-10
                 shrink-0
@@ -2652,32 +1895,24 @@ export default function Profile() {
                 sm:min-h-11
                 sm:px-5
             "
-                    >
-                        {saveMutation.isPending ? (
-                            <HiOutlineArrowPath
-                                size={17}
-                                className="animate-spin"
-                            />
-                        ) : (
-                            <HiOutlineCheck size={17} />
-                        )}
+          >
+            {saveMutation.isPending ? (
+              <HiOutlineArrowPath size={17} className="animate-spin" />
+            ) : (
+              <HiOutlineCheck size={17} />
+            )}
 
-                        <span>
-                            {saveMutation.isPending
-                                ? "Saving..."
-                                : "Save changes"}
-                        </span>
-                    </button>
-                </div>
-            </div>
+            <span>{saveMutation.isPending ? "Saving..." : "Save changes"}</span>
+          </button>
+        </div>
+      </div>
 
-
-            {/* ==================================================
+      {/* ==================================================
                 CONTENT
             ================================================== */}
 
-            <div
-                className="
+      <div
+        className="
                     mx-auto
                     w-full
                     max-w-[1200px]
@@ -2688,12 +1923,11 @@ export default function Profile() {
                     lg:px-8
                     lg:py-8
                 "
-            >
+      >
+        {/* MASTER DATA NOTICE */}
 
-                {/* MASTER DATA NOTICE */}
-
-                <div
-                    className="
+        <div
+          className="
                         mb-6
                         flex
                         items-start
@@ -2709,10 +1943,9 @@ export default function Profile() {
                         dark:from-indigo-500/10
                         dark:to-indigo-500/5
                     "
-                >
-
-                    <div
-                        className="
+        >
+          <div
+            className="
                             mt-0.5
                             flex
                             size-8
@@ -2724,27 +1957,24 @@ export default function Profile() {
                             text-indigo-600
                             dark:text-indigo-400
                         "
-                    >
-                        <HiOutlineLink
-                            size={17}
-                        />
-                    </div>
+          >
+            <HiOutlineLink size={17} />
+          </div>
 
-                    <div>
-
-                        <p
-                            className="
+          <div>
+            <p
+              className="
                                 text-sm
                                 font-semibold
                                 text-indigo-900
                                 dark:text-indigo-200
                             "
-                        >
-                            This is your master data
-                        </p>
+            >
+              This is your master data
+            </p>
 
-                        <p
-                            className="
+            <p
+              className="
                                 mt-1
                                 text-xs
                                 leading-5
@@ -2752,360 +1982,258 @@ export default function Profile() {
                                 dark:text-indigo-300/80
                                 sm:text-sm
                             "
-                        >
-                            Keep your professional information here.
-                            When you create a resume, the Resume Builder
-                            starts with this information and lets you
-                            customize it independently.
-                        </p>
+            >
+              Keep your professional information here. When you create a resume,
+              the Resume Builder starts with this information and lets you
+              customize it independently.
+            </p>
+          </div>
+        </div>
 
-                    </div>
-
-                </div>
-
-
-                <div className="space-y-6">
-
-                    {/* ==================================================
+        <div className="space-y-6">
+          {/* ==================================================
                         BASIC INFORMATION
                     ================================================== */}
 
-                    <Section
-                        icon={
-                            <HiOutlineUser
-                                size={19}
-                            />
-                        }
-                        title="Basic information"
-                        description="Your core professional identity and contact information."
-                    >
-
-                        <div
-                            className="
+          <Section
+            icon={<HiOutlineUser size={19} />}
+            title="Basic information"
+            description="Your core professional identity and contact information."
+          >
+            <div
+              className="
                                 grid
                                 grid-cols-1
                                 gap-4
                                 md:grid-cols-2
                             "
-                        >
+            >
+              <Field
+                label="Full name"
+                value={form.fullName}
+                placeholder="Your full name"
+                onChange={(fullName) =>
+                  update({
+                    fullName,
+                  })
+                }
+              />
 
-                            <Field
-                                label="Full name"
-                                value={
-                                    form.fullName
-                                }
-                                placeholder="Your full name"
-                                onChange={
-                                    fullName =>
-                                        update({
-                                            fullName,
-                                        })
-                                }
-                            />
+              <Field
+                label="Email"
+                type="email"
+                value={form.email}
+                placeholder="you@example.com"
+                onChange={(email) =>
+                  update({
+                    email,
+                  })
+                }
+              />
 
-                            <Field
-                                label="Email"
-                                type="email"
-                                value={
-                                    form.email
-                                }
-                                placeholder="you@example.com"
-                                onChange={
-                                    email =>
-                                        update({
-                                            email,
-                                        })
-                                }
-                            />
+              <Field
+                label="Phone"
+                value={form.phone}
+                placeholder="+91 98765 43210"
+                onChange={(phone) =>
+                  update({
+                    phone,
+                  })
+                }
+              />
 
-                            <Field
-                                label="Phone"
-                                value={
-                                    form.phone
-                                }
-                                placeholder="+91 98765 43210"
-                                onChange={
-                                    phone =>
-                                        update({
-                                            phone,
-                                        })
-                                }
-                            />
+              <Field
+                label="Location"
+                value={form.location}
+                placeholder="Hyderabad, India"
+                onChange={(location) =>
+                  update({
+                    location,
+                  })
+                }
+              />
 
-                            <Field
-                                label="Location"
-                                value={
-                                    form.location
-                                }
-                                placeholder="Hyderabad, India"
-                                onChange={
-                                    location =>
-                                        update({
-                                            location,
-                                        })
-                                }
-                            />
+              <Field
+                label="Professional headline"
+                value={form.headline}
+                placeholder="Full Stack Developer"
+                onChange={(headline) =>
+                  update({
+                    headline,
+                  })
+                }
+              />
+            </div>
+          </Section>
 
-                            <Field
-                                label="Professional headline"
-                                value={
-                                    form.headline
-                                }
-                                placeholder="Full Stack Developer"
-                                onChange={
-                                    headline =>
-                                        update({
-                                            headline,
-                                        })
-                                }
-                            />
-
-                        </div>
-
-                    </Section>
-
-
-                    {/* ==================================================
+          {/* ==================================================
                         LINKS
                     ================================================== */}
 
-                    <Section
-                        icon={
-                            <HiOutlineLink
-                                size={19}
-                            />
-                        }
-                        title="Professional links"
-                        description="Add the online profiles you want available for your resumes."
-                    >
-
-                        <div
-                            className="
+          <Section
+            icon={<HiOutlineLink size={19} />}
+            title="Professional links"
+            description="Add the online profiles you want available for your resumes."
+          >
+            <div
+              className="
                                 grid
                                 grid-cols-1
                                 gap-4
                                 md:grid-cols-2
                             "
-                        >
+            >
+              <Field
+                label="Website"
+                value={form.website}
+                placeholder="https://yourwebsite.com"
+                onChange={(website) =>
+                  update({
+                    website,
+                  })
+                }
+              />
 
-                            <Field
-                                label="Website"
-                                value={
-                                    form.website
-                                }
-                                placeholder="https://yourwebsite.com"
-                                onChange={
-                                    website =>
-                                        update({
-                                            website,
-                                        })
-                                }
-                            />
+              <Field
+                label="LinkedIn"
+                value={form.linkedin}
+                placeholder="https://linkedin.com/in/..."
+                onChange={(linkedin) =>
+                  update({
+                    linkedin,
+                  })
+                }
+              />
 
-                            <Field
-                                label="LinkedIn"
-                                value={
-                                    form.linkedin
-                                }
-                                placeholder="https://linkedin.com/in/..."
-                                onChange={
-                                    linkedin =>
-                                        update({
-                                            linkedin,
-                                        })
-                                }
-                            />
+              <Field
+                label="GitHub"
+                value={form.github}
+                placeholder="https://github.com/..."
+                onChange={(github) =>
+                  update({
+                    github,
+                  })
+                }
+              />
+            </div>
+          </Section>
 
-                            <Field
-                                label="GitHub"
-                                value={
-                                    form.github
-                                }
-                                placeholder="https://github.com/..."
-                                onChange={
-                                    github =>
-                                        update({
-                                            github,
-                                        })
-                                }
-                            />
-
-                        </div>
-
-                    </Section>
-
-
-                    {/* ==================================================
+          {/* ==================================================
                         SUMMARY
                     ================================================== */}
 
-                    <Section
-                        icon={
-                            <HiOutlineWrenchScrewdriver
-                                size={19}
-                            />
-                        }
-                        title="Professional summary"
-                        description="Write a reusable professional summary for your resumes."
-                    >
+          <Section
+            icon={<HiOutlineWrenchScrewdriver size={19} />}
+            title="Professional summary"
+            description="Write a reusable professional summary for your resumes."
+          >
+            <TextAreaField
+              label="Summary"
+              value={form.summary}
+              placeholder="Experienced software engineer with..."
+              rows={7}
+              onChange={(summary) =>
+                update({
+                  summary,
+                })
+              }
+            />
+          </Section>
 
-                        <TextAreaField
-                            label="Summary"
-                            value={
-                                form.summary
-                            }
-                            placeholder="Experienced software engineer with..."
-                            rows={7}
-                            onChange={
-                                summary =>
-                                    update({
-                                        summary,
-                                    })
-                            }
-                        />
-
-                    </Section>
-
-
-                    {/* ==================================================
+          {/* ==================================================
                         EXPERIENCE
                     ================================================== */}
 
-                    <Section
-                        icon={
-                            <HiOutlineBriefcase
-                                size={19}
-                            />
-                        }
-                        title="Experience"
-                        description="Maintain your complete professional experience here."
-                    >
+          <Section
+            icon={<HiOutlineBriefcase size={19} />}
+            title="Experience"
+            description="Maintain your complete professional experience here."
+          >
+            <ExperienceEditor
+              value={form.experience}
+              onChange={(experience) =>
+                update({
+                  experience,
+                })
+              }
+            />
+          </Section>
 
-                        <ExperienceEditor
-                            value={
-                                form.experience
-                            }
-                            onChange={
-                                experience =>
-                                    update({
-                                        experience,
-                                    })
-                            }
-                        />
-
-                    </Section>
-
-
-                    {/* ==================================================
+          {/* ==================================================
                         EDUCATION
                     ================================================== */}
 
-                    <Section
-                        icon={
-                            <HiOutlineAcademicCap
-                                size={19}
-                            />
-                        }
-                        title="Education"
-                        description="Add degrees and academic qualifications to your master profile."
-                    >
+          <Section
+            icon={<HiOutlineAcademicCap size={19} />}
+            title="Education"
+            description="Add degrees and academic qualifications to your master profile."
+          >
+            <EducationEditor
+              value={form.education}
+              onChange={(education) =>
+                update({
+                  education,
+                })
+              }
+            />
+          </Section>
 
-                        <EducationEditor
-                            value={
-                                form.education
-                            }
-                            onChange={
-                                education =>
-                                    update({
-                                        education,
-                                    })
-                            }
-                        />
-
-                    </Section>
-
-
-                    {/* ==================================================
+          {/* ==================================================
                         SKILLS
                     ================================================== */}
 
-                    <Section
-                        icon={
-                            <HiOutlineWrenchScrewdriver
-                                size={19}
-                            />
-                        }
-                        title="Skills"
-                        description="Organize your skills into categories that can be reused across resumes."
-                    >
+          <Section
+            icon={<HiOutlineWrenchScrewdriver size={19} />}
+            title="Skills"
+            description="Organize your skills into categories that can be reused across resumes."
+          >
+            <SkillsEditor
+              value={form.skills}
+              onChange={(skills) =>
+                update({
+                  skills,
+                })
+              }
+            />
+          </Section>
 
-                        <SkillsEditor
-                            value={
-                                form.skills
-                            }
-                            onChange={
-                                skills =>
-                                    update({
-                                        skills,
-                                    })
-                            }
-                        />
-
-                    </Section>
-
-
-                    {/* ==================================================
+          {/* ==================================================
                         PROJECTS
                     ================================================== */}
 
-                    <Section
-                        icon={
-                            <HiOutlineFolderOpen
-                                size={19}
-                            />
-                        }
-                        title="Projects"
-                        description="Keep your complete project portfolio here. Select and customize projects later in Resume Builder."
-                    >
+          <Section
+            icon={<HiOutlineFolderOpen size={19} />}
+            title="Projects"
+            description="Keep your complete project portfolio here. Select and customize projects later in Resume Builder."
+          >
+            <ProjectsEditor
+              value={form.projects}
+              onChange={(projects) =>
+                update({
+                  projects,
+                })
+              }
+            />
+          </Section>
 
-                        <ProjectsEditor
-                            value={
-                                form.projects
-                            }
-                            onChange={
-                                projects =>
-                                    update({
-                                        projects,
-                                    })
-                            }
-                        />
-
-                    </Section>
-
-
-                    {/* ==================================================
+          {/* ==================================================
                         BOTTOM SAVE
                     ================================================== */}
 
-                    <div
-                        className="
+          <div
+            className="
                             flex
                             justify-end
                             border-t
                             border-[var(--border-subtle)]
                             pt-6
                         "
-                    >
-
-                        <button
-                            type="button"
-                            onClick={
-                                handleSave
-                            }
-                            disabled={
-                                saveMutation.isPending
-                            }
-                            className="
+          >
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saveMutation.isPending}
+              className="
                                 inline-flex
                                 min-h-11
                                 w-full
@@ -3130,31 +2258,18 @@ export default function Profile() {
                                 disabled:opacity-60
                                 sm:w-auto
                             "
-                        >
+            >
+              {saveMutation.isPending ? (
+                <HiOutlineArrowPath size={17} className="animate-spin" />
+              ) : (
+                <HiOutlineCheck size={17} />
+              )}
 
-                            {saveMutation.isPending ? (
-                                <HiOutlineArrowPath
-                                    size={17}
-                                    className="animate-spin"
-                                />
-                            ) : (
-                                <HiOutlineCheck
-                                    size={17}
-                                />
-                            )}
-
-                            {saveMutation.isPending
-                                ? "Saving..."
-                                : "Save master profile"}
-
-                        </button>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </main>
-    );
+              {saveMutation.isPending ? "Saving..." : "Save master profile"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+  );
 }
