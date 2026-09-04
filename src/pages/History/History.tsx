@@ -13,13 +13,20 @@ import {
   HiOutlineArrowPath,
   HiOutlineChevronLeft,
   HiOutlineChevronRight,
+  HiOutlineArrowDownTray,
 } from "react-icons/hi2";
 
 import { format } from "date-fns";
 import { toast } from "sonner";
 
-import { getHistory, saveReport } from "../../services/report";
+import {
+  getHistory,
+  saveReport,
+  exportOwnReports,
+} from "../../services/report";
+
 import DayPickerInput from "../../components/DayPickerInput";
+import { useAuth } from "../../context/AuthContext";
 
 /* ================================================================
    TYPES
@@ -58,15 +65,27 @@ const REPORTS_PER_PAGE = 10;
 ================================================================ */
 
 export default function History() {
+
+  const { hasPermission } = useAuth();
+
   const [date, setDate] =
     useState<Date | null>(null);
 
   const [page, setPage] =
     useState(1);
 
-  const dateParam = date
-    ? format(date, "yyyy-MM-dd")
-    : "";
+  /* =============================================================
+       EXPORT STATE
+  ============================================================= */
+
+  const [exportOpen, setExportOpen] =
+    useState(false);
+
+  const [exportMonth, setExportMonth] =
+    useState("");
+
+  const [isExporting, setIsExporting] =
+    useState(false);
 
   /* =============================================================
        HISTORY QUERY
@@ -79,7 +98,9 @@ export default function History() {
   } = useQuery<HistoryResponse>({
     queryKey: [
       "history",
-      dateParam,
+      date
+        ? format(date, "yyyy-MM-dd")
+        : "",
       page,
       REPORTS_PER_PAGE,
     ],
@@ -87,7 +108,12 @@ export default function History() {
     queryFn: async () => {
       const response =
         await getHistory(
-          dateParam || undefined,
+          date
+            ? format(
+              date,
+              "yyyy-MM-dd"
+            )
+            : undefined,
           page,
           REPORTS_PER_PAGE
         );
@@ -99,6 +125,17 @@ export default function History() {
   });
 
   /* =============================================================
+       DATE PARAM
+  ============================================================= */
+
+  const dateParam = date
+    ? format(
+      date,
+      "yyyy-MM-dd"
+    )
+    : "";
+
+  /* =============================================================
        DATE CHANGE
   ============================================================= */
 
@@ -108,8 +145,8 @@ export default function History() {
     setDate(newDate);
 
     /*
-     * Always return to the first page
-     * when the filter changes.
+     * Always return to first page
+     * when filter changes.
      */
     setPage(1);
   };
@@ -125,12 +162,151 @@ export default function History() {
   };
 
   /* =============================================================
+       EXPORT
+  ============================================================= */
+
+  const handleExport = async (
+    type:
+      | "all"
+      | "date"
+      | "month"
+  ) => {
+    try {
+      setIsExporting(true);
+
+      /*
+       * Close dropdown immediately
+       * when export begins.
+       */
+      setExportOpen(false);
+
+      let blob: Blob;
+
+      /* =========================================================
+         ALL REPORTS
+      ========================================================= */
+
+      if (type === "all") {
+        blob =
+          await exportOwnReports({
+            filter: "all",
+          });
+      }
+
+      /* =========================================================
+         SELECTED DATE
+      ========================================================= */
+
+      else if (type === "date") {
+        if (!dateParam) {
+          toast.warning(
+            "Please select a date first."
+          );
+
+          setIsExporting(false);
+
+          return;
+        }
+
+        blob =
+          await exportOwnReports({
+            filter: "date",
+            date: dateParam,
+          });
+      }
+
+      /* =========================================================
+         MONTH
+      ========================================================= */
+
+      else {
+        if (!exportMonth) {
+          toast.warning(
+            "Please select a month first."
+          );
+
+          setIsExporting(false);
+
+          return;
+        }
+
+        blob =
+          await exportOwnReports({
+            filter: "month",
+            month: exportMonth,
+          });
+      }
+
+      /* =========================================================
+         DOWNLOAD
+      ========================================================= */
+
+      const url =
+        window.URL.createObjectURL(
+          blob
+        );
+
+      const link =
+        document.createElement("a");
+
+      link.href = url;
+
+      let filename =
+        "reports_all.xlsx";
+
+      if (type === "date") {
+        filename =
+          `reports_${dateParam}.xlsx`;
+      }
+
+      if (type === "month") {
+        filename =
+          `reports_${exportMonth}.xlsx`;
+      }
+
+      link.setAttribute(
+        "download",
+        filename
+      );
+
+      document.body.appendChild(
+        link
+      );
+
+      link.click();
+
+      link.remove();
+
+      window.URL.revokeObjectURL(
+        url
+      );
+
+      toast.success(
+        "Excel exported successfully."
+      );
+    } catch (error: any) {
+      console.error(
+        "Report export failed:",
+        error
+      );
+
+      toast.error(
+        error?.response?.data?.message ||
+        "Failed to export reports."
+      );
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  /* =============================================================
        PAGINATION
   ============================================================= */
 
   const handlePreviousPage = () => {
     if (
-      !data?.pagination?.hasPreviousPage ||
+      !data?.pagination
+        ?.hasPreviousPage ||
       isFetching
     ) {
       return;
@@ -152,7 +328,8 @@ export default function History() {
 
   const handleNextPage = () => {
     if (
-      !data?.pagination?.hasNextPage ||
+      !data?.pagination
+        ?.hasNextPage ||
       isFetching
     ) {
       return;
@@ -217,10 +394,71 @@ export default function History() {
           }
         }
 
+        @keyframes exportSpin {
+          from {
+            transform: rotate(0deg);
+          }
+
+          to {
+            transform: rotate(360deg);
+          }
+        }
+
+        @keyframes exportPulse {
+          0% {
+            transform: scale(1);
+          }
+
+          50% {
+            transform: scale(0.97);
+          }
+
+          100% {
+            transform: scale(1);
+          }
+        }
+
+        @keyframes exportMenuReveal {
+          from {
+            opacity: 0;
+            transform: translateY(-4px) scale(0.98);
+          }
+
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+
+        .export-spin {
+          animation: exportSpin 0.8s linear infinite;
+        }
+
+        .export-menu-reveal {
+          animation: exportMenuReveal 0.16s ease-out forwards;
+          transform-origin: top right;
+        }
+
+        .export-clicking {
+          animation: exportPulse 0.25s ease-out;
+        }
+
         @media (prefers-reduced-motion: reduce) {
           .history-reveal {
             animation: none !important;
             opacity: 1 !important;
+          }
+
+          .export-spin {
+            animation: none !important;
+          }
+
+          .export-menu-reveal {
+            animation: none !important;
+          }
+
+          .export-clicking {
+            animation: none !important;
           }
         }
       `}</style>
@@ -317,6 +555,7 @@ export default function History() {
           {!isLoading &&
             pagination &&
             pagination.total > 0 && (
+
               <div
                 className="
                   inline-flex
@@ -348,6 +587,7 @@ export default function History() {
                   ? "Report"
                   : "Reports"}
               </div>
+
             )}
 
 
@@ -363,6 +603,7 @@ export default function History() {
               sm:w-auto
             "
           >
+
             <div
               className="
                 w-full
@@ -371,6 +612,7 @@ export default function History() {
                 sm:w-auto
               "
             >
+
               <DayPickerInput
                 value={date}
                 onChange={
@@ -378,7 +620,9 @@ export default function History() {
                 }
                 placeholder="Filter by date"
               />
+
             </div>
+
           </div>
 
 
@@ -419,8 +663,12 @@ export default function History() {
 
               transition
 
+              duration-200
+
               hover:border-slate-300
               hover:bg-slate-50
+
+              active:scale-[0.97]
 
               disabled:cursor-not-allowed
               disabled:opacity-35
@@ -435,12 +683,547 @@ export default function History() {
               sm:w-auto
             "
           >
+
             <HiOutlineXMark
               className="h-4 w-4"
             />
 
             Clear
+
           </button>
+
+
+          {/* =======================================================
+              EXPORT WRAPPER
+          ======================================================= */}
+
+          <div
+            className="
+              relative
+              w-full
+
+              sm:w-auto
+            "
+          >
+
+            {/* =====================================================
+                EXPORT BUTTON
+            ===================================================== */}
+            {hasPermission("REPORT_EXPORT_OWN") && (
+              <button
+                type="button"
+
+                onClick={() =>
+                  setExportOpen(
+                    (current) =>
+                      !current
+                  )
+                }
+
+                disabled={
+                  isExporting
+                }
+
+                className={`
+                inline-flex
+                h-10
+                w-full
+
+                items-center
+                justify-center
+                gap-1.5
+
+                rounded-xl
+
+                bg-indigo-600
+
+                px-3.5
+
+                text-xs
+                font-semibold
+
+                text-white
+
+                shadow-sm
+
+                transition-all
+                duration-200
+
+                hover:bg-indigo-500
+                hover:shadow-md
+                hover:shadow-indigo-500/15
+
+                active:scale-[0.97]
+
+                disabled:cursor-not-allowed
+                disabled:opacity-70
+
+                sm:w-auto
+
+                ${isExporting
+                    ? "export-clicking"
+                    : ""
+                  }
+              `}
+              >
+
+                {isExporting ? (
+
+                  <HiOutlineArrowPath
+                    className="
+                    export-spin
+
+                    h-4
+                    w-4
+                  "
+                  />
+
+                ) : (
+
+                  <HiOutlineArrowDownTray
+                    className="
+                    h-4
+                    w-4
+                  "
+                  />
+
+                )}
+
+                <span>
+                  {isExporting
+                    ? "Exporting..."
+                    : "Export"}
+                </span>
+
+              </button>
+            )}
+
+            {/* =====================================================
+                EXPORT MENU
+            ===================================================== */}
+
+            {exportOpen &&
+              !isExporting && (
+
+                <div
+                  className="
+                    export-menu-reveal
+
+                    absolute
+                    right-0
+                    top-full
+                    z-50
+
+                    mt-2
+
+                    w-full
+                    min-w-[240px]
+
+                    overflow-hidden
+
+                    rounded-xl
+
+                    border
+                    border-slate-200
+
+                    bg-white
+
+                    p-1.5
+
+                    shadow-xl
+                    shadow-slate-900/10
+
+                    dark:border-zinc-800
+                    dark:bg-zinc-950
+                    dark:shadow-black/30
+
+                    sm:w-[270px]
+                  "
+                >
+
+                  {/* =================================================
+                      ALL REPORTS
+                  ================================================= */}
+
+                  <button
+                    type="button"
+
+                    onClick={() =>
+                      handleExport(
+                        "all"
+                      )
+                    }
+
+                    className="
+                      group
+
+                      flex
+                      w-full
+                      flex-col
+                      items-start
+
+                      rounded-lg
+
+                      px-3
+                      py-2.5
+
+                      text-left
+
+                      transition-all
+                      duration-150
+
+                      hover:bg-slate-50
+
+                      active:scale-[0.99]
+
+                      dark:hover:bg-zinc-900
+                    "
+                  >
+
+                    <div
+                      className="
+                        flex
+                        w-full
+                        items-center
+                        justify-between
+                      "
+                    >
+
+                      <span
+                        className="
+                          text-xs
+                          font-semibold
+
+                          text-slate-800
+
+                          dark:text-zinc-100
+                        "
+                      >
+                        All Reports
+                      </span>
+
+                      <HiOutlineArrowDownTray
+                        className="
+                          h-3.5
+                          w-3.5
+
+                          text-slate-300
+
+                          transition
+
+                          group-hover:text-indigo-500
+
+                          dark:text-zinc-700
+                          dark:group-hover:text-indigo-400
+                        "
+                      />
+
+                    </div>
+
+                    <span
+                      className="
+                        mt-0.5
+
+                        text-[10px]
+
+                        text-slate-400
+
+                        dark:text-zinc-600
+                      "
+                    >
+                      Export all your reports
+                    </span>
+
+                  </button>
+
+
+                  {/* =================================================
+                      SELECTED DATE
+                  ================================================= */}
+
+                  <button
+                    type="button"
+
+                    disabled={
+                      !dateParam
+                    }
+
+                    onClick={() =>
+                      handleExport(
+                        "date"
+                      )
+                    }
+
+                    className="
+                      group
+
+                      flex
+                      w-full
+                      flex-col
+                      items-start
+
+                      rounded-lg
+
+                      px-3
+                      py-2.5
+
+                      text-left
+
+                      transition-all
+                      duration-150
+
+                      hover:bg-slate-50
+
+                      active:scale-[0.99]
+
+                      disabled:cursor-not-allowed
+                      disabled:opacity-40
+
+                      dark:hover:bg-zinc-900
+                    "
+                  >
+
+                    <div
+                      className="
+                        flex
+                        w-full
+                        items-center
+                        justify-between
+                      "
+                    >
+
+                      <span
+                        className="
+                          text-xs
+                          font-semibold
+
+                          text-slate-800
+
+                          dark:text-zinc-100
+                        "
+                      >
+                        Selected Date
+                      </span>
+
+                      {dateParam && (
+
+                        <HiOutlineArrowDownTray
+                          className="
+                            h-3.5
+                            w-3.5
+
+                            text-slate-300
+
+                            transition
+
+                            group-hover:text-indigo-500
+
+                            dark:text-zinc-700
+                            dark:group-hover:text-indigo-400
+                          "
+                        />
+
+                      )}
+
+                    </div>
+
+                    <span
+                      className="
+                        mt-0.5
+
+                        text-[10px]
+
+                        text-slate-400
+
+                        dark:text-zinc-600
+                      "
+                    >
+                      {dateParam
+                        ? `Export ${dateParam}`
+                        : "Select a date first"}
+                    </span>
+
+                  </button>
+
+
+                  {/* =================================================
+                      MONTH DIVIDER
+                  ================================================= */}
+
+                  <div
+                    className="
+                      mt-1
+
+                      border-t
+                      border-slate-100
+
+                      pt-1
+
+                      dark:border-zinc-900
+                    "
+                  >
+
+                    <div
+                      className="
+                        px-3
+                        pt-2
+                        pb-1
+                      "
+                    >
+
+                      <span
+                        className="
+                          text-[10px]
+                          font-bold
+                          uppercase
+
+                          tracking-[0.1em]
+
+                          text-slate-400
+
+                          dark:text-zinc-600
+                        "
+                      >
+                        Month
+                      </span>
+
+                    </div>
+
+
+                    {/* =================================================
+                        MONTH INPUT
+                    ================================================= */}
+
+                    <div
+                      className="
+                        flex
+                        gap-2
+
+                        px-2
+                        pb-2
+                      "
+                    >
+
+                      <input
+                        type="month"
+
+                        value={
+                          exportMonth
+                        }
+
+                        onChange={(e) =>
+                          setExportMonth(
+                            e.target.value
+                          )
+                        }
+
+                        className="
+                          h-9
+                          min-w-0
+                          flex-1
+
+                          rounded-lg
+
+                          border
+                          border-slate-200
+
+                          bg-white
+
+                          px-2.5
+
+                          text-xs
+
+                          text-slate-700
+
+                          outline-none
+
+                          transition
+
+                          focus:border-indigo-400
+                          focus:ring-4
+                          focus:ring-indigo-500/10
+
+                          dark:border-zinc-800
+                          dark:bg-zinc-900
+                          dark:text-zinc-200
+
+                          dark:focus:border-indigo-500/50
+                        "
+                      />
+
+
+                      {/* =================================================
+                          MONTH EXPORT BUTTON
+                      ================================================= */}
+
+                      <button
+                        type="button"
+
+                        disabled={
+                          !exportMonth
+                        }
+
+                        onClick={() =>
+                          handleExport(
+                            "month"
+                          )
+                        }
+
+                        className="
+                          inline-flex
+                          h-9
+
+                          shrink-0
+
+                          items-center
+                          justify-center
+                          gap-1.5
+
+                          rounded-lg
+
+                          bg-indigo-600
+
+                          px-3
+
+                          text-[11px]
+                          font-semibold
+
+                          text-white
+
+                          transition-all
+                          duration-200
+
+                          hover:bg-indigo-500
+                          hover:shadow-md
+                          hover:shadow-indigo-500/15
+
+                          active:scale-[0.96]
+
+                          disabled:cursor-not-allowed
+                          disabled:opacity-40
+                        "
+                      >
+
+                        <HiOutlineArrowDownTray
+                          className="
+                            h-3.5
+                            w-3.5
+                          "
+                        />
+
+                        Export
+
+                      </button>
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+              )}
+
+          </div>
 
         </div>
 
@@ -508,11 +1291,21 @@ export default function History() {
               1 && (
 
                 <Pagination
-                  pagination={pagination}
-                  onPrevious={handlePreviousPage}
-                  onNext={handleNextPage}
-                  onPageChange={setPage}
-                  isFetching={isFetching}
+                  pagination={
+                    pagination
+                  }
+                  onPrevious={
+                    handlePreviousPage
+                  }
+                  onNext={
+                    handleNextPage
+                  }
+                  onPageChange={
+                    setPage
+                  }
+                  isFetching={
+                    isFetching
+                  }
                 />
 
               )}
@@ -522,7 +1315,9 @@ export default function History() {
         ) : (
 
           <EmptyState
-            hasDateFilter={!!date}
+            hasDateFilter={
+              !!date
+            }
           />
 
         )}
@@ -1176,6 +1971,8 @@ function TimelineEntry({
                   hover:bg-indigo-50
                   hover:text-indigo-600
 
+                  active:scale-[0.97]
+
                   dark:border-zinc-800
                   dark:bg-zinc-900
                   dark:text-zinc-400
@@ -1234,6 +2031,8 @@ function TimelineEntry({
 
                   hover:border-slate-300
                   hover:bg-slate-50
+
+                  active:scale-[0.97]
 
                   dark:border-zinc-800
                   dark:bg-zinc-900
@@ -1416,6 +2215,8 @@ function TimelineEntry({
 
                     hover:bg-slate-50
 
+                    active:scale-[0.98]
+
                     disabled:opacity-50
 
                     dark:border-zinc-800
@@ -1464,9 +2265,12 @@ function TimelineEntry({
 
                     shadow-sm
 
-                    transition
+                    transition-all
+                    duration-200
 
                     hover:bg-indigo-500
+
+                    active:scale-[0.98]
 
                     disabled:cursor-not-allowed
                     disabled:opacity-60
@@ -1564,13 +2368,17 @@ function getPageWindow(
     page + 1,
   ]);
 
-  const sorted = Array.from(pages)
+  const sorted = Array.from(
+    pages
+  )
     .filter(
       (p) =>
         p >= 1 &&
         p <= totalPages
     )
-    .sort((a, b) => a - b);
+    .sort(
+      (a, b) => a - b
+    );
 
   const result: (
     | number
@@ -1591,7 +2399,9 @@ function getPageWindow(
       result.push("gap");
     }
 
-    result.push(sorted[i]);
+    result.push(
+      sorted[i]
+    );
   }
 
   return result;
@@ -1616,7 +2426,9 @@ function Pagination({
 
   onPrevious: () => void;
   onNext: () => void;
-  onPageChange: (page: number) => void;
+  onPageChange: (
+    page: number
+  ) => void;
   isFetching: boolean;
 }) {
   const {
@@ -1750,7 +2562,9 @@ function Pagination({
         <button
           type="button"
 
-          onClick={onPrevious}
+          onClick={
+            onPrevious
+          }
 
           disabled={
             page === 1 ||
@@ -1799,10 +2613,14 @@ function Pagination({
         ======================================================= */}
 
         {pageWindow.map(
-          (entry, index) => {
+          (
+            entry,
+            index
+          ) => {
 
             if (
-              entry === "gap"
+              entry ===
+              "gap"
             ) {
               return (
                 <span
@@ -1878,21 +2696,21 @@ function Pagination({
 
                   ${isActive
                     ? `
-                        bg-indigo-600
-                        text-white
-                        shadow-sm
-                      `
+                          bg-indigo-600
+                          text-white
+                          shadow-sm
+                        `
                     : `
-                        text-slate-500
+                          text-slate-500
 
-                        hover:bg-slate-100
-                        hover:text-slate-800
+                          hover:bg-slate-100
+                          hover:text-slate-800
 
-                        dark:text-zinc-500
+                          dark:text-zinc-500
 
-                        dark:hover:bg-zinc-900
-                        dark:hover:text-zinc-200
-                      `
+                          dark:hover:bg-zinc-900
+                          dark:hover:text-zinc-200
+                        `
                   }
                 `}
               >
@@ -1910,10 +2728,13 @@ function Pagination({
         <button
           type="button"
 
-          onClick={onNext}
+          onClick={
+            onNext
+          }
 
           disabled={
-            page === totalPages ||
+            page ===
+            totalPages ||
             isFetching
           }
 
@@ -1972,101 +2793,118 @@ function SkeletonList() {
 
       {Array.from({
         length: 4,
-      }).map((_, index) => (
-
-        <div
-          key={index}
-
-          className="
-            flex
-
-            animate-pulse
-
-            gap-3
-
-            sm:gap-4
-          "
-        >
-
-          {/* DATE */}
+      }).map(
+        (_, index) => (
 
           <div
+            key={index}
+
             className="
-              h-[48px]
-              w-[48px]
+              flex
 
-              shrink-0
+              animate-pulse
 
-              rounded-xl
+              gap-3
 
-              bg-slate-200
-
-              dark:bg-zinc-800
-
-              sm:h-[54px]
-              sm:w-[54px]
-            "
-          />
-
-
-          {/* CARD */}
-
-          <div
-            className="
-              min-w-0
-              flex-1
-
-              overflow-hidden
-
-              rounded-xl
-
-              border
-              border-slate-200
-
-              bg-white
-
-              dark:border-zinc-800
-              dark:bg-zinc-950
+              sm:gap-4
             "
           >
 
+            {/* DATE */}
+
             <div
               className="
-                flex
-                items-center
-                justify-between
+                h-[48px]
+                w-[48px]
 
-                border-b
-                border-slate-100
+                shrink-0
 
-                px-4
-                py-4
+                rounded-xl
 
-                dark:border-zinc-900
+                bg-slate-200
+
+                dark:bg-zinc-800
+
+                sm:h-[54px]
+                sm:w-[54px]
+              "
+            />
+
+
+            {/* CARD */}
+
+            <div
+              className="
+                min-w-0
+                flex-1
+
+                overflow-hidden
+
+                rounded-xl
+
+                border
+                border-slate-200
+
+                bg-white
+
+                dark:border-zinc-800
+                dark:bg-zinc-950
               "
             >
 
-              <div className="space-y-2">
+              <div
+                className="
+                  flex
+                  items-center
+                  justify-between
+
+                  border-b
+                  border-slate-100
+
+                  px-4
+                  py-4
+
+                  dark:border-zinc-900
+                "
+              >
+
+                <div className="space-y-2">
+
+                  <div
+                    className="
+                      h-3
+                      w-32
+
+                      rounded
+
+                      bg-slate-200
+
+                      dark:bg-zinc-800
+                    "
+                  />
+
+                  <div
+                    className="
+                      h-2
+                      w-20
+
+                      rounded
+
+                      bg-slate-100
+
+                      dark:bg-zinc-900
+                    "
+                  />
+
+                </div>
+
 
                 <div
                   className="
-                    h-3
-                    w-32
+                    h-8
+                    w-16
 
-                    rounded
-
-                    bg-slate-200
-
-                    dark:bg-zinc-800
-                  "
-                />
-
-                <div
-                  className="
-                    h-2
-                    w-20
-
-                    rounded
+                    rounded-lg
 
                     bg-slate-100
 
@@ -2079,75 +2917,60 @@ function SkeletonList() {
 
               <div
                 className="
-                  h-8
-                  w-16
+                  space-y-3
 
-                  rounded-lg
-
-                  bg-slate-100
-
-                  dark:bg-zinc-900
+                  px-4
+                  py-5
                 "
-              />
+              >
 
-            </div>
+                <div
+                  className="
+                    h-3
+                    w-full
 
+                    rounded
 
-            <div
-              className="
-                space-y-3
+                    bg-slate-100
 
-                px-4
-                py-5
-              "
-            >
+                    dark:bg-zinc-900
+                  "
+                />
 
-              <div
-                className="
-                  h-3
-                  w-full
+                <div
+                  className="
+                    h-3
+                    w-5/6
 
-                  rounded
+                    rounded
 
-                  bg-slate-100
+                    bg-slate-100
 
-                  dark:bg-zinc-900
-                "
-              />
+                    dark:bg-zinc-900
+                  "
+                />
 
-              <div
-                className="
-                  h-3
-                  w-5/6
+                <div
+                  className="
+                    h-3
+                    w-2/3
 
-                  rounded
+                    rounded
 
-                  bg-slate-100
+                    bg-slate-100
 
-                  dark:bg-zinc-900
-                "
-              />
+                    dark:bg-zinc-900
+                  "
+                />
 
-              <div
-                className="
-                  h-3
-                  w-2/3
-
-                  rounded
-
-                  bg-slate-100
-
-                  dark:bg-zinc-900
-                "
-              />
+              </div>
 
             </div>
 
           </div>
 
-        </div>
-
-      ))}
+        )
+      )}
 
     </div>
 

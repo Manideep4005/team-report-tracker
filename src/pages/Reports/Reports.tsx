@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useAuth } from "../../context/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 
 import {
@@ -9,6 +10,7 @@ import {
   HiOutlineChevronRight,
   HiOutlineUsers,
   HiOutlineChevronDown,
+  HiOutlineArrowPath,
 } from "react-icons/hi2";
 
 import { format } from "date-fns";
@@ -18,6 +20,7 @@ import {
   getAllReports,
   getUsersForReports,
   getUserReports,
+  exportAllReports,
   type ReportUser,
 } from "../../services/report";
 
@@ -88,11 +91,20 @@ export default function Reports() {
   const [selectedUserId, setSelectedUserId] =
     useState(ALL_USERS);
 
+  const [exportOpen, setExportOpen] =
+    useState(false);
+
+  const [exportMonth, setExportMonth] =
+    useState("");
+
+  const [isExporting, setIsExporting] =
+    useState(false);
+
   const dateParam = date
     ? format(date, "yyyy-MM-dd")
     : undefined;
 
-
+  const { hasPermission } = useAuth();
   /* ==============================================================
      USERS
   ============================================================== */
@@ -347,6 +359,105 @@ export default function Reports() {
     setSelectedUserId(ALL_USERS);
 
     setPage(1);
+  };
+
+
+  /* ==============================================================
+     EXPORT
+  ============================================================== */
+
+  const handleExport = async (
+    type: "all" | "date" | "month"
+  ) => {
+    if (isExporting) {
+      return;
+    }
+
+    try {
+      setIsExporting(true);
+
+      let response;
+
+      if (type === "all") {
+        response = await exportAllReports({
+          filter: "all",
+        });
+      }
+
+      if (type === "date") {
+        if (!dateParam) {
+          toast.error("Please select a date first.");
+          return;
+        }
+
+        response = await exportAllReports({
+          filter: "date",
+          date: dateParam,
+        });
+      }
+
+      if (type === "month") {
+        if (!exportMonth) {
+          toast.error("Please select a month first.");
+          return;
+        }
+
+        response = await exportAllReports({
+          filter: "month",
+          month: exportMonth,
+        });
+      }
+
+      const blob =
+        response instanceof Blob
+          ? response
+          : new Blob(
+            [response],
+            {
+              type:
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            }
+          );
+
+      const url =
+        window.URL.createObjectURL(blob);
+
+      const link =
+        document.createElement("a");
+
+      link.href = url;
+
+      if (type === "all") {
+        link.download =
+          "team_reports_all.xlsx";
+      } else if (type === "date") {
+        link.download =
+          `team_reports_${dateParam}.xlsx`;
+      } else {
+        link.download =
+          `team_reports_${exportMonth}.xlsx`;
+      }
+
+      document.body.appendChild(link);
+
+      link.click();
+
+      link.remove();
+
+      window.URL.revokeObjectURL(url);
+
+      setExportOpen(false);
+
+      toast.success(
+        "Excel exported successfully."
+      );
+    } catch {
+      toast.error(
+        "Unable to export reports."
+      );
+    } finally {
+      setIsExporting(false);
+    }
   };
 
 
@@ -758,6 +869,344 @@ export default function Reports() {
           </div>
 
         </div>
+
+
+        {/* =======================================================
+            EXPORT
+        ======================================================= */}
+
+        {hasPermission("REPORT_EXPORT_ALL") && (
+          <div
+            className="
+              relative
+              mt-3
+
+              flex
+              w-full
+              justify-end
+            "
+          >
+
+            <button
+              type="button"
+              disabled={isExporting}
+              onClick={() => {
+                if (isExporting) {
+                  return;
+                }
+
+                setExportOpen(
+                  (open) => !open
+                );
+              }}
+              className="
+                inline-flex
+
+                h-10
+                w-full
+                items-center
+                justify-center
+                gap-2
+
+                rounded-xl
+
+                border
+                border-indigo-200
+
+                bg-indigo-50
+
+                px-4
+
+                text-xs
+                font-semibold
+
+                text-indigo-700
+
+                shadow-sm
+
+                outline-none
+
+                transition
+
+                hover:border-indigo-300
+                hover:bg-indigo-100
+
+                focus:ring-2
+                focus:ring-indigo-100
+
+                disabled:cursor-not-allowed
+                disabled:opacity-70
+
+                dark:border-indigo-500/20
+                dark:bg-indigo-500/10
+                dark:text-indigo-400
+
+                dark:hover:border-indigo-500/30
+                dark:hover:bg-indigo-500/15
+
+                dark:focus:ring-indigo-500/10
+
+                sm:w-auto
+              "
+            >
+
+              <HiOutlineArrowPath
+                className={`
+                  h-4
+                  w-4
+
+                  ${isExporting
+                    ? "animate-spin"
+                    : ""
+                  }
+                `}
+              />
+
+              <span>
+                {isExporting
+                  ? "Exporting..."
+                  : "Export Excel"}
+              </span>
+
+              {!isExporting && (
+                <HiOutlineChevronDown
+                  className={`
+                    h-3.5
+                    w-3.5
+
+                    transition-transform
+                    duration-200
+
+                    ${exportOpen
+                      ? "rotate-180"
+                      : ""
+                    }
+                  `}
+                />
+              )}
+
+            </button>
+
+
+            {exportOpen &&
+              !isExporting && (
+                <div
+                  className="
+                    absolute
+                    right-0
+                    top-full
+                    z-30
+
+                    mt-2
+
+                    w-full
+                    min-w-[245px]
+
+                    overflow-hidden
+
+                    rounded-xl
+
+                    border
+                    border-slate-200
+
+                    bg-white
+
+                    p-1.5
+
+                    shadow-[0_12px_30px_rgba(15,23,42,0.12)]
+
+                    dark:border-zinc-800
+                    dark:bg-zinc-950
+                    dark:shadow-[0_12px_30px_rgba(0,0,0,0.3)]
+
+                    sm:w-auto
+                  "
+                >
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleExport("all")
+                    }
+                    className="
+                      flex
+                      w-full
+
+                      items-center
+
+                      rounded-lg
+
+                      px-3
+                      py-2.5
+
+                      text-left
+
+                      text-xs
+                      font-semibold
+
+                      text-slate-700
+
+                      transition
+
+                      hover:bg-slate-50
+
+                      dark:text-zinc-300
+                      dark:hover:bg-zinc-900
+                    "
+                  >
+                    All Reports
+                  </button>
+
+
+                  <button
+                    type="button"
+                    disabled={!dateParam}
+                    onClick={() =>
+                      handleExport("date")
+                    }
+                    className="
+                      flex
+                      w-full
+
+                      items-center
+
+                      rounded-lg
+
+                      px-3
+                      py-2.5
+
+                      text-left
+
+                      text-xs
+                      font-semibold
+
+                      text-slate-700
+
+                      transition
+
+                      hover:bg-slate-50
+
+                      disabled:cursor-not-allowed
+                      disabled:opacity-35
+
+                      dark:text-zinc-300
+                      dark:hover:bg-zinc-900
+                    "
+                  >
+                    Selected Date
+                  </button>
+
+
+                  <div
+                    className="
+                      mt-1
+
+                      border-t
+                      border-slate-100
+
+                      pt-1
+
+                      dark:border-zinc-900
+                    "
+                  >
+
+                    <div
+                      className="
+                        flex
+                        items-center
+                        gap-2
+
+                        px-2
+                        py-1
+                      "
+                    >
+
+                      <input
+                        type="month"
+                        value={exportMonth}
+                        onChange={(event) =>
+                          setExportMonth(
+                            event.target.value
+                          )
+                        }
+                        className="
+                          h-9
+                          min-w-0
+                          flex-1
+
+                          rounded-lg
+
+                          border
+                          border-slate-200
+
+                          bg-white
+
+                          px-2.5
+
+                          text-[11px]
+                          font-medium
+
+                          text-slate-700
+
+                          outline-none
+
+                          focus:border-indigo-400
+                          focus:ring-2
+                          focus:ring-indigo-100
+
+                          dark:border-zinc-800
+                          dark:bg-zinc-900
+                          dark:text-zinc-300
+
+                          dark:focus:border-indigo-500
+                          dark:focus:ring-indigo-500/10
+                        "
+                      />
+
+
+                      <button
+                        type="button"
+                        disabled={!exportMonth}
+                        onClick={() =>
+                          handleExport("month")
+                        }
+                        className="
+                          h-9
+                          shrink-0
+
+                          rounded-lg
+
+                          bg-indigo-600
+
+                          px-3
+
+                          text-[11px]
+                          font-semibold
+
+                          text-white
+
+                          shadow-sm
+
+                          transition
+
+                          hover:bg-indigo-700
+
+                          disabled:cursor-not-allowed
+                          disabled:opacity-40
+                        "
+                      >
+                        Export
+                      </button>
+
+                    </div>
+
+                  </div>
+
+                </div>
+              )}
+
+          </div>
+        )}
 
 
         {/* =======================================================

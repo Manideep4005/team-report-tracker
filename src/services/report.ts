@@ -145,3 +145,44 @@ export async function getUserReports(
 
 //   return data;
 // }
+
+export type ReportExportFilter =
+  | {
+    filter: "all";
+  }
+  | {
+    filter: "date";
+    date: string;
+  }
+  | {
+    filter: "month";
+    month: string;
+  };
+
+export async function exportOwnReports(
+  options: ReportExportFilter
+) {
+  const response = await api.get(
+    "/api/reports/export/own",
+    {
+      params: options,
+      responseType: "blob",
+    }
+  );
+
+  return response.data;
+}
+
+export async function exportAllReports(
+  options: ReportExportFilter
+) {
+  const response = await api.get(
+    "/api/reports/export/all",
+    {
+      params: options,
+      responseType: "blob",
+    }
+  );
+
+  return response.data;
+}
