@@ -1833,9 +1833,9 @@ export default function Dashboard() {
                                         dark:text-zinc-600
                                     "
                 >
-                  {isToday
-                    ? "Editable until you sign off for the day"
-                    : "Read-only snapshot for this date"}
+                 {data?.myReport
+    ? "Edit your submitted report and save the changes"
+    : "Add your work report for this date"}
                 </p>
 
               </div>
@@ -1897,9 +1897,7 @@ export default function Dashboard() {
                   )
                 }
 
-                disabled={
-                  !isToday
-                }
+               disabled={reportMutation.isPending}
 
                 placeholder={
                   isToday
@@ -2058,9 +2056,8 @@ export default function Dashboard() {
                     }
 
                     disabled={
-                      reportMutation.isPending ||
-                      !isToday
-                    }
+    reportMutation.isPending
+}
 
                     className="
                                             inline-flex
