@@ -57,6 +57,7 @@ function getInitials(name?: string) {
 }
 
 
+
 function getAvatarColor(name?: string) {
 
   if (!name) {
@@ -1017,7 +1018,7 @@ export default function Sidebar({
           <p className="
             sidebar-user-email
           ">
-            {user?.email}
+            {user?.role.name.toLocaleLowerCase().replace('_', ' ')}
           </p>
 
         </div>
