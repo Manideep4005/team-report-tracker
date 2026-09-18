@@ -25,6 +25,8 @@ import {
 } from "../../services/report";
 
 import DayPickerInput from "../../components/DayPickerInput";
+import PageTitle from "../../components/PageTitle";
+import UserAvatar from "../../components/UserAvatar";
 
 /* ================================================================
    TYPES
@@ -41,6 +43,7 @@ interface ReportItem {
     id: string;
     name: string;
     email: string;
+    avatarUrl: string;
     deletedAt: string | null;
   };
 }
@@ -530,7 +533,7 @@ export default function Reports() {
         lg:py-8
       "
     >
-
+      <PageTitle title="All Reports" />
       {/* =========================================================
           HEADER
       ========================================================= */}
@@ -1829,17 +1832,7 @@ function ReportCard({
   report: ReportItem;
 }) {
 
-  const initials =
-    report.user.name
-      .trim()
-      .split(/\s+/)
-      .slice(0, 2)
-      .map(
-        (part) =>
-          part[0]
-      )
-      .join("")
-      .toUpperCase();
+
 
 
   const isDeleted =
@@ -1996,7 +1989,10 @@ function ReportCard({
               }
             `}
           >
-            {initials}
+            <UserAvatar
+              name={report.user.name}
+              avatarUrl={report.user.avatarUrl}
+            />
           </div>
 
 

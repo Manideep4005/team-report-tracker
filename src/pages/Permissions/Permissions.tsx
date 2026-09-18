@@ -20,6 +20,7 @@ import {
 } from "../../services/permission";
 
 import { useAuth } from "../../context/AuthContext";
+import PageTitle from "../../components/PageTitle";
 
 /* ================================================================
    MAIN PAGE
@@ -157,6 +158,8 @@ export default function Permissions() {
                 lg:py-8
             "
     >
+
+      <PageTitle title="Permissions" />
       {/* ==================================================
                 HEADER
             ================================================== */}
@@ -554,21 +557,20 @@ function PermissionCard({
                             text-[9px]
                             font-bold
 
-                            ${
-                              roleCount > 0
-                                ? `
+                            ${roleCount > 0
+                ? `
                                         bg-indigo-50
                                         text-indigo-600
                                         dark:bg-indigo-500/10
                                         dark:text-indigo-400
                                     `
-                                : `
+                : `
                                         bg-slate-50
                                         text-slate-400
                                         dark:bg-zinc-900
                                         dark:text-zinc-600
                                     `
-                            }
+              }
                         `}
           >
             <HiOutlineUsers className="h-3.5 w-3.5" />

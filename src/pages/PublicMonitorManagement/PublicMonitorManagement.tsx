@@ -28,6 +28,7 @@ import {
 } from "../../services/publicMonitor";
 
 import { useAuth } from "../../context/AuthContext";
+import PageTitle from "../../components/PageTitle";
 
 
 /* =========================================================
@@ -680,6 +681,8 @@ export default function PublicMonitorManagement() {
             sm:space-y-6
             sm:py-4
         ">
+
+            <PageTitle title="Public Links Monitoring" />
 
             {/* =================================================
                 HEADER

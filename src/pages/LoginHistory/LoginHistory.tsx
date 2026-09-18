@@ -15,6 +15,8 @@ import { useState } from "react";
 
 import { getLoginHistory } from "../../services/loginHistory";
 import type { LoginHistoryItem } from "../../services/loginHistory";
+import PageTitle from "../../components/PageTitle";
+import UserAvatar from "../../components/UserAvatar";
 
 export default function LoginHistory() {
   const [page, setPage] = useState(1);
@@ -76,6 +78,7 @@ export default function LoginHistory() {
                 lg:py-8
             "
     >
+      <PageTitle title="Login History" />
       {/* ==================================================
                 HEADER
             ================================================== */}
@@ -687,21 +690,20 @@ function LoginHistoryRow({ item }: { item: LoginHistoryItem }) {
                         items-center
                         justify-center
                         rounded-lg
-                        ${
-                          success
-                            ? `
+                        ${success
+              ? `
                                     bg-emerald-50
                                     text-emerald-600
                                     dark:bg-emerald-500/10
                                     dark:text-emerald-400
                                 `
-                            : `
+              : `
                                     bg-red-50
                                     text-red-500
                                     dark:bg-red-500/10
                                     dark:text-red-400
                                 `
-                        }
+            }
                     `}
         >
           {success ? (
@@ -722,7 +724,10 @@ function LoginHistoryRow({ item }: { item: LoginHistoryItem }) {
                         gap-3
                     "
         >
-          <UserAvatar name={item.user?.name ?? "Unknown User"} />
+          <UserAvatar
+            name={item.user?.name ?? "Unknown User"}
+            avatarUrl={item.user?.avatarUrl ?? null}
+          />
 
           <div
             className="
@@ -860,31 +865,31 @@ function LoginHistoryRow({ item }: { item: LoginHistoryItem }) {
    USER AVATAR
 ================================================================ */
 
-function UserAvatar({ name }: { name: string }) {
-  const initial = name.trim().charAt(0).toUpperCase() || "?";
+// function UserAvatar({ name }: { name: string }) {
+//   const initial = name.trim().charAt(0).toUpperCase() || "?";
 
-  return (
-    <div
-      className="
-                flex
-                h-8
-                w-8
-                shrink-0
-                items-center
-                justify-center
-                rounded-full
-                bg-indigo-50
-                text-[10px]
-                font-bold
-                text-indigo-600
-                dark:bg-indigo-500/10
-                dark:text-indigo-400
-            "
-    >
-      {initial}
-    </div>
-  );
-}
+//   return (
+//     <div
+//       className="
+//                 flex
+//                 h-8
+//                 w-8
+//                 shrink-0
+//                 items-center
+//                 justify-center
+//                 rounded-full
+//                 bg-indigo-50
+//                 text-[10px]
+//                 font-bold
+//                 text-indigo-600
+//                 dark:bg-indigo-500/10
+//                 dark:text-indigo-400
+//             "
+//     >
+//       {initial}
+//     </div>
+//   );
+// }
 
 /* ================================================================
    MOBILE CARD
@@ -928,28 +933,26 @@ function MobileLoginHistoryCard({ item }: { item: LoginHistoryItem }) {
                             items-center
                             justify-center
                             rounded-xl
-                            ${
-                              success
-                                ? `
+                            ${success
+                ? `
                                         bg-emerald-50
                                         text-emerald-600
                                         dark:bg-emerald-500/10
                                         dark:text-emerald-400
                                     `
-                                : `
+                : `
                                         bg-red-50
                                         text-red-500
                                         dark:bg-red-500/10
                                         dark:text-red-400
                                     `
-                            }
+              }
                         `}
           >
-            {success ? (
-              <HiOutlineCheckCircle className="h-5 w-5" />
-            ) : (
-              <HiOutlineXCircle className="h-5 w-5" />
-            )}
+            <UserAvatar
+              name={item.user?.name ?? "Unknown User"}
+              avatarUrl={item.user?.avatarUrl ?? null}
+            />
           </div>
 
           <div
@@ -985,21 +988,20 @@ function MobileLoginHistoryCard({ item }: { item: LoginHistoryItem }) {
                                     py-0.5
                                     text-[8px]
                                     font-bold
-                                    ${
-                                      success
-                                        ? `
+                                    ${success
+                    ? `
                                                 bg-emerald-50
                                                 text-emerald-600
                                                 dark:bg-emerald-500/10
                                                 dark:text-emerald-400
                                             `
-                                        : `
+                    : `
                                                 bg-red-50
                                                 text-red-600
                                                 dark:bg-red-500/10
                                                 dark:text-red-400
                                             `
-                                    }
+                  }
                                 `}
               >
                 {success ? "SUCCESS" : "FAILED"}
@@ -1348,14 +1350,13 @@ function Pagination({
                                     text-[10px]
                                     font-semibold
                                     transition
-                                    ${
-                                      entry === page
-                                        ? `
+                                    ${entry === page
+                  ? `
                                                 bg-indigo-600
                                                 text-white
                                                 shadow-sm
                                             `
-                                        : `
+                  : `
                                                 text-slate-500
                                                 hover:bg-slate-100
                                                 hover:text-slate-800
@@ -1363,7 +1364,7 @@ function Pagination({
                                                 dark:hover:bg-zinc-900
                                                 dark:hover:text-zinc-200
                                             `
-                                    }
+                }
                                 `}
               aria-current={entry === page ? "page" : undefined}
             >

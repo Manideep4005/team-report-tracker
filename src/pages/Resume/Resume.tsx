@@ -14,20 +14,20 @@ import {
   HiOutlineAcademicCap,
   HiOutlineArrowDownTray,
   HiOutlineArrowPath,
+  HiOutlineArrowUpRight,
   HiOutlineBriefcase,
   HiOutlineCheck,
   HiOutlineChevronDown,
   HiOutlineChevronUp,
   HiOutlineDocumentText,
   HiOutlineEye,
+  HiOutlineEyeSlash,
   HiOutlineFolderOpen,
   HiOutlineGlobeAlt,
-  HiOutlineLink,
+  HiOutlinePencil,
   HiOutlinePlus,
-  HiOutlineSparkles,
   HiOutlineTrash,
   HiOutlineUser,
-  HiOutlineViewColumns,
   HiOutlineWrenchScrewdriver,
   HiOutlineXMark,
 } from "react-icons/hi2";
@@ -65,6 +65,68 @@ import {
 } from "../../utils/resume";
 
 import ResumePreview from "./components/ResumePreview";
+import PageTitle from "../../components/PageTitle";
+
+/* ============================================================
+   THEME
+   A resume is a manuscript under construction — this treats the
+   screen like a draft on a writing desk rather than a SaaS panel:
+   warm paper, an ink/brass palette, a serif used only where the
+   document's own "voice" appears (names, headings), and a plain
+   working sans everywhere the interface is speaking.
+============================================================ */
+
+const THEME_STYLES = `
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,380;0,9..144,480;0,9..144,600;1,9..144,480&family=Inter:wght@400;500;600&display=swap');
+
+.rs-scope {
+  --rs-paper: #FAF6EC;
+  --rs-paper-raised: #F1E9D6;
+  --rs-ink: #262218;
+  --rs-ink-soft: #756B57;
+  --rs-ink-faint: #ABA089;
+  --rs-rule: #E0D3B4;
+  --rs-rule-strong: #C7B486;
+  --rs-brass: #93611F;
+  --rs-brass-strong: #6E4A18;
+  --rs-brass-wash: rgba(147, 97, 31, 0.08);
+  --rs-moss: #4F6647;
+  --rs-rust: #954632;
+  --rs-shadow: rgba(38, 34, 24, 0.14);
+  font-family: 'Inter', sans-serif;
+  color: var(--rs-ink);
+}
+
+.dark .rs-scope {
+  --rs-paper: #1A1812;
+  --rs-paper-raised: #23201A;
+  --rs-ink: #EEE7D6;
+  --rs-ink-soft: #A79C85;
+  --rs-ink-faint: #6E6551;
+  --rs-rule: #38321F;
+  --rs-rule-strong: #4C4526;
+  --rs-brass: #D6A75A;
+  --rs-brass-strong: #EAC482;
+  --rs-brass-wash: rgba(214, 167, 90, 0.1);
+  --rs-moss: #8FA57F;
+  --rs-rust: #CC7C63;
+  --rs-shadow: rgba(0, 0, 0, 0.4);
+}
+
+.rs-serif {
+  font-family: 'Fraunces', serif;
+}
+
+.rs-scope input::placeholder,
+.rs-scope textarea::placeholder {
+  color: var(--rs-ink-faint);
+}
+
+.rs-scrollbar::-webkit-scrollbar {
+  height: 0px;
+  width: 0px;
+}
+`;
 
 /* ============================================================
    SECTION META
@@ -145,7 +207,7 @@ const SECTION_META: Record<
 
 function SectionIcon({
   type,
-  size = 17,
+  size = 16,
 }: {
   type: ResumeSectionType;
   size?: number | string;
@@ -155,7 +217,7 @@ function SectionIcon({
 }
 
 /* ============================================================
-   SMALL UI HELPERS
+   SMALL HELPERS
 ============================================================ */
 
 function cn(...classes: Array<string | false | null | undefined>) {
@@ -197,8 +259,13 @@ function domId(sectionId: string) {
   return `resume-section-${sectionId}`;
 }
 
+function ordinal(index: number) {
+  return String(index + 1).padStart(2, "0");
+}
+
 /* ============================================================
-   FIELD
+   FIELDS — underlined, written-on-the-page inputs rather than
+   boxed form controls.
 ============================================================ */
 
 function Field({
@@ -216,7 +283,7 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-[13px] font-medium text-[var(--text-secondary)]">
+      <span className="mb-1 block text-[11.5px] font-medium text-[var(--rs-ink-soft)]">
         {label}
       </span>
 
@@ -226,21 +293,18 @@ function Field({
         placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
         className="
-          min-h-11
+          h-9
           w-full
-          rounded-xl
-          border
-          border-[var(--border)]
-          bg-[var(--surface)]
-          px-3.5
-          text-sm
-          text-[var(--text-primary)]
+          border-0
+          border-b
+          border-[var(--rs-rule)]
+          bg-transparent
+          px-0
+          text-[14px]
+          text-[var(--rs-ink)]
           outline-none
           transition
-          placeholder:text-[var(--text-muted)]
-          focus:border-indigo-500
-          focus:ring-4
-          focus:ring-indigo-500/10
+          focus:border-[var(--rs-brass-strong)] focus:ring-0 focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_var(--rs-brass-wash)]
         "
       />
     </label>
@@ -262,7 +326,7 @@ function TextArea({
 }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-[13px] font-medium text-[var(--text-secondary)]">
+      <span className="mb-1.5 block text-[11.5px] font-medium text-[var(--rs-ink-soft)]">
         {label}
       </span>
 
@@ -274,21 +338,18 @@ function TextArea({
         className="
           w-full
           resize-y
-          rounded-xl
+          rounded-[4px]
           border
-          border-[var(--border)]
-          bg-[var(--surface)]
-          px-3.5
-          py-3
-          text-sm
+          border-[var(--rs-rule)]
+          bg-[var(--rs-paper)]
+          px-3
+          py-2.5
+          text-[14px]
           leading-6
-          text-[var(--text-primary)]
+          text-[var(--rs-ink)]
           outline-none
           transition
-          placeholder:text-[var(--text-muted)]
-          focus:border-indigo-500
-          focus:ring-4
-          focus:ring-indigo-500/10
+          focus:border-[var(--rs-brass-strong)] focus:ring-0 focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_var(--rs-brass-wash)]
         "
       />
     </label>
@@ -311,20 +372,6 @@ function CommaSeparatedInput({
   const [draft, setDraft] = useState(value);
 
   useEffect(() => {
-    /*
-     * Only synchronize from the outside when the normalized
-     * value actually represents a different value.
-     *
-     * This prevents:
-     *
-     * React,
-     *
-     * from immediately becoming:
-     *
-     * React
-     *
-     * while the user is typing.
-     */
     const normalizedItems = draft
       .split(",")
       .map((item) => item.trim())
@@ -343,14 +390,8 @@ function CommaSeparatedInput({
   }, [items, value]);
 
   function handleChange(nextValue: string) {
-    /*
-     * Preserve exactly what the user types.
-     */
     setDraft(nextValue);
 
-    /*
-     * Store the normalized representation separately.
-     */
     onChange(
       nextValue
         .split(",")
@@ -361,32 +402,27 @@ function CommaSeparatedInput({
 
   return (
     <label className="block">
-      <span className="mb-1.5 block text-[13px] font-medium text-[var(--text-secondary)]">
+      <span className="mb-1 block text-[11.5px] font-medium text-[var(--rs-ink-soft)]">
         {label}
       </span>
 
       <input
         value={draft}
         placeholder={placeholder}
-        onChange={(event) =>
-          handleChange(event.target.value)
-        }
+        onChange={(event) => handleChange(event.target.value)}
         className="
-          min-h-11
+          h-9
           w-full
-          rounded-xl
-          border
-          border-[var(--border)]
-          bg-[var(--surface)]
-          px-3.5
-          text-sm
-          text-[var(--text-primary)]
+          border-0
+          border-b
+          border-[var(--rs-rule)]
+          bg-transparent
+          px-0
+          text-[14px]
+          text-[var(--rs-ink)]
           outline-none
           transition
-          placeholder:text-[var(--text-muted)]
-          focus:border-indigo-500
-          focus:ring-4
-          focus:ring-indigo-500/10
+          focus:border-[var(--rs-brass-strong)] focus:ring-0 focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_var(--rs-brass-wash)]
         "
       />
     </label>
@@ -394,7 +430,7 @@ function CommaSeparatedInput({
 }
 
 /* ============================================================
-   PERSONAL INFO (document masthead)
+   PERSONAL INFO — the title page of the manuscript
 ============================================================ */
 
 function PersonalInfoEditor({
@@ -405,83 +441,66 @@ function PersonalInfoEditor({
   update: (patch: Partial<ResumeProfileContent>) => void;
 }) {
   return (
-    <div className="space-y-8">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Field
-          label="Full name"
-          value={content.fullName ?? ""}
-          placeholder="John Doe"
-          onChange={(fullName) => update({ fullName })}
-        />
+    <div>
+      <input
+        value={content.fullName ?? ""}
+        placeholder="Your name"
+        onChange={(event) => update({ fullName: event.target.value })}
+        className="rs-serif w-full border-0 bg-transparent p-0 text-[34px] font-medium leading-tight text-[var(--rs-ink)] outline-none sm:text-[44px]"
+      />
 
-        <Field
-          label="Professional headline"
-          value={content.headline ?? ""}
-          placeholder="Senior Software Engineer"
-          onChange={(headline) => update({ headline })}
-        />
+      <input
+        value={content.headline ?? ""}
+        placeholder="Professional headline"
+        onChange={(event) => update({ headline: event.target.value })}
+        className="rs-serif mt-2 w-full border-0 bg-transparent p-0 text-[16px] italic text-[var(--rs-ink-soft)] outline-none sm:text-[18px]"
+      />
 
-        <Field
-          label="Email"
+      <div className="mt-6 flex flex-wrap items-center gap-x-1 gap-y-2 text-[13.5px]">
+        <input
           type="email"
           value={content.email ?? ""}
-          placeholder="john@example.com"
-          onChange={(email) => update({ email })}
+          placeholder="email@example.com"
+          onChange={(event) => update({ email: event.target.value })}
+          className="min-w-[120px] max-w-full border-0 border-b border-transparent bg-transparent px-0 py-0.5 text-[var(--rs-ink)] outline-none transition focus:border-[var(--rs-brass-strong)] focus:ring-0 focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_var(--rs-brass-wash)]"
         />
-
-        <Field
-          label="Phone"
+        <span className="px-1.5 text-[var(--rs-ink-faint)]">&middot;</span>
+        <input
           value={content.phone ?? ""}
-          placeholder="+91 98765 43210"
-          onChange={(phone) => update({ phone })}
+          placeholder="Phone number"
+          onChange={(event) => update({ phone: event.target.value })}
+          className="min-w-[110px] max-w-full border-0 border-b border-transparent bg-transparent px-0 py-0.5 text-[var(--rs-ink)] outline-none transition focus:border-[var(--rs-brass-strong)] focus:ring-0 focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_var(--rs-brass-wash)]"
         />
-
-        <Field
-          label="Location"
+        <span className="px-1.5 text-[var(--rs-ink-faint)]">&middot;</span>
+        <input
           value={content.location ?? ""}
-          placeholder="Hyderabad, India"
-          onChange={(location) => update({ location })}
+          placeholder="City, Country"
+          onChange={(event) => update({ location: event.target.value })}
+          className="min-w-[130px] max-w-full border-0 border-b border-transparent bg-transparent px-0 py-0.5 text-[var(--rs-ink)] outline-none transition focus:border-[var(--rs-brass-strong)] focus:ring-0 focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_var(--rs-brass-wash)]"
         />
       </div>
 
-      <div>
-        <div className="mb-4 flex items-center gap-3">
-          <div className="flex size-9 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-300">
-            <HiOutlineLink size={16} />
-          </div>
-
-          <div>
-            <h3 className="text-sm font-semibold text-[var(--text-primary)]">
-              Professional links
-            </h3>
-            <p className="text-xs text-[var(--text-muted)]">
-              The profiles you want visible on your resume.
-            </p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field
-            label="Website"
-            value={content.website ?? ""}
-            placeholder="https://example.com"
-            onChange={(website) => update({ website })}
-          />
-
-          <Field
-            label="LinkedIn"
-            value={content.linkedin ?? ""}
-            placeholder="https://linkedin.com/in/..."
-            onChange={(linkedin) => update({ linkedin })}
-          />
-
-          <Field
-            label="GitHub"
-            value={content.github ?? ""}
-            placeholder="https://github.com/..."
-            onChange={(github) => update({ github })}
-          />
-        </div>
+      <div className="mt-3 flex flex-wrap items-center gap-x-1 gap-y-2 text-[13.5px] text-[var(--rs-brass)]">
+        <input
+          value={content.website ?? ""}
+          placeholder="Website"
+          onChange={(event) => update({ website: event.target.value })}
+          className="min-w-[100px] max-w-full border-0 border-b border-transparent bg-transparent px-0 py-0.5 text-[var(--rs-brass)] outline-none transition focus:border-[var(--rs-brass-strong)] focus:ring-0 focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_var(--rs-brass-wash)]"
+        />
+        <span className="px-1.5 text-[var(--rs-ink-faint)]">&middot;</span>
+        <input
+          value={content.linkedin ?? ""}
+          placeholder="LinkedIn"
+          onChange={(event) => update({ linkedin: event.target.value })}
+          className="min-w-[100px] max-w-full border-0 border-b border-transparent bg-transparent px-0 py-0.5 text-[var(--rs-brass)] outline-none transition focus:border-[var(--rs-brass-strong)] focus:ring-0 focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_var(--rs-brass-wash)]"
+        />
+        <span className="px-1.5 text-[var(--rs-ink-faint)]">&middot;</span>
+        <input
+          value={content.github ?? ""}
+          placeholder="GitHub"
+          onChange={(event) => update({ github: event.target.value })}
+          className="min-w-[100px] max-w-full border-0 border-b border-transparent bg-transparent px-0 py-0.5 text-[var(--rs-brass)] outline-none transition focus:border-[var(--rs-brass-strong)] focus:ring-0 focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_var(--rs-brass-wash)]"
+        />
       </div>
     </div>
   );
@@ -499,21 +518,55 @@ function SummaryEditor({
   updateSection: (patch: Partial<ResumeSection>) => void;
 }) {
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <TextArea
         label="Summary"
         value={typeof section.content === "string" ? section.content : ""}
         placeholder="Experienced software engineer with a strong background in..."
-        rows={8}
+        rows={7}
         onChange={(content) => updateSection({ content })}
       />
 
-      <div className="rounded-2xl border border-indigo-500/10 bg-indigo-500/[0.04] p-4">
-        <p className="text-xs leading-5 text-[var(--text-muted)]">
-          Keep this section focused on your experience, strengths, domain
-          expertise and the value you bring.
+      <p className="border-l-2 border-[var(--rs-brass)] pl-3 text-[12.5px] leading-5 text-[var(--rs-ink-soft)]">
+        Keep this focused on your experience, strengths, domain expertise and
+        the value you bring.
+      </p>
+    </div>
+  );
+}
+
+/* ============================================================
+   ENTRY CARD — shared shell for repeatable items (experience,
+   education, projects, custom). Flat, ruled, no drop shadows.
+============================================================ */
+
+function EntryCard({
+  eyebrow,
+  onRemove,
+  children,
+}: {
+  eyebrow: string;
+  onRemove: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-[4px] border border-[var(--rs-rule)] bg-[var(--rs-paper)] p-4 sm:p-5">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <p className="text-[11px] font-semibold tracking-wide text-[var(--rs-brass)]">
+          {eyebrow}
         </p>
+
+        <button
+          type="button"
+          onClick={onRemove}
+          className="flex size-7 items-center justify-center rounded-[4px] text-[var(--rs-ink-faint)] transition hover:bg-[var(--rs-rust)]/10 hover:text-[var(--rs-rust)]"
+          title="Remove"
+        >
+          <HiOutlineTrash size={15} />
+        </button>
       </div>
+
+      {children}
     </div>
   );
 }
@@ -541,150 +594,129 @@ function ExperienceEditor({
   }
 
   return (
-    <div className="space-y-5">
-      <div className="space-y-4">
-        {items.map((item, index) => (
-          <div
-            key={item.id}
-            className="rounded-2xl border border-[var(--border)] bg-[var(--surface-subtle)] p-4 transition hover:border-indigo-300/60 sm:p-5"
-          >
-            <div className="mb-5 flex items-center justify-between gap-3">
-              <div>
-                <p className="text-xs font-semibold text-indigo-500">
-                  Position {index + 1}
-                </p>
-                <p className="mt-1 text-sm font-semibold text-[var(--text-primary)]">
-                  {item.position || item.company || "New position"}
-                </p>
-              </div>
+    <div className="space-y-4">
+      {items.map((item, index) => (
+        <EntryCard
+          key={item.id}
+          eyebrow={item.position || item.company || `Position ${index + 1}`}
+          onRemove={() =>
+            updateItems(items.filter((entry) => entry.id !== item.id))
+          }
+        >
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Field
+              label="Position"
+              value={item.position}
+              placeholder="Senior Software Engineer"
+              onChange={(position) =>
+                updateItems(
+                  items.map((entry) =>
+                    entry.id === item.id ? { ...entry, position } : entry,
+                  ),
+                )
+              }
+            />
 
-              <button
-                type="button"
-                onClick={() =>
-                  updateItems(items.filter((entry) => entry.id !== item.id))
-                }
-                className="flex size-9 items-center justify-center rounded-lg text-[var(--text-muted)] transition hover:bg-red-500/10 hover:text-red-500"
-                title="Remove"
-              >
-                <HiOutlineTrash size={17} />
-              </button>
-            </div>
+            <Field
+              label="Company"
+              value={item.company}
+              placeholder="Company name"
+              onChange={(company) =>
+                updateItems(
+                  items.map((entry) =>
+                    entry.id === item.id ? { ...entry, company } : entry,
+                  ),
+                )
+              }
+            />
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field
-                label="Position"
-                value={item.position}
-                placeholder="Senior Software Engineer"
-                onChange={(position) =>
-                  updateItems(
-                    items.map((entry) =>
-                      entry.id === item.id ? { ...entry, position } : entry,
-                    ),
-                  )
-                }
-              />
+            <Field
+              label="Location"
+              value={item.location ?? ""}
+              placeholder="Hyderabad, India"
+              onChange={(location) =>
+                updateItems(
+                  items.map((entry) =>
+                    entry.id === item.id ? { ...entry, location } : entry,
+                  ),
+                )
+              }
+            />
 
-              <Field
-                label="Company"
-                value={item.company}
-                placeholder="Company name"
-                onChange={(company) =>
-                  updateItems(
-                    items.map((entry) =>
-                      entry.id === item.id ? { ...entry, company } : entry,
-                    ),
-                  )
-                }
-              />
+            <Field
+              label="Start date"
+              value={item.startDate}
+              placeholder="Jan 2024"
+              onChange={(startDate) =>
+                updateItems(
+                  items.map((entry) =>
+                    entry.id === item.id ? { ...entry, startDate } : entry,
+                  ),
+                )
+              }
+            />
 
-              <Field
-                label="Location"
-                value={item.location ?? ""}
-                placeholder="Hyderabad, India"
-                onChange={(location) =>
-                  updateItems(
-                    items.map((entry) =>
-                      entry.id === item.id ? { ...entry, location } : entry,
-                    ),
-                  )
-                }
-              />
+            <Field
+              label="End date"
+              value={item.endDate ?? ""}
+              placeholder="Present"
+              onChange={(endDate) =>
+                updateItems(
+                  items.map((entry) =>
+                    entry.id === item.id ? { ...entry, endDate } : entry,
+                  ),
+                )
+              }
+            />
 
-              <Field
-                label="Start date"
-                value={item.startDate}
-                placeholder="Jan 2024"
-                onChange={(startDate) =>
-                  updateItems(
-                    items.map((entry) =>
-                      entry.id === item.id ? { ...entry, startDate } : entry,
-                    ),
-                  )
-                }
-              />
-
-              <Field
-                label="End date"
-                value={item.endDate ?? ""}
-                placeholder="Present"
-                onChange={(endDate) =>
-                  updateItems(
-                    items.map((entry) =>
-                      entry.id === item.id ? { ...entry, endDate } : entry,
-                    ),
-                  )
-                }
-              />
-
-              <label className="flex min-h-11 items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3.5">
-                <input
-                  type="checkbox"
-                  checked={Boolean(item.currentlyWorking)}
-                  onChange={(event) =>
-                    updateItems(
-                      items.map((entry) =>
-                        entry.id === item.id
-                          ? { ...entry, currentlyWorking: event.target.checked }
-                          : entry,
-                      ),
-                    )
-                  }
-                  className="size-4 rounded accent-indigo-600"
-                />
-                <span className="text-sm font-medium text-[var(--text-secondary)]">
-                  Currently working here
-                </span>
-              </label>
-            </div>
-
-            <div className="mt-4">
-              <TextArea
-                label="Description / achievements"
-                value={item.description.join("\n")}
-                placeholder={
-                  "Built and maintained...\nImproved performance by...\nLed..."
-                }
-                rows={6}
-                onChange={(value) =>
+            <label className="flex h-9 items-center gap-2 self-end pb-0.5">
+              <input
+                type="checkbox"
+                checked={Boolean(item.currentlyWorking)}
+                onChange={(event) =>
                   updateItems(
                     items.map((entry) =>
                       entry.id === item.id
-                        ? {
-                          ...entry,
-                          description: value
-                            .split("\n")
-                            .map((line) => line.trim())
-                            .filter(Boolean),
-                        }
+                        ? { ...entry, currentlyWorking: event.target.checked }
                         : entry,
                     ),
                   )
                 }
+                className="size-3.5 accent-[var(--rs-brass)]"
               />
-            </div>
+              <span className="text-[13px] text-[var(--rs-ink-soft)]">
+                Currently working here
+              </span>
+            </label>
           </div>
-        ))}
-      </div>
+
+          <div className="mt-4">
+            <TextArea
+              label="Description / achievements"
+              value={item.description.join("\n")}
+              placeholder={
+                "Built and maintained...\nImproved performance by...\nLed..."
+              }
+              rows={5}
+              onChange={(value) =>
+                updateItems(
+                  items.map((entry) =>
+                    entry.id === item.id
+                      ? {
+                        ...entry,
+                        description: value
+                          .split("\n")
+                          .map((line) => line.trim())
+                          .filter(Boolean),
+                      }
+                      : entry,
+                  ),
+                )
+              }
+            />
+          </div>
+        </EntryCard>
+      ))}
 
       <AddButton
         onClick={() => updateItems([...items, createEmptyExperience()])}
@@ -717,124 +749,109 @@ function EducationEditor({
   }
 
   return (
-    <div className="space-y-5">
-      <div className="space-y-4">
-        {items.map((item, index) => (
-          <div
-            key={item.id}
-            className="rounded-2xl border border-[var(--border)] bg-[var(--surface-subtle)] p-4 sm:p-5"
-          >
-            <div className="mb-5 flex items-center justify-between">
-              <p className="text-xs font-semibold text-indigo-500">
-                Education {index + 1}
-              </p>
+    <div className="space-y-4">
+      {items.map((item, index) => (
+        <EntryCard
+          key={item.id}
+          eyebrow={item.institution || `Education ${index + 1}`}
+          onRemove={() =>
+            updateItems(items.filter((entry) => entry.id !== item.id))
+          }
+        >
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Field
+              label="Institution"
+              value={item.institution}
+              placeholder="University / College"
+              onChange={(institution) =>
+                updateItems(
+                  items.map((entry) =>
+                    entry.id === item.id ? { ...entry, institution } : entry,
+                  ),
+                )
+              }
+            />
 
-              <button
-                type="button"
-                onClick={() =>
-                  updateItems(items.filter((entry) => entry.id !== item.id))
-                }
-                className="flex size-9 items-center justify-center rounded-lg text-[var(--text-muted)] transition hover:bg-red-500/10 hover:text-red-500"
-              >
-                <HiOutlineTrash size={17} />
-              </button>
-            </div>
+            <Field
+              label="Degree"
+              value={item.degree}
+              placeholder="Bachelor of Technology"
+              onChange={(degree) =>
+                updateItems(
+                  items.map((entry) =>
+                    entry.id === item.id ? { ...entry, degree } : entry,
+                  ),
+                )
+              }
+            />
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field
-                label="Institution"
-                value={item.institution}
-                placeholder="University / College"
-                onChange={(institution) =>
-                  updateItems(
-                    items.map((entry) =>
-                      entry.id === item.id ? { ...entry, institution } : entry,
-                    ),
-                  )
-                }
-              />
+            <Field
+              label="Field of study"
+              value={item.fieldOfStudy ?? ""}
+              placeholder="Computer Science"
+              onChange={(fieldOfStudy) =>
+                updateItems(
+                  items.map((entry) =>
+                    entry.id === item.id ? { ...entry, fieldOfStudy } : entry,
+                  ),
+                )
+              }
+            />
 
-              <Field
-                label="Degree"
-                value={item.degree}
-                placeholder="Bachelor of Technology"
-                onChange={(degree) =>
-                  updateItems(
-                    items.map((entry) =>
-                      entry.id === item.id ? { ...entry, degree } : entry,
-                    ),
-                  )
-                }
-              />
+            <Field
+              label="Location"
+              value={item.location ?? ""}
+              placeholder="Hyderabad, India"
+              onChange={(location) =>
+                updateItems(
+                  items.map((entry) =>
+                    entry.id === item.id ? { ...entry, location } : entry,
+                  ),
+                )
+              }
+            />
 
-              <Field
-                label="Field of study"
-                value={item.fieldOfStudy ?? ""}
-                placeholder="Computer Science"
-                onChange={(fieldOfStudy) =>
-                  updateItems(
-                    items.map((entry) =>
-                      entry.id === item.id ? { ...entry, fieldOfStudy } : entry,
-                    ),
-                  )
-                }
-              />
+            <Field
+              label="Start date"
+              value={item.startDate ?? ""}
+              placeholder="2020"
+              onChange={(startDate) =>
+                updateItems(
+                  items.map((entry) =>
+                    entry.id === item.id ? { ...entry, startDate } : entry,
+                  ),
+                )
+              }
+            />
 
-              <Field
-                label="Location"
-                value={item.location ?? ""}
-                placeholder="Hyderabad, India"
-                onChange={(location) =>
-                  updateItems(
-                    items.map((entry) =>
-                      entry.id === item.id ? { ...entry, location } : entry,
-                    ),
-                  )
-                }
-              />
+            <Field
+              label="End date"
+              value={item.endDate ?? ""}
+              placeholder="2024"
+              onChange={(endDate) =>
+                updateItems(
+                  items.map((entry) =>
+                    entry.id === item.id ? { ...entry, endDate } : entry,
+                  ),
+                )
+              }
+            />
 
-              <Field
-                label="Start date"
-                value={item.startDate ?? ""}
-                placeholder="2020"
-                onChange={(startDate) =>
-                  updateItems(
-                    items.map((entry) =>
-                      entry.id === item.id ? { ...entry, startDate } : entry,
-                    ),
-                  )
-                }
-              />
-
-              <Field
-                label="End date"
-                value={item.endDate ?? ""}
-                placeholder="2024"
-                onChange={(endDate) =>
-                  updateItems(
-                    items.map((entry) =>
-                      entry.id === item.id ? { ...entry, endDate } : entry,
-                    ),
-                  )
-                }
-              />
-
-              <Field
-                label="Grade"
-                value={item.grade ?? ""}
-                placeholder="8.5 CGPA"
-                onChange={(grade) =>
-                  updateItems(
-                    items.map((entry) =>
-                      entry.id === item.id ? { ...entry, grade } : entry,
-                    ),
-                  )
-                }
-              />
-            </div>
+            <Field
+              label="Grade"
+              value={item.grade ?? ""}
+              placeholder="8.5 CGPA"
+              onChange={(grade) =>
+                updateItems(
+                  items.map((entry) =>
+                    entry.id === item.id ? { ...entry, grade } : entry,
+                  ),
+                )
+              }
+            />
           </div>
-        ))}
-      </div>
+        </EntryCard>
+      ))}
 
       <AddButton
         onClick={() => updateItems([...items, createEmptyEducation()])}
@@ -867,71 +884,62 @@ function SkillsEditor({
   }
 
   return (
-    <div className="space-y-5">
-      <div className="space-y-4">
-        {skills.categories.map((category, index) => (
-          <div
-            key={category.id}
-            className="rounded-2xl border border-[var(--border)] bg-[var(--surface-subtle)] p-4 sm:p-5"
-          >
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div className="flex min-w-0 items-center gap-3">
-                <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-indigo-500/10 text-xs font-bold text-indigo-600 dark:text-indigo-300">
-                  {index + 1}
-                </div>
+    <div className="space-y-4">
+      {skills.categories.map((category, index) => (
+        <div
+          key={category.id}
+          className="rounded-[4px] border border-[var(--rs-rule)] bg-[var(--rs-paper)] p-4 sm:p-5"
+        >
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div className="flex min-w-0 flex-1 items-center gap-2.5">
+              <span className="rs-serif shrink-0 text-[13px] text-[var(--rs-ink-faint)]">
+                {ordinal(index)}
+              </span>
 
-                <input
-                  value={category.name}
-                  placeholder="Category name"
-                  onChange={(event) =>
-                    updateCategories(
-                      skills.categories.map((entry) =>
-                        entry.id === category.id
-                          ? { ...entry, name: event.target.value }
-                          : entry,
-                      ),
-                    )
-                  }
-                  className="min-h-10 min-w-0 flex-1 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 text-sm font-semibold text-[var(--text-primary)] outline-none focus:border-indigo-500"
-                />
-              </div>
-
-              <button
-                type="button"
-                onClick={() =>
+              <input
+                value={category.name}
+                placeholder="Category name"
+                onChange={(event) =>
                   updateCategories(
-                    skills.categories.filter(
-                      (entry) => entry.id !== category.id,
+                    skills.categories.map((entry) =>
+                      entry.id === category.id
+                        ? { ...entry, name: event.target.value }
+                        : entry,
                     ),
                   )
                 }
-                className="flex size-9 shrink-0 items-center justify-center rounded-lg text-[var(--text-muted)] transition hover:bg-red-500/10 hover:text-red-500"
-              >
-                <HiOutlineTrash size={17} />
-              </button>
+                className="h-8 min-w-0 flex-1 border-0 border-b border-[var(--rs-rule)] bg-transparent px-0 text-[14px] font-medium text-[var(--rs-ink)] outline-none focus:border-[var(--rs-brass-strong)] focus:ring-0 focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_var(--rs-brass-wash)]"
+              />
             </div>
 
-            <CommaSeparatedInput
-              label="Skills"
-              value={category.items.join(", ")}
-              items={category.items}
-              placeholder="React, TypeScript, Node.js, PostgreSQL"
-              onChange={(items) =>
+            <button
+              type="button"
+              onClick={() =>
                 updateCategories(
-                  skills.categories.map((entry) =>
-                    entry.id === category.id
-                      ? {
-                        ...entry,
-                        items,
-                      }
-                      : entry,
-                  ),
+                  skills.categories.filter((entry) => entry.id !== category.id),
                 )
               }
-            />
+              className="flex size-7 shrink-0 items-center justify-center rounded-[4px] text-[var(--rs-ink-faint)] transition hover:bg-[var(--rs-rust)]/10 hover:text-[var(--rs-rust)]"
+            >
+              <HiOutlineTrash size={15} />
+            </button>
           </div>
-        ))}
-      </div>
+
+          <CommaSeparatedInput
+            label="Skills"
+            value={category.items.join(", ")}
+            items={category.items}
+            placeholder="React, TypeScript, Node.js, PostgreSQL"
+            onChange={(items) =>
+              updateCategories(
+                skills.categories.map((entry) =>
+                  entry.id === category.id ? { ...entry, items } : entry,
+                ),
+              )
+            }
+          />
+        </div>
+      ))}
 
       <AddButton
         onClick={() =>
@@ -966,107 +974,87 @@ function ProjectsEditor({
   }
 
   return (
-    <div className="space-y-5">
-      <div className="space-y-4">
-        {items.map((item, index) => (
-          <div
-            key={item.id}
-            className="rounded-2xl border border-[var(--border)] bg-[var(--surface-subtle)] p-4 sm:p-5"
-          >
-            <div className="mb-5 flex items-center justify-between">
-              <p className="text-xs font-semibold text-indigo-500">
-                Project {index + 1}
-              </p>
+    <div className="space-y-4">
+      {items.map((item, index) => (
+        <EntryCard
+          key={item.id}
+          eyebrow={item.name || `Project ${index + 1}`}
+          onRemove={() =>
+            updateItems(items.filter((entry) => entry.id !== item.id))
+          }
+        >
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Field
+              label="Project name"
+              value={item.name}
+              placeholder="Project name"
+              onChange={(name) =>
+                updateItems(
+                  items.map((entry) =>
+                    entry.id === item.id ? { ...entry, name } : entry,
+                  ),
+                )
+              }
+            />
 
-              <button
-                type="button"
-                onClick={() =>
-                  updateItems(items.filter((entry) => entry.id !== item.id))
-                }
-                className="flex size-9 items-center justify-center rounded-lg text-[var(--text-muted)] hover:bg-red-500/10 hover:text-red-500"
-              >
-                <HiOutlineTrash size={17} />
-              </button>
-            </div>
+            <Field
+              label="Project URL"
+              value={item.url ?? ""}
+              placeholder="https://..."
+              onChange={(url) =>
+                updateItems(
+                  items.map((entry) =>
+                    entry.id === item.id ? { ...entry, url } : entry,
+                  ),
+                )
+              }
+            />
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field
-                label="Project name"
-                value={item.name}
-                placeholder="Project name"
-                onChange={(name) =>
-                  updateItems(
-                    items.map((entry) =>
-                      entry.id === item.id ? { ...entry, name } : entry,
-                    ),
-                  )
-                }
-              />
+            <Field
+              label="GitHub"
+              value={item.github ?? ""}
+              placeholder="https://github.com/..."
+              onChange={(github) =>
+                updateItems(
+                  items.map((entry) =>
+                    entry.id === item.id ? { ...entry, github } : entry,
+                  ),
+                )
+              }
+            />
 
-              <Field
-                label="Project URL"
-                value={item.url ?? ""}
-                placeholder="https://..."
-                onChange={(url) =>
-                  updateItems(
-                    items.map((entry) =>
-                      entry.id === item.id ? { ...entry, url } : entry,
-                    ),
-                  )
-                }
-              />
-
-              <Field
-                label="GitHub"
-                value={item.github ?? ""}
-                placeholder="https://github.com/..."
-                onChange={(github) =>
-                  updateItems(
-                    items.map((entry) =>
-                      entry.id === item.id ? { ...entry, github } : entry,
-                    ),
-                  )
-                }
-              />
-
-              <CommaSeparatedInput
-                label="Technologies"
-                value={(item.technologies ?? []).join(", ")}
-                items={item.technologies ?? []}
-                placeholder="React, Node.js, PostgreSQL"
-                onChange={(technologies) =>
-                  updateItems(
-                    items.map((entry) =>
-                      entry.id === item.id
-                        ? {
-                          ...entry,
-                          technologies,
-                        }
-                        : entry,
-                    ),
-                  )
-                }
-              />
-            </div>
-
-            <div className="mt-4">
-              <TextArea
-                label="Description"
-                value={item.description ?? ""}
-                placeholder="Describe what you built, your role and the impact..."
-                rows={5}
-                onChange={(description) =>
-                  updateItems(
-                    items.map((entry) =>
-                      entry.id === item.id ? { ...entry, description } : entry,
-                    ),
-                  )
-                }
-              />
-            </div>
+            <CommaSeparatedInput
+              label="Technologies"
+              value={(item.technologies ?? []).join(", ")}
+              items={item.technologies ?? []}
+              placeholder="React, Node.js, PostgreSQL"
+              onChange={(technologies) =>
+                updateItems(
+                  items.map((entry) =>
+                    entry.id === item.id ? { ...entry, technologies } : entry,
+                  ),
+                )
+              }
+            />
           </div>
-        ))}
-      </div>
+
+          <div className="mt-4">
+            <TextArea
+              label="Description"
+              value={item.description ?? ""}
+              placeholder="Describe what you built, your role and the impact..."
+              rows={4}
+              onChange={(description) =>
+                updateItems(
+                  items.map((entry) =>
+                    entry.id === item.id ? { ...entry, description } : entry,
+                  ),
+                )
+              }
+            />
+          </div>
+        </EntryCard>
+      ))}
 
       <AddButton
         onClick={() => updateItems([...items, createEmptyProject()])}
@@ -1145,78 +1133,67 @@ function GenericSectionEditor({
   }
 
   return (
-    <div className="space-y-5">
-      <div className="space-y-4">
-        {items.map((rawItem, index) => {
-          if (!rawItem || typeof rawItem !== "object") {
-            return null;
-          }
+    <div className="space-y-4">
+      {items.map((rawItem, index) => {
+        if (!rawItem || typeof rawItem !== "object") {
+          return null;
+        }
 
-          const item = rawItem as Record<string, unknown>;
-          const id =
-            typeof item.id === "string" ? item.id : createResumeId("custom-item");
+        const item = rawItem as Record<string, unknown>;
+        const id =
+          typeof item.id === "string" ? item.id : createResumeId("custom-item");
 
-          return (
-            <div
-              key={id}
-              className="rounded-2xl border border-[var(--border)] bg-[var(--surface-subtle)] p-4 sm:p-5"
-            >
-              <div className="mb-5 flex items-center justify-between">
-                <p className="text-xs font-semibold text-indigo-500">
-                  Entry {index + 1}
-                </p>
-
-                <button
-                  type="button"
-                  onClick={() => removeItem(id)}
-                  className="flex size-9 items-center justify-center rounded-lg text-[var(--text-muted)] hover:bg-red-500/10 hover:text-red-500"
-                >
-                  <HiOutlineTrash size={17} />
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Field
-                  label="Title"
-                  value={typeof item.title === "string" ? item.title : ""}
-                  onChange={(title) => updateItem(id, { title })}
-                />
-                <Field
-                  label="Subtitle"
-                  value={typeof item.subtitle === "string" ? item.subtitle : ""}
-                  onChange={(subtitle) => updateItem(id, { subtitle })}
-                />
-                <Field
-                  label="Date"
-                  value={typeof item.date === "string" ? item.date : ""}
-                  onChange={(date) => updateItem(id, { date })}
-                />
-                <Field
-                  label="Location"
-                  value={typeof item.location === "string" ? item.location : ""}
-                  onChange={(location) => updateItem(id, { location })}
-                />
-                <Field
-                  label="URL"
-                  value={typeof item.url === "string" ? item.url : ""}
-                  onChange={(url) => updateItem(id, { url })}
-                />
-              </div>
-
-              <div className="mt-4">
-                <TextArea
-                  label="Description"
-                  value={
-                    typeof item.description === "string" ? item.description : ""
-                  }
-                  rows={5}
-                  onChange={(description) => updateItem(id, { description })}
-                />
-              </div>
+        return (
+          <EntryCard
+            key={id}
+            eyebrow={
+              typeof item.title === "string" && item.title
+                ? item.title
+                : `Entry ${index + 1}`
+            }
+            onRemove={() => removeItem(id)}
+          >
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field
+                label="Title"
+                value={typeof item.title === "string" ? item.title : ""}
+                onChange={(title) => updateItem(id, { title })}
+              />
+              <Field
+                label="Subtitle"
+                value={typeof item.subtitle === "string" ? item.subtitle : ""}
+                onChange={(subtitle) => updateItem(id, { subtitle })}
+              />
+              <Field
+                label="Date"
+                value={typeof item.date === "string" ? item.date : ""}
+                onChange={(date) => updateItem(id, { date })}
+              />
+              <Field
+                label="Location"
+                value={typeof item.location === "string" ? item.location : ""}
+                onChange={(location) => updateItem(id, { location })}
+              />
+              <Field
+                label="URL"
+                value={typeof item.url === "string" ? item.url : ""}
+                onChange={(url) => updateItem(id, { url })}
+              />
             </div>
-          );
-        })}
-      </div>
+
+            <div className="mt-4">
+              <TextArea
+                label="Description"
+                value={
+                  typeof item.description === "string" ? item.description : ""
+                }
+                rows={4}
+                onChange={(description) => updateItem(id, { description })}
+              />
+            </div>
+          </EntryCard>
+        );
+      })}
 
       <AddButton
         onClick={addItem}
@@ -1272,34 +1249,31 @@ function AddButton({
       onClick={onClick}
       className="
         inline-flex
-        min-h-11
+        h-9
         items-center
         justify-center
-        gap-2
-        rounded-xl
+        gap-1.5
+        rounded-[4px]
         border
         border-dashed
-        border-indigo-400/50
-        bg-indigo-500/[0.03]
-        px-4
-        text-sm
-        font-semibold
-        text-indigo-600
+        border-[var(--rs-rule-strong)]
+        px-3.5
+        text-[13px]
+        font-medium
+        text-[var(--rs-brass)]
         transition
-        hover:border-indigo-500
-        hover:bg-indigo-500/[0.07]
-        active:scale-[0.99]
-        dark:text-indigo-300
+        hover:border-[var(--rs-brass)]
+        hover:bg-[var(--rs-brass-wash)]
       "
     >
-      <HiOutlinePlus size={17} />
+      <HiOutlinePlus size={15} />
       {label}
     </button>
   );
 }
 
 /* ============================================================
-   ADD SECTION MENU (modal — unchanged behaviour)
+   ADD SECTION MENU — a small catalogue of section types
 ============================================================ */
 
 function AddSectionMenu({
@@ -1311,7 +1285,7 @@ function AddSectionMenu({
 }) {
   return (
     <div
-      className="fixed inset-0 z-[9999] flex items-end justify-center bg-slate-950/55 p-3 backdrop-blur-[6px] sm:items-center sm:p-6"
+      className="rs-scope fixed inset-0 z-[9999] flex items-end justify-center bg-[var(--rs-ink)]/50 p-3 backdrop-blur-[3px] sm:items-center sm:p-6"
       role="presentation"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) {
@@ -1320,31 +1294,31 @@ function AddSectionMenu({
       }}
     >
       <div
-        className="w-full max-w-2xl overflow-hidden rounded-3xl border border-[var(--border)] bg-[var(--surface)] shadow-2xl"
+        className="w-full max-w-2xl overflow-hidden rounded-[6px] border border-[var(--rs-rule)] bg-[var(--rs-paper)] shadow-[0_20px_60px_var(--rs-shadow)]"
         role="dialog"
         aria-modal="true"
         aria-label="Add a section"
       >
-        <div className="flex items-center justify-between border-b border-[var(--border-subtle)] px-5 py-4 sm:px-6">
+        <div className="flex items-center justify-between border-b border-[var(--rs-rule)] px-5 py-4 sm:px-6">
           <div>
-            <h2 className="text-base font-bold text-[var(--text-primary)]">
+            <h2 className="rs-serif text-[19px] text-[var(--rs-ink)]">
               Add a section
             </h2>
-            <p className="mt-0.5 text-xs text-[var(--text-muted)]">
-              Choose what you want to add to this resume.
+            <p className="mt-0.5 text-[12.5px] text-[var(--rs-ink-soft)]">
+              Choose what belongs in this draft.
             </p>
           </div>
 
           <button
             type="button"
             onClick={onClose}
-            className="flex size-9 items-center justify-center rounded-lg text-[var(--text-muted)] hover:bg-[var(--surface-hover)]"
+            className="flex size-8 items-center justify-center rounded-[4px] text-[var(--rs-ink-soft)] hover:bg-[var(--rs-paper-raised)]"
           >
-            <HiOutlineXMark size={20} />
+            <HiOutlineXMark size={19} />
           </button>
         </div>
 
-        <div className="grid max-h-[70vh] grid-cols-1 gap-2 overflow-y-auto p-4 sm:grid-cols-2 sm:p-5">
+        <div className="grid max-h-[70vh] grid-cols-1 gap-px overflow-y-auto bg-[var(--rs-rule)] p-px sm:grid-cols-2">
           {(Object.keys(SECTION_META) as ResumeSectionType[]).map((type) => {
             const meta = SECTION_META[type];
 
@@ -1356,17 +1330,17 @@ function AddSectionMenu({
                   onSelect(type);
                   onClose();
                 }}
-                className="group flex items-start gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface-subtle)] p-4 text-left transition hover:border-indigo-400 hover:bg-indigo-500/[0.04]"
+                className="group flex items-start gap-3 bg-[var(--rs-paper)] p-4 text-left transition hover:bg-[var(--rs-brass-wash)]"
               >
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[var(--surface)] text-indigo-600 shadow-sm transition group-hover:bg-indigo-600 group-hover:text-white dark:text-indigo-300">
-                  <SectionIcon type={type} size={19} />
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-[4px] border border-[var(--rs-rule)] text-[var(--rs-brass)] transition group-hover:border-[var(--rs-brass)]">
+                  <SectionIcon type={type} size={17} />
                 </span>
 
                 <span className="min-w-0">
-                  <span className="block text-sm font-bold text-[var(--text-primary)]">
+                  <span className="block text-[13.5px] font-semibold text-[var(--rs-ink)]">
                     {meta.label}
                   </span>
-                  <span className="mt-1 block text-xs leading-5 text-[var(--text-muted)]">
+                  <span className="mt-1 block text-[12px] leading-5 text-[var(--rs-ink-soft)]">
                     {meta.description}
                   </span>
                 </span>
@@ -1380,14 +1354,14 @@ function AddSectionMenu({
 }
 
 /* ============================================================
-   ACCORDION SECTION CARD
-   Each resume section is a row in the document — collapsed by
-   default once filled, with its controls inline in the row
-   itself rather than a separate settings panel.
+   SECTION BLOCK — a numbered entry in the document sequence.
+   Ruled rather than boxed, since the resume reads as one
+   continuous manuscript, not a stack of cards.
 ============================================================ */
 
-function AccordionSectionCard({
+function SectionBlock({
   section,
+  index,
   isFirst,
   isLast,
   expanded,
@@ -1413,103 +1387,101 @@ function AccordionSectionCard({
   return (
     <div
       id={domId(section.id)}
-      className="scroll-mt-24 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_14px_45px_-30px_rgba(15,23,42,0.35)] dark:border-white/[0.07] dark:bg-zinc-950"
+      className="scroll-mt-6 border-t border-[var(--rs-rule)]"
     >
-      {/* Row header — always visible */}
-      <div className="flex items-center gap-3 px-4 py-3.5 sm:px-5">
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-300">
-          <SectionIcon type={section.type} size={17} />
+      <div className="flex items-start gap-3 py-4 sm:gap-4">
+        <span className="rs-serif hidden pt-0.5 text-[15px] text-[var(--rs-ink-faint)] sm:block">
+          {ordinal(index)}
+        </span>
+
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-[4px] border border-[var(--rs-rule)] text-[var(--rs-brass)] sm:hidden">
+          <SectionIcon type={section.type} size={15} />
         </span>
 
         <button
           type="button"
           onClick={onToggleExpanded}
-          className="flex min-w-0 flex-1 items-center gap-2 text-left"
+          className="flex min-w-0 flex-1 flex-col items-start gap-1 text-left"
         >
-          <span className="min-w-0 flex-1">
-            <input
-              value={section.title}
-              onClick={(event) => event.stopPropagation()}
-              onChange={(event) => onUpdate({ title: event.target.value })}
-              className="w-full min-w-0 truncate bg-transparent text-sm font-bold text-slate-950 outline-none dark:text-white"
-            />
+          <input
+            value={section.title}
+            onClick={(event) => event.stopPropagation()}
+            onChange={(event) => onUpdate({ title: event.target.value })}
+            className="rs-serif w-full min-w-0 truncate border-0 bg-transparent p-0 text-[19px] text-[var(--rs-ink)] outline-none"
+          />
 
-            <span className="mt-0.5 flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-zinc-500">
-              {filled ? (
-                <span className="inline-flex size-1.5 rounded-full bg-emerald-500" />
-              ) : (
-                <span className="inline-flex size-1.5 rounded-full bg-slate-300 dark:bg-zinc-700" />
+          <span className="flex items-center gap-1.5 text-[11.5px] text-[var(--rs-ink-soft)]">
+            <span
+              className={cn(
+                "inline-flex size-1.5 rounded-full",
+                filled ? "bg-[var(--rs-moss)]" : "bg-[var(--rs-ink-faint)]",
               )}
-              {getSectionItemCount(section)}{" "}
-              {section.type === "SUMMARY" ? "content" : "entries"}
-              {!section.visible && " · Hidden from PDF"}
-            </span>
+            />
+            {getSectionItemCount(section)}{" "}
+            {section.type === "SUMMARY" ? "content" : "entries"}
+            {!section.visible && " · hidden from PDF"}
           </span>
         </button>
 
-        <div className="flex shrink-0 items-center gap-0.5">
+        <div className="flex shrink-0 items-center gap-0.5 pt-0.5">
           <button
             type="button"
             disabled={isFirst}
             onClick={onMoveUp}
-            className="hidden size-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 disabled:opacity-25 dark:hover:bg-white/[0.06] sm:flex"
+            className="hidden size-7 items-center justify-center rounded-[4px] text-[var(--rs-ink-faint)] transition hover:bg-[var(--rs-paper-raised)] disabled:opacity-20 sm:flex"
             title="Move up"
           >
-            <HiOutlineChevronUp size={16} />
+            <HiOutlineChevronUp size={15} />
           </button>
 
           <button
             type="button"
             disabled={isLast}
             onClick={onMoveDown}
-            className="hidden size-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 disabled:opacity-25 dark:hover:bg-white/[0.06] sm:flex"
+            className="hidden size-7 items-center justify-center rounded-[4px] text-[var(--rs-ink-faint)] transition hover:bg-[var(--rs-paper-raised)] disabled:opacity-20 sm:flex"
             title="Move down"
           >
-            <HiOutlineChevronDown size={16} />
+            <HiOutlineChevronDown size={15} />
           </button>
 
           <button
             type="button"
             onClick={() => onUpdate({ visible: !section.visible })}
-            className={cn(
-              "hidden rounded-lg px-2.5 py-1.5 text-[11px] font-semibold transition sm:inline-flex",
-              section.visible
-                ? "text-emerald-600 hover:bg-emerald-500/10"
-                : "text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06]",
-            )}
+            className="flex size-7 items-center justify-center rounded-[4px] text-[var(--rs-ink-soft)] transition hover:bg-[var(--rs-paper-raised)]"
+            title={section.visible ? "Visible in PDF" : "Hidden from PDF"}
           >
-            {section.visible ? "Visible" : "Hidden"}
+            {section.visible ? (
+              <HiOutlineEye size={15} />
+            ) : (
+              <HiOutlineEyeSlash size={15} />
+            )}
           </button>
 
           <button
             type="button"
             onClick={onDelete}
-            className="flex size-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-500/10 hover:text-red-500"
+            className="flex size-7 items-center justify-center rounded-[4px] text-[var(--rs-ink-faint)] transition hover:bg-[var(--rs-rust)]/10 hover:text-[var(--rs-rust)]"
             title="Delete section"
           >
-            <HiOutlineTrash size={16} />
+            <HiOutlineTrash size={15} />
           </button>
 
           <button
             type="button"
             onClick={onToggleExpanded}
-            className="flex size-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 dark:hover:bg-white/[0.06]"
+            className="flex size-7 items-center justify-center rounded-[4px] text-[var(--rs-ink-soft)] transition hover:bg-[var(--rs-paper-raised)]"
             title={expanded ? "Collapse" : "Expand"}
           >
             <HiOutlineChevronDown
-              size={16}
-              className={cn(
-                "transition-transform",
-                expanded && "rotate-180",
-              )}
+              size={15}
+              className={cn("transition-transform", expanded && "rotate-180")}
             />
           </button>
         </div>
       </div>
 
-      {/* Body */}
       {expanded && (
-        <div className="border-t border-slate-100 px-4 py-5 dark:border-white/[0.05] sm:px-6 sm:py-6">
+        <div className="pb-6 pl-0 sm:pl-8">
           <SectionEditor section={section} updateSection={onUpdate} />
         </div>
       )}
@@ -1518,11 +1490,13 @@ function AccordionSectionCard({
 }
 
 /* ============================================================
-   SECTION RAIL (desktop) — a slim vertical index, not a
-   full sidebar. Reflects that a resume really is a sequence.
+   SECTION TABS — one horizontal, scrollable strip used at every
+   breakpoint (replaces a separate desktop rail / mobile chip
+   pattern) so navigation reads as chapter tabs on a folder, not
+   an app sidebar.
 ============================================================ */
 
-function SectionRail({
+function SectionTabs({
   sections,
   activeSectionId,
   onJump,
@@ -1534,120 +1508,57 @@ function SectionRail({
   onAdd: () => void;
 }) {
   return (
-    <div className="hidden lg:sticky lg:top-24 lg:flex lg:h-fit lg:w-14 lg:flex-col lg:items-center lg:gap-1">
+    <div className="rs-section-nav rs-scrollbar -mx-5 flex gap-2 overflow-x-auto rounded-[8px] border border-[var(--rs-rule)] bg-[var(--rs-paper-raised)] p-1.5 px-2 sm:mx-0 sm:px-2">
       <button
         type="button"
         onClick={() => onJump("__personal__")}
-        className="flex size-10 items-center justify-center rounded-xl bg-slate-900 text-white shadow-md transition hover:bg-slate-700 dark:bg-white dark:text-slate-950"
-        title="Personal information"
+        className={cn(
+          "flex shrink-0 items-center gap-1.5 rounded-[6px] border px-3 py-2.5 text-[12.5px] font-medium transition-all duration-200",
+          activeSectionId === "__personal__"
+            ? "border-[var(--rs-brass)] bg-[var(--rs-paper)] text-[var(--rs-ink)] shadow-[0_2px_8px_var(--rs-shadow)]"
+            : "border-transparent text-[var(--rs-ink-soft)] hover:border-[var(--rs-rule-strong)] hover:bg-[var(--rs-paper)] hover:text-[var(--rs-ink)]",
+        )}
       >
-        <HiOutlineUser size={17} />
+        <HiOutlineUser size={14} />
+        Personal
       </button>
-
-      <div className="my-1 h-4 w-px bg-slate-200 dark:bg-white/10" />
 
       {sections.map((section) => {
         const active = activeSectionId === section.id;
 
         return (
-          <React.Fragment key={section.id}>
-            <button
-              type="button"
-              onClick={() => onJump(section.id)}
-              title={section.title}
-              className={cn(
-                "flex size-10 items-center justify-center rounded-xl border transition",
-                active
-                  ? "border-indigo-500 bg-indigo-600 text-white shadow-md shadow-indigo-600/20"
-                  : "border-slate-200 bg-white text-slate-500 hover:border-indigo-300 hover:text-indigo-600 dark:border-white/10 dark:bg-zinc-950 dark:text-zinc-400",
-              )}
-            >
-              <SectionIcon type={section.type} size={16} />
-            </button>
-
-            <div className="h-3 w-px bg-slate-200 dark:bg-white/10" />
-          </React.Fragment>
+          <button
+            type="button"
+            key={section.id}
+            onClick={() => onJump(section.id)}
+            className={cn(
+              "flex shrink-0 items-center gap-1.5 rounded-[6px] border px-3 py-2.5 text-[12.5px] font-medium transition-all duration-200",
+              active
+                ? "border-[var(--rs-brass)] bg-[var(--rs-paper)] text-[var(--rs-ink)] shadow-[0_2px_8px_var(--rs-shadow)]"
+                : "border-transparent text-[var(--rs-ink-soft)] hover:border-[var(--rs-rule-strong)] hover:bg-[var(--rs-paper)] hover:text-[var(--rs-ink)]",
+            )}
+          >
+            <SectionIcon type={section.type} size={14} />
+            <span className="max-w-[130px] truncate">{section.title}</span>
+          </button>
         );
       })}
 
       <button
         type="button"
         onClick={onAdd}
-        className="flex size-10 items-center justify-center rounded-xl border border-dashed border-indigo-300 text-indigo-500 transition hover:bg-indigo-500/5 dark:border-indigo-400/30"
-        title="Add section"
+        className="flex shrink-0 items-center gap-1.5 rounded-[6px] border border-dashed border-[var(--rs-rule-strong)] px-3 py-2.5 text-[12.5px] font-semibold text-[var(--rs-brass)] transition-all duration-200 hover:border-[var(--rs-brass)] hover:bg-[var(--rs-brass-wash)] hover:text-[var(--rs-brass-strong)]"
       >
-        <HiOutlinePlus size={17} />
+        <HiOutlinePlus size={14} />
+        Add section
       </button>
     </div>
   );
 }
 
 /* ============================================================
-   MOBILE JUMP CHIPS
-============================================================ */
-
-function MobileJumpChips({
-  sections,
-  activeSectionId,
-  onJump,
-  onAdd,
-}: {
-  sections: ResumeSection[];
-  activeSectionId: string;
-  onJump: (id: string) => void;
-  onAdd: () => void;
-}) {
-  return (
-    <div className="lg:hidden">
-      <div className="rounded-2xl border border-slate-200 bg-white p-2 shadow-sm dark:border-white/[0.07] dark:bg-zinc-950">
-        <div className="flex gap-2 overflow-x-auto pb-0.5">
-          <button
-            type="button"
-            onClick={() => onJump("__personal__")}
-            className={cn(
-              "flex min-h-9 shrink-0 items-center gap-2 rounded-xl px-3 text-[11px] font-bold transition",
-              activeSectionId === "__personal__"
-                ? "bg-slate-950 text-white shadow-sm dark:bg-white dark:text-slate-950"
-                : "bg-slate-50 text-slate-600 hover:bg-slate-100 dark:bg-white/[0.04] dark:text-zinc-300 dark:hover:bg-white/[0.07]",
-            )}
-          >
-            <HiOutlineUser size={15} />
-            Personal
-          </button>
-
-          {sections.map((section) => (
-            <button
-              type="button"
-              key={section.id}
-              onClick={() => onJump(section.id)}
-              className={cn(
-                "flex min-h-9 shrink-0 items-center gap-2 rounded-xl px-3 text-[11px] font-bold transition",
-                activeSectionId === section.id
-                  ? "bg-indigo-600 text-white shadow-sm shadow-indigo-600/20"
-                  : "bg-slate-50 text-slate-600 hover:bg-slate-100 dark:bg-white/[0.04] dark:text-zinc-300 dark:hover:bg-white/[0.07]",
-              )}
-            >
-              <SectionIcon type={section.type} size={15} />
-              <span className="max-w-[110px] truncate">{section.title}</span>
-            </button>
-          ))}
-
-          <button
-            type="button"
-            onClick={onAdd}
-            className="flex min-h-9 shrink-0 items-center gap-2 rounded-xl border border-dashed border-indigo-300 bg-indigo-50 px-3 text-[11px] font-bold text-indigo-600 dark:border-indigo-400/30 dark:bg-indigo-500/[0.08] dark:text-indigo-300"
-          >
-            <HiOutlinePlus size={15} />
-            Add section
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ============================================================
-   PREVIEW PANEL (drawer below xl, dockable column at xl+)
+   PREVIEW PANEL — a loose page laid beside/over the draft.
+   Never sticky: it scrolls with the page like everything else.
 ============================================================ */
 
 function PreviewPanel({
@@ -1662,18 +1573,20 @@ function PreviewPanel({
   if (docked) {
     return (
       <div className="hidden xl:block">
-        <div className="sticky top-24 overflow-hidden rounded-3xl border border-slate-200 bg-[#e9ebef] shadow-[0_18px_55px_-32px_rgba(15,23,42,0.35)] dark:border-white/[0.07] dark:bg-zinc-900">
-          <div className="flex min-h-[56px] items-center justify-between border-b border-slate-200 bg-white px-5 dark:border-white/[0.06] dark:bg-zinc-950">
-            <p className="text-xs font-semibold text-indigo-500">
+        <div className="overflow-hidden rounded-[6px] border border-[var(--rs-rule)] bg-[var(--rs-paper-raised)]">
+          <div className="flex h-12 items-center justify-between border-b border-[var(--rs-rule)] bg-[var(--rs-paper)] px-4">
+            <p className="text-[11.5px] font-semibold text-[var(--rs-brass)]">
               Live preview
             </p>
-            <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-bold text-slate-500 dark:border-white/10 dark:bg-white/[0.04] dark:text-zinc-400">
+            <span className="rounded-[4px] border border-[var(--rs-rule)] px-2 py-0.5 text-[10px] font-medium text-[var(--rs-ink-soft)]">
               A4
             </span>
           </div>
 
-          <div className="max-h-[calc(100vh-160px)] overflow-auto p-4">
-            <ResumePreview resume={content} />
+          <div className="max-h-[calc(100vh-220px)] overflow-auto p-4">
+            <div className="shadow-[0_16px_40px_var(--rs-shadow)]">
+              <ResumePreview resume={content} />
+            </div>
           </div>
         </div>
       </div>
@@ -1682,7 +1595,7 @@ function PreviewPanel({
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex justify-end bg-slate-950/55 backdrop-blur-[6px]"
+      className="rs-scope fixed inset-0 z-[9999] flex justify-end bg-[var(--rs-ink)]/50 backdrop-blur-[3px]"
       role="presentation"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) {
@@ -1691,28 +1604,32 @@ function PreviewPanel({
       }}
     >
       <div
-        className="flex h-full w-full max-w-[560px] flex-col bg-[#eef0f4] shadow-2xl"
+        className="flex h-full w-full max-w-[560px] flex-col bg-[var(--rs-paper-raised)] shadow-2xl"
         role="dialog"
         aria-modal="true"
         aria-label="Resume preview"
       >
-        <div className="flex min-h-14 items-center justify-between border-b border-slate-200 bg-white px-4">
+        <div className="flex h-14 items-center justify-between border-b border-[var(--rs-rule)] bg-[var(--rs-paper)] px-4">
           <div>
-            <p className="text-sm font-bold text-slate-900">Resume preview</p>
-            <p className="text-[10px] text-slate-500">Matches your PDF layout</p>
+            <p className="rs-serif text-[15px] text-[var(--rs-ink)]">
+              Resume preview
+            </p>
+            <p className="text-[10.5px] text-[var(--rs-ink-soft)]">
+              Matches your PDF layout
+            </p>
           </div>
 
           <button
             type="button"
             onClick={onClose}
-            className="flex size-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100"
+            className="flex size-8 items-center justify-center rounded-[4px] text-[var(--rs-ink-soft)] hover:bg-[var(--rs-paper-raised)]"
           >
-            <HiOutlineXMark size={21} />
+            <HiOutlineXMark size={20} />
           </button>
         </div>
 
         <div className="flex-1 overflow-auto p-4 sm:p-6">
-          <div className="mx-auto max-w-[680px] shadow-2xl">
+          <div className="mx-auto max-w-[680px] shadow-[0_16px_40px_var(--rs-shadow)]">
             <ResumePreview resume={content} />
           </div>
         </div>
@@ -1765,8 +1682,6 @@ export default function Resume() {
 
   /* ------------------------------------------------------------
      MODAL BEHAVIOUR
-     Preview / Add Section are true application-level overlays.
-     Lock the document behind them and support Escape-to-close.
   ------------------------------------------------------------ */
   useEffect(() => {
     const modalOpen = showAddSection || previewOpen;
@@ -1822,8 +1737,7 @@ export default function Resume() {
     }
   }, [customizationQuery.data]);
 
-  /* INITIALIZE WHICH SECTIONS START EXPANDED — filled ones open,
-     empty ones collapsed, so the document isn't a wall of empty forms */
+  /* INITIALIZE WHICH SECTIONS START EXPANDED */
   useEffect(() => {
     if (hasInitializedExpanded) {
       return;
@@ -1908,9 +1822,6 @@ export default function Resume() {
   const sections = content.sections ?? [];
 
   const completeness = useMemo(() => computeCompleteness(content), [content]);
-
-  /* SECTION HELPERS — operate by id, since the document renders
-     every section inline rather than routing through one "active" one */
 
   function updateSectionById(id: string, patch: Partial<ResumeSection>) {
     setContent((previous) => ({
@@ -2047,13 +1958,12 @@ export default function Resume() {
   /* LOADING */
   if (profileQuery.isLoading || customizationQuery.isLoading) {
     return (
-      <div className="flex min-h-[70vh] items-center justify-center">
+      <div className="rs-scope flex min-h-[70vh] items-center justify-center bg-[var(--rs-paper)]">
+        <style>{THEME_STYLES}</style>
         <div className="flex flex-col items-center gap-4">
-          <div className="flex size-14 items-center justify-center rounded-2xl bg-indigo-600/10">
-            <HiOutlineArrowPath size={24} className="animate-spin text-indigo-600" />
-          </div>
-          <p className="text-sm font-medium text-[var(--text-muted)]">
-            Preparing Resume Studio…
+          <HiOutlineArrowPath size={22} className="animate-spin text-[var(--rs-brass)]" />
+          <p className="rs-serif text-[15px] italic text-[var(--rs-ink-soft)]">
+            Preparing your draft…
           </p>
         </div>
       </div>
@@ -2063,17 +1973,18 @@ export default function Resume() {
   /* ERROR */
   if (profileQuery.isError || customizationQuery.isError) {
     return (
-      <div className="flex min-h-[70vh] items-center justify-center px-5">
-        <div className="w-full max-w-md rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-7 text-center shadow-xl">
-          <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-red-500/10 text-red-500">
-            <HiOutlineDocumentText size={24} />
+      <div className="rs-scope flex min-h-[70vh] items-center justify-center bg-[var(--rs-paper)] px-5">
+        <style>{THEME_STYLES}</style>
+        <div className="w-full max-w-md rounded-[6px] border border-[var(--rs-rule)] bg-[var(--rs-paper-raised)] p-8 text-center">
+          <div className="mx-auto flex size-11 items-center justify-center rounded-[4px] border border-[var(--rs-rust)]/40 text-[var(--rs-rust)]">
+            <HiOutlineDocumentText size={22} />
           </div>
 
-          <h2 className="mt-5 text-lg font-bold text-[var(--text-primary)]">
-            Unable to load Resume Studio
+          <h2 className="rs-serif mt-5 text-[20px] text-[var(--rs-ink)]">
+            The draft won&rsquo;t open
           </h2>
 
-          <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">
+          <p className="mt-2 text-[13.5px] leading-6 text-[var(--rs-ink-soft)]">
             Something went wrong while loading your resume.
           </p>
 
@@ -2083,9 +1994,9 @@ export default function Resume() {
               profileQuery.refetch();
               customizationQuery.refetch();
             }}
-            className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white transition hover:bg-indigo-700"
+            className="mt-6 inline-flex h-10 items-center gap-2 rounded-[4px] bg-[var(--rs-ink)] px-5 text-[13.5px] font-medium text-[var(--rs-paper)] transition hover:bg-[var(--rs-brass-strong)]"
           >
-            <HiOutlineArrowPath size={17} />
+            <HiOutlineArrowPath size={15} />
             Try again
           </button>
         </div>
@@ -2098,74 +2009,46 @@ export default function Resume() {
     const hasProfile = Boolean(profileQuery.data);
 
     return (
-      <main className="min-h-full w-full p-4 sm:p-6 lg:p-8">
-        <div className="mx-auto flex min-h-[70vh] w-full max-w-5xl items-center justify-center">
-          <div className="w-full overflow-hidden rounded-[28px] border border-[var(--border)] bg-[var(--surface)] shadow-2xl shadow-slate-900/5">
-            <div className="grid lg:grid-cols-[1.1fr_0.9fr]">
-              <div className="p-7 sm:p-10 lg:p-14">
-                <div className="flex size-12 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-600/20">
-                  <HiOutlineDocumentText size={24} />
+      <main className="rs-scope min-h-full w-full bg-[var(--rs-paper)] p-4 sm:p-6 lg:p-8">
+        <style>{THEME_STYLES}</style>
+        <PageTitle title="Resume Editor" />
+
+        <div className="mx-auto flex min-h-[70vh] w-full max-w-4xl items-center justify-center">
+          <div className="w-full overflow-hidden rounded-[8px] border border-[var(--rs-rule)] bg-[var(--rs-paper-raised)]">
+            <div className="p-8 text-center sm:p-14">
+              <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[var(--rs-brass)]" style={{ letterSpacing: "0.08em" }}>
+                Resume Studio
+              </p>
+
+              <h1 className="rs-serif mx-auto mt-3 max-w-xl text-[32px] leading-[1.15] text-[var(--rs-ink)] sm:text-[40px]">
+                Every resume starts as a blank page.
+              </h1>
+
+              <p className="mx-auto mt-4 max-w-md text-[14px] leading-7 text-[var(--rs-ink-soft)]">
+                Start from your master profile and shape it into a focused
+                draft for this opportunity.
+              </p>
+
+              {!hasProfile ? (
+                <div className="mx-auto mt-8 max-w-sm rounded-[4px] border border-[var(--rs-rust)]/30 bg-[var(--rs-rust)]/10 p-4 text-[13px] leading-6 text-[var(--rs-rust)]">
+                  Complete your Profile first — your resume is built from
+                  that information.
                 </div>
-
-                <p className="mt-8 flex items-center gap-1.5 text-sm font-semibold text-indigo-500">
-                  <HiOutlineSparkles size={15} />
-                  Resume Studio
-                </p>
-
-                <h1 className="mt-2 max-w-lg text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl">
-                  Build a resume that feels like you.
-                </h1>
-
-                <p className="mt-4 max-w-xl text-sm leading-7 text-[var(--text-muted)] sm:text-base">
-                  Start with your master profile and turn it into a focused,
-                  customizable resume for each opportunity.
-                </p>
-
-                {!hasProfile ? (
-                  <div className="mt-7 rounded-2xl border border-amber-300/30 bg-amber-500/10 p-4 text-sm leading-6 text-amber-700 dark:text-amber-300">
-                    Complete your Profile first. Your resume will be created
-                    from that information.
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    disabled={importMutation.isPending}
-                    onClick={() => importMutation.mutate()}
-                    className="mt-8 inline-flex min-h-12 items-center gap-2 rounded-xl bg-indigo-600 px-6 text-sm font-bold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-700 disabled:opacity-60"
-                  >
-                    {importMutation.isPending ? (
-                      <HiOutlineArrowPath size={18} className="animate-spin" />
-                    ) : (
-                      <HiOutlinePlus size={18} />
-                    )}
-                    {importMutation.isPending ? "Creating..." : "Create from profile"}
-                  </button>
-                )}
-              </div>
-
-              <div className="hidden min-h-[440px] bg-gradient-to-br from-indigo-600 via-indigo-700 to-slate-900 p-8 lg:block">
-                <div className="flex h-full items-center justify-center">
-                  <div className="w-full max-w-sm rounded-xl bg-white p-7 shadow-2xl">
-                    <div className="h-3 w-32 rounded-full bg-slate-900" />
-                    <div className="mt-2 h-2 w-24 rounded-full bg-slate-200" />
-                    <div className="mt-7 h-2 w-full rounded-full bg-slate-100" />
-                    <div className="mt-2 h-2 w-5/6 rounded-full bg-slate-100" />
-                    <div className="mt-2 h-2 w-4/6 rounded-full bg-slate-100" />
-                    <div className="mt-7 h-2 w-28 rounded-full bg-slate-300" />
-                    <div className="mt-4 space-y-2">
-                      <div className="h-2 rounded-full bg-slate-100" />
-                      <div className="h-2 w-11/12 rounded-full bg-slate-100" />
-                      <div className="h-2 w-4/5 rounded-full bg-slate-100" />
-                    </div>
-                    <div className="mt-7 h-2 w-24 rounded-full bg-slate-300" />
-                    <div className="mt-4 grid grid-cols-3 gap-2">
-                      <div className="h-7 rounded bg-slate-100" />
-                      <div className="h-7 rounded bg-slate-100" />
-                      <div className="h-7 rounded bg-slate-100" />
-                    </div>
-                  </div>
-                </div>
-              </div>
+              ) : (
+                <button
+                  type="button"
+                  disabled={importMutation.isPending}
+                  onClick={() => importMutation.mutate()}
+                  className="mt-8 inline-flex h-11 items-center gap-2 rounded-[4px] bg-[var(--rs-ink)] px-6 text-[13.5px] font-medium text-[var(--rs-paper)] transition hover:bg-[var(--rs-brass-strong)] disabled:opacity-60"
+                >
+                  {importMutation.isPending ? (
+                    <HiOutlineArrowPath size={16} className="animate-spin" />
+                  ) : (
+                    <HiOutlinePencil size={16} />
+                  )}
+                  {importMutation.isPending ? "Creating…" : "Start from profile"}
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -2175,39 +2058,49 @@ export default function Resume() {
 
   /* BUILDER */
   return (
-    <main className="min-h-full w-full bg-[#f5f6fa] text-slate-900 dark:bg-[#09090b] dark:text-white">
-      {/* HEADER */}
-      <header className="relative z-10 border-b border-slate-200 bg-white/95 dark:border-white/[0.07] dark:bg-zinc-950/95">
-        <div className="mx-auto flex min-h-[68px] w-full max-w-[1200px] items-center justify-between gap-4 px-4 sm:px-6">
-          <div className="flex min-w-0 items-center gap-3">
-            <div className="relative flex size-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-900 to-slate-700 text-white shadow-lg shadow-slate-950/10 dark:from-white dark:to-zinc-200 dark:text-slate-950">
-              <HiOutlineDocumentText size={19} />
-              <span className="absolute -right-1 -top-1 size-2.5 rounded-full bg-indigo-500 ring-2 ring-white dark:ring-zinc-950" />
+    <main className="rs-scope min-h-full w-full bg-[var(--rs-paper)]">
+      <style>{THEME_STYLES}</style>
+      <PageTitle title="Resume Editor" />
+
+      {/* masthead band — scrolls away with the page, not sticky */}
+      <section className="border-b border-[var(--rs-rule)] bg-[var(--rs-paper-raised)]">
+        <div className="mx-auto max-w-[860px] px-5 py-10 sm:px-8 sm:py-14">
+          <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
+            <div className="min-w-0 flex-1">
+              <PersonalInfoEditor content={content} update={updatePersonal} />
             </div>
 
-            <div className="min-w-0">
-              <h1 className="truncate text-base font-bold tracking-tight text-slate-950 dark:text-white">
-                Resume Studio
-              </h1>
-              <p className="truncate text-xs font-medium text-slate-500 dark:text-zinc-500">
-                {content.fullName || "Untitled resume"} · {completeness}% complete
-              </p>
+            <div className="flex shrink-0 flex-col items-start gap-4 lg:items-end">
+              <div className="text-left lg:text-right">
+                <p className="rs-serif text-[26px] text-[var(--rs-ink)]">
+                  {completeness}<span className="text-[15px] text-[var(--rs-ink-faint)]">/100</span>
+                </p>
+                <p className="text-[11px] text-[var(--rs-ink-soft)]">draft complete</p>
+                <div className="mt-1.5 h-[3px] w-24 bg-[var(--rs-rule)] lg:ml-auto">
+                  <div
+                    className="h-full bg-[var(--rs-brass)] transition-all duration-500"
+                    style={{ width: `${completeness}%` }}
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+          <div className="mt-8 flex flex-wrap items-center gap-2">
             <button
               type="button"
-              onClick={() => { setPreviewDocked((value) => !value); setPreviewOpen(false); }}
+              onClick={() => {
+                setPreviewDocked((value) => !value);
+                setPreviewOpen(false);
+              }}
               className={cn(
-                "hidden min-h-9 items-center gap-2 rounded-xl border px-3 text-xs font-semibold shadow-sm transition xl:inline-flex",
+                "hidden h-9 items-center gap-1.5 rounded-[4px] border px-3.5 text-[12.5px] font-medium transition xl:inline-flex",
                 previewDocked
-                  ? "border-indigo-300 bg-indigo-50 text-indigo-600 dark:border-indigo-400/30 dark:bg-indigo-500/10 dark:text-indigo-300"
-                  : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-zinc-300 dark:hover:bg-white/[0.07]",
+                  ? "border-[var(--rs-brass)] bg-[var(--rs-brass-wash)] text-[var(--rs-brass-strong)]"
+                  : "border-[var(--rs-rule)] text-[var(--rs-ink-soft)] hover:border-[var(--rs-rule-strong)] hover:text-[var(--rs-ink)]",
               )}
-              title="Toggle split view"
             >
-              <HiOutlineViewColumns size={15} />
+              <HiOutlineArrowUpRight size={14} />
               Split view
             </button>
 
@@ -2215,10 +2108,10 @@ export default function Resume() {
               type="button"
               onClick={() => replaceMutation.mutate()}
               disabled={replaceMutation.isPending}
-              className="hidden min-h-9 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-zinc-300 dark:hover:bg-white/[0.07] md:inline-flex"
+              className="hidden h-9 items-center gap-1.5 rounded-[4px] border border-[var(--rs-rule)] px-3.5 text-[12.5px] font-medium text-[var(--rs-ink-soft)] transition hover:border-[var(--rs-rule-strong)] hover:text-[var(--rs-ink)] disabled:opacity-50 md:inline-flex"
             >
               <HiOutlineArrowPath
-                size={14}
+                size={13}
                 className={replaceMutation.isPending ? "animate-spin" : ""}
               />
               Sync profile
@@ -2226,107 +2119,68 @@ export default function Resume() {
 
             <button
               type="button"
-              onClick={() => { setPreviewDocked(false); setPreviewOpen(true); }}
+              onClick={() => {
+                setPreviewDocked(false);
+                setPreviewOpen(true);
+              }}
               className={cn(
-                "inline-flex min-h-9 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-zinc-200 dark:hover:bg-white/[0.07]",
+                "inline-flex h-9 items-center gap-1.5 rounded-[4px] border border-[var(--rs-rule)] px-3.5 text-[12.5px] font-medium text-[var(--rs-ink-soft)] transition hover:border-[var(--rs-rule-strong)] hover:text-[var(--rs-ink)]",
                 previewDocked && "xl:hidden",
               )}
             >
-              <HiOutlineEye size={15} />
-              <span className="hidden sm:inline">Preview</span>
+              <HiOutlineEye size={14} />
+              Preview
             </button>
 
             <button
               type="button"
               onClick={download}
               disabled={isDownloading}
-              className="inline-flex min-h-9 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-zinc-200 dark:hover:bg-white/[0.07]"
+              className="inline-flex h-9 items-center gap-1.5 rounded-[4px] border border-[var(--rs-rule)] px-3.5 text-[12.5px] font-medium text-[var(--rs-ink-soft)] transition hover:border-[var(--rs-rule-strong)] hover:text-[var(--rs-ink)] disabled:opacity-50"
             >
               {isDownloading ? (
-                <HiOutlineArrowPath size={15} className="animate-spin" />
+                <HiOutlineArrowPath size={14} className="animate-spin" />
               ) : (
-                <HiOutlineArrowDownTray size={15} />
+                <HiOutlineArrowDownTray size={14} />
               )}
-              <span className="hidden sm:inline">Export PDF</span>
+              Export PDF
             </button>
 
             <button
               type="button"
               onClick={save}
               disabled={saveMutation.isPending}
-              className="inline-flex min-h-9 items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 text-xs font-bold text-white shadow-lg shadow-slate-950/10 transition hover:bg-slate-800 disabled:opacity-60 dark:bg-white dark:text-slate-950 dark:hover:bg-zinc-200"
+              className="ml-auto inline-flex h-9 items-center gap-1.5 rounded-[4px] bg-[var(--rs-ink)] px-4 text-[12.5px] font-semibold text-[var(--rs-paper)] transition hover:bg-[var(--rs-brass-strong)] disabled:opacity-60"
             >
               {saveMutation.isPending ? (
-                <HiOutlineArrowPath size={15} className="animate-spin" />
+                <HiOutlineArrowPath size={14} className="animate-spin" />
               ) : (
-                <HiOutlineCheck size={15} />
+                <HiOutlineCheck size={14} />
               )}
-              <span>{saveMutation.isPending ? "Saving..." : "Save"}</span>
+              {saveMutation.isPending ? "Saving…" : "Save"}
             </button>
           </div>
         </div>
+      </section>
 
-        {/* thin completeness thread under the header */}
-        <div className="h-[3px] w-full bg-slate-100 dark:bg-white/[0.06]">
-          <div
-            className="h-full bg-gradient-to-r from-indigo-500 to-indigo-600 transition-all duration-500"
-            style={{ width: `${completeness}%` }}
-          />
-        </div>
-      </header>
-
-      {/* WORKSPACE */}
-      <div className="mx-auto w-full max-w-[1200px] px-3 py-6 sm:px-6">
+      {/* workspace */}
+      <div className="mx-auto w-full max-w-[860px] px-5 pb-16 sm:px-8">
         <div
-          className={cn(
-            "mx-auto flex gap-6",
-            previewDocked ? "max-w-none xl:items-start" : "max-w-[760px]",
-          )}
+          id="resume-masthead"
+          className={cn("flex gap-10", previewDocked && "xl:max-w-none")}
         >
-          {/* rail */}
-          <SectionRail
-            sections={sections}
-            activeSectionId={activeSectionId}
-            onJump={jumpTo}
-            onAdd={() => setShowAddSection(true)}
-          />
-
-          {/* document column */}
-          <div className={cn("min-w-0 flex-1 space-y-4", previewDocked && "xl:max-w-[720px]")}>
-            <MobileJumpChips
-              sections={sections}
-              activeSectionId={activeSectionId}
-              onJump={jumpTo}
-              onAdd={() => setShowAddSection(true)}
-            />
-
-            {/* masthead — personal info, edited directly in place */}
-            <div
-              id="resume-masthead"
-              className="scroll-mt-24 overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 shadow-[0_14px_45px_-30px_rgba(15,23,42,0.35)] dark:border-white/[0.07] dark:from-zinc-950 dark:to-zinc-950"
-            >
-              <div className="flex items-center gap-3 border-b border-slate-100 px-5 py-4 dark:border-white/[0.05]">
-                <span className="flex size-9 items-center justify-center rounded-xl bg-slate-950 text-white dark:bg-white dark:text-slate-950">
-                  <HiOutlineUser size={17} />
-                </span>
-                <div>
-                  <p className="text-sm font-bold text-slate-950 dark:text-white">
-                    Personal information
-                  </p>
-                  <p className="text-[11px] text-slate-500 dark:text-zinc-500">
-                    The header block of your document
-                  </p>
-                </div>
-              </div>
-
-              <div className="p-5 sm:p-6">
-                <PersonalInfoEditor content={content} update={updatePersonal} />
-              </div>
+          <div className="min-w-0 flex-1">
+            <div className="pt-4">
+              <SectionTabs
+                sections={sections}
+                activeSectionId={activeSectionId}
+                onJump={jumpTo}
+                onAdd={() => setShowAddSection(true)}
+              />
             </div>
 
-            {/* resume sections, in document order */}
             {sections.map((section, index) => (
-              <AccordionSectionCard
+              <SectionBlock
                 key={section.id}
                 section={section}
                 index={index}
@@ -2342,40 +2196,48 @@ export default function Resume() {
             ))}
 
             {sections.length === 0 && (
-              <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-8 text-center shadow-sm dark:border-white/10 dark:bg-zinc-950 sm:p-12">
-                <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-300">
-                  <HiOutlinePlus size={24} />
+              <div className="border-t border-[var(--rs-rule)] py-14 text-center">
+                <div className="mx-auto flex size-12 items-center justify-center rounded-[4px] border border-dashed border-[var(--rs-rule-strong)] text-[var(--rs-brass)]">
+                  <HiOutlinePlus size={20} />
                 </div>
 
-                <h2 className="mt-5 text-xl font-bold tracking-tight text-slate-950 dark:text-white">
+                <h2 className="rs-serif mt-5 text-[22px] text-[var(--rs-ink)]">
                   Start building your resume
                 </h2>
 
-                <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500 dark:text-zinc-500">
-                  Add the sections that matter for this application — they'll
+                <p className="mx-auto mt-2 max-w-sm text-[13.5px] leading-6 text-[var(--rs-ink-soft)]">
+                  Add the sections that matter for this application — they
                   appear here in the order you arrange them.
                 </p>
 
                 <button
                   type="button"
                   onClick={() => setShowAddSection(true)}
-                  className="mt-7 inline-flex min-h-11 items-center gap-2 rounded-xl bg-slate-950 px-5 text-sm font-bold text-white shadow-lg shadow-slate-950/15 transition hover:bg-slate-800 dark:bg-white dark:text-slate-950"
+                  className="mt-7 inline-flex h-10 items-center gap-2 rounded-[4px] bg-[var(--rs-ink)] px-5 text-[13.5px] font-medium text-[var(--rs-paper)] transition hover:bg-[var(--rs-brass-strong)]"
                 >
-                  <HiOutlinePlus size={17} />
+                  <HiOutlinePlus size={16} />
                   Add your first section
                 </button>
               </div>
             )}
 
-            <AddButton
-              onClick={() => setShowAddSection(true)}
-              label="Add another section"
-            />
+            {sections.length > 0 && (
+              <div className="border-t border-[var(--rs-rule)] pt-5">
+                <AddButton
+                  onClick={() => setShowAddSection(true)}
+                  label="Add another section"
+                />
+              </div>
+            )}
           </div>
 
           {previewDocked && (
-            <div className="w-[420px] shrink-0">
-              <PreviewPanel content={content} docked onClose={() => setPreviewDocked(false)} />
+            <div className="hidden w-[380px] shrink-0 pt-4 xl:block">
+              <PreviewPanel
+                content={content}
+                docked
+                onClose={() => setPreviewDocked(false)}
+              />
             </div>
           )}
         </div>

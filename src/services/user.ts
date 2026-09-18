@@ -20,6 +20,7 @@ export interface ManagedUser {
     id: string;
     name: string;
     email: string;
+    avatarUrl: string;
 
     roleId: string;
 

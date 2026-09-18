@@ -33,7 +33,7 @@ import type {
   CreateUserPayload,
   UpdateUserPayload,
 } from "../../services/user";
-
+import PageTitle from "../../components/PageTitle";
 /*
  * CHANGE THIS IMPORT ONLY IF YOUR AUTH HOOK
  * LIVES SOMEWHERE ELSE.
@@ -49,6 +49,7 @@ import type {
  * hasPermission("USER_RESTORE")
  */
 import { useAuth } from "../../context/AuthContext";
+import UserAvatar from "../../components/UserAvatar";
 
 
 /* ================================================================
@@ -1128,14 +1129,7 @@ function UserCard({
   deleting?: boolean;
   resetting?: boolean;
 }) {
-  const initials =
-    user.name
-      .trim()
-      .split(/\s+/)
-      .slice(0, 2)
-      .map((part) => part[0])
-      .join("")
-      .toUpperCase();
+
 
   return (
     <article
@@ -1231,7 +1225,10 @@ function UserCard({
             }
           `}
         >
-          {initials}
+          <UserAvatar
+            name={user.name}
+            avatarUrl={user.avatarUrl}
+          />
         </div>
 
 
@@ -2556,6 +2553,7 @@ export default function Users() {
         lg:py-8
       "
     >
+      <PageTitle title="Users" />
 
       {/* ==========================================================
           HEADER

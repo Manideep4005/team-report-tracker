@@ -55,6 +55,7 @@ import {
   createEmptySkillCategory,
   normalizeResumeContent,
 } from "../../utils/resume";
+import PageTitle from "../../components/PageTitle";
 
 /* ============================================================
    SECTION META
@@ -1735,6 +1736,7 @@ export default function Profile() {
   if (profileQuery.isError) {
     return (
       <main className="flex min-h-[70vh] items-center justify-center px-4">
+        <PageTitle title="Master Profile" />
         <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 text-center shadow-xl dark:border-white/10 dark:bg-zinc-950 sm:p-8">
           <div className="mx-auto flex size-11 items-center justify-center rounded-2xl bg-red-500/10 text-red-500 sm:size-12">
             <HiOutlineUser size={20} className="sm:size-[23px]" />

@@ -4,6 +4,7 @@ export interface LoginHistoryUser {
     id: string;
     name: string;
     email: string;
+    avatarUrl: string;
 }
 
 export interface LoginHistoryItem {

@@ -35,6 +35,8 @@ import {
 import { format } from "date-fns";
 
 import DayPickerInput from "../../components/DayPickerInput";
+import PageTitle from "../../components/PageTitle";
+import UserAvatar from "../../components/UserAvatar";
 
 
 /* ========================================================================== */
@@ -67,6 +69,7 @@ interface DashboardResponse {
     user: {
       name: string;
       email: string;
+      avatarUrl: string;
     };
   }[];
 
@@ -88,6 +91,7 @@ interface DashboardResponse {
     id: string;
     name: string;
     email: string;
+    avatarUrl: string;
     submitted: boolean;
   }[];
 }
@@ -127,14 +131,6 @@ function avatarClasses(name: string) {
 }
 
 
-function getInitial(name: string) {
-  return (
-    name
-      ?.trim()
-      ?.charAt(0)
-      ?.toUpperCase() || "?"
-  );
-}
 
 
 /* ========================================================================== */
@@ -969,6 +965,7 @@ export default function Dashboard() {
                 lg:py-9
             "
     >
+      <PageTitle title="Dashboard" />
 
       <style>{`
 
@@ -1833,9 +1830,9 @@ export default function Dashboard() {
                                         dark:text-zinc-600
                                     "
                 >
-                 {data?.myReport
-    ? "Edit your submitted report and save the changes"
-    : "Add your work report for this date"}
+                  {data?.myReport
+                    ? "Edit your submitted report and save the changes"
+                    : "Add your work report for this date"}
                 </p>
 
               </div>
@@ -1897,7 +1894,7 @@ export default function Dashboard() {
                   )
                 }
 
-               disabled={reportMutation.isPending}
+                disabled={reportMutation.isPending}
 
                 placeholder={
                   isToday
@@ -2056,8 +2053,8 @@ export default function Dashboard() {
                     }
 
                     disabled={
-    reportMutation.isPending
-}
+                      reportMutation.isPending
+                    }
 
                     className="
                                             inline-flex
@@ -2235,9 +2232,10 @@ export default function Dashboard() {
                         )}
                                                 `}
                       >
-                        {getInitial(
-                          member.name
-                        )}
+                        <UserAvatar
+                          name={member.name}
+                          avatarUrl={member.avatarUrl}
+                        />
                       </div>
 
 
@@ -2662,9 +2660,10 @@ export default function Dashboard() {
                         )}
                                                 `}
                       >
-                        {getInitial(
-                          report.user.name
-                        )}
+                        <UserAvatar
+                          name={report.user.name}
+                          avatarUrl={report.user.avatarUrl}
+                        />
                       </span>
 
                     </div>

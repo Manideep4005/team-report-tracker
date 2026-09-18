@@ -23,6 +23,7 @@ import {
 } from "../../services/role";
 
 import { useAuth } from "../../context/AuthContext";
+import PageTitle from "../../components/PageTitle";
 
 /* ================================================================
    MAIN PAGE
@@ -189,6 +190,8 @@ export default function Roles() {
                 lg:py-8
             "
     >
+
+      <PageTitle title="Roles" />
       {/* ==================================================
                 HEADER
             ================================================== */}

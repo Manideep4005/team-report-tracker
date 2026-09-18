@@ -8,12 +8,17 @@ import {
   HiOutlineEyeSlash,
   HiOutlineCheckCircle,
   HiOutlineXCircle,
-  HiOutlineShieldCheck,
 } from "react-icons/hi2";
 
 import { changePassword } from "../../services/profile";
+import ProfileAvatarSettings from "../../components/ProfileAvatarSettings";
+import { useAuth } from "../../context/AuthContext";
+
+import PageTitle from "../../components/PageTitle";
 
 export default function Settings() {
+  const { user, updateUser } = useAuth();
+
   const [currentPassword, setCurrentPassword] = useState("");
 
   const [newPassword, setNewPassword] = useState("");
@@ -176,6 +181,15 @@ export default function Settings() {
       {/* ==================================================
                 PAGE HEADER
             ================================================== */}
+
+      <PageTitle title="Settings" />
+
+      {user && (
+        <ProfileAvatarSettings
+          user={user}
+          onUserUpdated={updateUser}
+        />
+      )}
 
       {/* ==================================================
                 SECURITY FORM
@@ -347,17 +361,16 @@ export default function Settings() {
                       className={`
                                                 text-[9px]
                                                 font-bold
-                                                ${
-                                                  passwordStrength.value <= 25
-                                                    ? "text-red-500"
-                                                    : passwordStrength.value ===
-                                                        50
-                                                      ? "text-amber-500"
-                                                      : passwordStrength.value ===
-                                                          75
-                                                        ? "text-blue-500"
-                                                        : "text-emerald-500"
-                                                }
+                                                ${passwordStrength.value <= 25
+                          ? "text-red-500"
+                          : passwordStrength.value ===
+                            50
+                            ? "text-amber-500"
+                            : passwordStrength.value ===
+                              75
+                              ? "text-blue-500"
+                              : "text-emerald-500"
+                        }
                                             `}
                     >
                       {passwordStrength.label}
@@ -382,20 +395,19 @@ export default function Settings() {
                                                             flex-1
                                                             rounded-full
                                                             transition-all
-                                                            ${
-                                                              active
-                                                                ? passwordStrength.value <=
-                                                                  25
-                                                                  ? "bg-red-500"
-                                                                  : passwordStrength.value ===
-                                                                      50
-                                                                    ? "bg-amber-500"
-                                                                    : passwordStrength.value ===
-                                                                        75
-                                                                      ? "bg-blue-500"
-                                                                      : "bg-emerald-500"
-                                                                : "bg-slate-100 dark:bg-zinc-800"
-                                                            }
+                                                            ${active
+                              ? passwordStrength.value <=
+                                25
+                                ? "bg-red-500"
+                                : passwordStrength.value ===
+                                  50
+                                  ? "bg-amber-500"
+                                  : passwordStrength.value ===
+                                    75
+                                    ? "bg-blue-500"
+                                    : "bg-emerald-500"
+                              : "bg-slate-100 dark:bg-zinc-800"
+                            }
                                                         `}
                         />
                       );
@@ -761,17 +773,16 @@ function PasswordRequirement({
       <span
         className={`
                     text-[10px]
-                    ${
-                      valid
-                        ? `
+                    ${valid
+            ? `
                                 text-slate-600
                                 dark:text-zinc-400
                             `
-                        : `
+            : `
                                 text-slate-400
                                 dark:text-zinc-600
                             `
-                    }
+          }
                 `}
       >
         {text}

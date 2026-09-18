@@ -18,10 +18,13 @@ import {
     type PublicMonitorData,
     type PublicMonitorReport,
 } from "../../services/publicMonitor";
+import PageTitle from "../../components/PageTitle";
+import UserAvatar from "../../components/UserAvatar";
 
 type PublicMonitorReportWithUser = PublicMonitorReport & {
     user: {
         name: string;
+        avatarUrl: string;
     };
 };
 
@@ -101,15 +104,6 @@ function formatReportDescription(description: string) {
         .filter(Boolean);
 }
 
-function getInitials(name: string) {
-    return name
-        .trim()
-        .split(/\s+/)
-        .slice(0, 2)
-        .map(part => part[0])
-        .join("")
-        .toUpperCase();
-}
 
 /* -------------------------------------------------------------------------- */
 /* Live indicator                                                            */
@@ -191,7 +185,10 @@ function ReportActivity({
                     <div
                         className={`relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border ${hue.bg} ${hue.text} ${hue.border} text-[10px] font-bold ring-8 ring-[#0A0B0F]`}
                     >
-                        {getInitials(report.user.name)}
+                        <UserAvatar
+                            name={report.user.name}
+                            avatarUrl={report.user.avatarUrl}
+                        />
                     </div>
 
                     <div className="min-w-0 flex-1">
@@ -251,7 +248,10 @@ function TeamMemberRow({
                 <div
                     className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${hue.bg} ${hue.text} text-[10px] font-bold`}
                 >
-                    {getInitials(member.name)}
+                    <UserAvatar
+                        name={member.name}
+                        avatarUrl={member.avatarUrl}
+                    />
                 </div>
 
                 <p className="min-w-0 truncate text-sm font-medium text-slate-300">
@@ -366,6 +366,7 @@ export default function PublicMonitorView() {
             ...member.report!,
             user: {
                 name: member.name,
+                avatarUrl: member.avatarUrl
             },
         }));
 
@@ -425,6 +426,7 @@ export default function PublicMonitorView() {
             {/* ================================================================= */}
             {/* HEADER                                                            */}
             {/* ================================================================= */}
+            <PageTitle title="Monitoring" />
 
             <header className="sticky top-0 z-40 border-b border-white/[0.06] bg-[#0A0B0F]/90 backdrop-blur-xl">
                 <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 sm:px-8">
@@ -558,24 +560,26 @@ export default function PublicMonitorView() {
                                 </div>
                             </div>
 
-                            {/* Controls */}
+                            {/* Controls - RESPONSIVE FIX */}
                             <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                                <div className="flex items-center gap-3">
-                                    <DayPickerInput
-                                        value={toDateObj(selectedDate)}
-                                        onChange={date =>
-                                            setSelectedDate(
-                                                toDateStr(date)
-                                            )
-                                        }
-                                        placeholder="Select date"
-                                    />
+                                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                                    <div className="w-full sm:w-auto">
+                                        <DayPickerInput
+                                            value={toDateObj(selectedDate)}
+                                            onChange={date =>
+                                                setSelectedDate(
+                                                    toDateStr(date)
+                                                )
+                                            }
+                                            placeholder="Select date"
+                                        />
+                                    </div>
 
                                     <button
                                         type="button"
                                         onClick={handleRefresh}
                                         disabled={isFetching}
-                                        className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3.5 text-xs font-semibold text-slate-300 transition hover:border-white/[0.14] hover:bg-white/[0.06] hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                                        className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3.5 text-xs font-semibold text-slate-300 transition hover:border-white/[0.14] hover:bg-white/[0.06] hover:text-white disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
                                     >
                                         <HiOutlineArrowPath
                                             size={14}
@@ -593,11 +597,10 @@ export default function PublicMonitorView() {
                                 <p className="text-[11px] text-slate-700">
                                     {allDone
                                         ? "All reports received"
-                                        : `${stats.pending} ${
-                                              stats.pending === 1
-                                                  ? "report"
-                                                  : "reports"
-                                          } still pending`}
+                                        : `${stats.pending} ${stats.pending === 1
+                                            ? "report"
+                                            : "reports"
+                                        } still pending`}
                                 </p>
                             </div>
                         </section>

@@ -27,6 +27,7 @@ import {
 
 import DayPickerInput from "../../components/DayPickerInput";
 import { useAuth } from "../../context/AuthContext";
+import PageTitle from "../../components/PageTitle";
 
 /* ================================================================
    TYPES
@@ -376,6 +377,8 @@ export default function History() {
         lg:py-8
       "
     >
+
+      <PageTitle title="My Reports" />
 
       {/* ===========================================================
           PAGE ANIMATIONS

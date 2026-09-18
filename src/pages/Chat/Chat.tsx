@@ -28,6 +28,7 @@ import {
     type Conversation,
     type Message,
 } from "../../services/chat";
+import PageTitle from "../../components/PageTitle";
 
 import { io, Socket } from "socket.io-client";
 
@@ -1664,6 +1665,9 @@ export default function Chat() {
                 shadow-sm
             "
         >
+
+            <PageTitle title="Chat" />
+
             {/* =====================================================
                 CONVERSATION PANEL
             ====================================================== */}

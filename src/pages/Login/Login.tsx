@@ -10,7 +10,6 @@ import {
   HiOutlineEnvelope,
   HiOutlineShieldCheck,
   HiOutlineArrowRight,
-  HiOutlineBuildingOffice,
 } from "react-icons/hi2";
 
 import { useNavigate } from "react-router-dom";
@@ -18,6 +17,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 import { useAuth } from "../../context/AuthContext";
+import PageTitle from "../../components/PageTitle";
 
 export default function Login() {
   const { login } = useAuth();
@@ -60,6 +60,7 @@ export default function Login() {
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[var(--background)] text-[var(--text-primary)]">
+      <PageTitle title="Login" />
       {/* Animated gradient orbs - Light & Dark aware */}
       <div
         aria-hidden="true"

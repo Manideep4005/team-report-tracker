@@ -22,57 +22,11 @@ import { useEffect, useRef, useState } from "react";
 
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
+import UserAvatar from "./UserAvatar";
 
 interface SidebarProps {
   open: boolean;
   onClose: () => void;
-}
-
-
-const avatarColors = [
-  "bg-blue-600",
-  "bg-emerald-600",
-  "bg-violet-600",
-  "bg-amber-600",
-  "bg-rose-600",
-  "bg-cyan-600",
-  "bg-indigo-600",
-  "bg-teal-600",
-];
-
-
-function getInitials(name?: string) {
-
-  if (!name) {
-    return "";
-  }
-
-  return name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase();
-}
-
-
-
-function getAvatarColor(name?: string) {
-
-  if (!name) {
-    return avatarColors[0];
-  }
-
-  const hash = [...name].reduce(
-    (sum, char) =>
-      sum + char.charCodeAt(0),
-    0
-  );
-
-  return avatarColors[
-    hash % avatarColors.length
-  ];
 }
 
 
@@ -114,12 +68,6 @@ export default function Sidebar({
     useRef<HTMLDivElement>(null);
 
 
-  const initials =
-    getInitials(user?.name);
-
-
-  const avatarColor =
-    getAvatarColor(user?.name);
 
 
   /*
@@ -699,11 +647,12 @@ export default function Sidebar({
 
           <div className="sidebar-account-profile">
 
-            <div
-              className={`sidebar-account-avatar ${avatarColor}`}
-            >
-              {initials}
-            </div>
+
+            <UserAvatar
+              name={user.name}
+              avatarUrl={user.avatarUrl}
+            />
+
 
 
             <div className="min-w-0">
@@ -996,9 +945,12 @@ export default function Sidebar({
       >
 
         <div
-          className={`sidebar-user-avatar ${avatarColor}`}
+          className={`sidebar-user-avatar`}
         >
-          {initials}
+          <UserAvatar
+            name={user.name}
+            avatarUrl={user.avatarUrl}
+          />
         </div>
 
 

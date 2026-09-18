@@ -102,6 +102,7 @@ export interface PublicMonitorReport {
 export interface PublicMonitorTeamMember {
     id: string;
     name: string;
+    avatarUrl: string;
     submitted: boolean;
 
     report: PublicMonitorReport | null;
