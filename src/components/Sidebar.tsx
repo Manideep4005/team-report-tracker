@@ -857,7 +857,7 @@ export default function Sidebar({
 
 
                 <span>
-                  Change Password
+                  Settings
                 </span>
 
               </span>
