@@ -215,7 +215,7 @@ export default function ProfileAvatarSettings({
                 "
             >
                 <UserAvatar
-                    userId={user.id}
+                    // userId={user.id}
                     name={user.name}
                     avatarUrl={user.avatarUrl}
                     size="xl"

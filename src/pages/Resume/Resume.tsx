@@ -76,57 +76,157 @@ import PageTitle from "../../components/PageTitle";
    working sans everywhere the interface is speaking.
 ============================================================ */
 
-const THEME_STYLES = `
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,380;0,9..144,480;0,9..144,600;1,9..144,480&family=Inter:wght@400;500;600&display=swap');
-
+/* Replace the existing THEME_STYLES constant in Resume.tsx with this value. */
+export const THEME_STYLES = `
 .rs-scope {
-  --rs-paper: #FAF6EC;
-  --rs-paper-raised: #F1E9D6;
-  --rs-ink: #262218;
-  --rs-ink-soft: #756B57;
-  --rs-ink-faint: #ABA089;
-  --rs-rule: #E0D3B4;
-  --rs-rule-strong: #C7B486;
-  --rs-brass: #93611F;
-  --rs-brass-strong: #6E4A18;
-  --rs-brass-wash: rgba(147, 97, 31, 0.08);
-  --rs-moss: #4F6647;
-  --rs-rust: #954632;
-  --rs-shadow: rgba(38, 34, 24, 0.14);
-  font-family: 'Inter', sans-serif;
-  color: var(--rs-ink);
+  --rs-paper: var(--background);
+  --rs-paper-raised: var(--surface);
+  --rs-ink: var(--text-primary);
+  --rs-ink-soft: var(--text-secondary);
+  --rs-ink-faint: var(--text-muted);
+  --rs-rule: var(--border-subtle);
+  --rs-rule-strong: var(--border-strong);
+  --rs-brass: var(--brand);
+  --rs-brass-strong: var(--brand-hover);
+  --rs-brass-wash: var(--brand-soft);
+  --rs-moss: var(--success);
+  --rs-rust: var(--danger);
+  --rs-shadow: rgb(15 23 42 / 0.12);
+
+  min-height: 100%;
+  color: var(--text-primary);
+  font-family: inherit;
 }
 
 .dark .rs-scope {
-  --rs-paper: #1A1812;
-  --rs-paper-raised: #23201A;
-  --rs-ink: #EEE7D6;
-  --rs-ink-soft: #A79C85;
-  --rs-ink-faint: #6E6551;
-  --rs-rule: #38321F;
-  --rs-rule-strong: #4C4526;
-  --rs-brass: #D6A75A;
-  --rs-brass-strong: #EAC482;
-  --rs-brass-wash: rgba(214, 167, 90, 0.1);
-  --rs-moss: #8FA57F;
-  --rs-rust: #CC7C63;
-  --rs-shadow: rgba(0, 0, 0, 0.4);
+  --rs-shadow: rgb(0 0 0 / 0.30);
 }
 
 .rs-serif {
-  font-family: 'Fraunces', serif;
+  font-family: inherit;
+  font-weight: 700;
+  letter-spacing: -0.025em;
 }
 
 .rs-scope input::placeholder,
 .rs-scope textarea::placeholder {
-  color: var(--rs-ink-faint);
+  color: var(--text-muted);
+}
+
+/* Shared control language */
+.rs-scope input,
+.rs-scope textarea {
+  border-radius: var(--radius-md);
+  padding: 8px;
+}
+
+.rs-scope input:not([type="checkbox"]):not([type="radio"]),
+.rs-scope textarea {
+  border-color: var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
+}
+
+.rs-scope input:focus,
+.rs-scope textarea:focus {
+  border-color: var(--brand) !important;
+  box-shadow: 0 0 0 3px var(--brand-soft) !important;
+}
+
+/* Builder header: an elevated workspace toolbar */
+.rs-scope > section {
+  position: relative;
+  border-bottom-color: var(--border-subtle);
+  background:
+    linear-gradient(180deg, var(--surface) 0%, var(--background-subtle) 100%);
+}
+
+.rs-scope > section::before {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  content: "";
+  background: radial-gradient(circle at 82% 0%, rgb(99 102 241 / 0.10), transparent 34%);
+}
+
+.dark .rs-scope > section::before {
+  background: radial-gradient(circle at 82% 0%, rgb(99 102 241 / 0.15), transparent 34%);
+}
+
+.rs-scope > section > div {
+  position: relative;
+  max-width: 1440px !important;
+}
+
+.rs-scope > div.mx-auto {
+  max-width: 1440px !important;
+}
+
+/* Section navigation: a sticky, elevated workspace switcher */
+.rs-scope .rs-section-nav {
+  position: sticky;
+  top: 12px;
+  z-index: 20;
+  gap: 4px;
+  border-color: var(--border);
+  border-radius: var(--radius-xl);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  padding: 6px;
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(14px);
+}
+
+.rs-scope .rs-section-nav button {
+  min-height: 36px;
+  border-radius: var(--radius-md);
+}
+
+/* Cards, menus, and previews */
+.rs-scope [role="dialog"],
+.rs-scope .rs-section-nav,
+.rs-scope .rs-section-nav + div {
+  border-color: var(--border);
+}
+
+.rs-scope [role="dialog"] {
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+}
+
+/* The editor's section blocks read as discrete, scannable panels. */
+.rs-scope [id^="resume-section-"] {
+  margin-top: 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  padding: 0 18px;
+  box-shadow: var(--shadow-xs);
+  transition: border-color 180ms var(--ease-standard), box-shadow 180ms var(--ease-standard);
+}
+
+.rs-scope [id^="resume-section-"]:focus-within {
+  border-color: rgb(99 102 241 / 0.38);
+  box-shadow: 0 0 0 3px var(--brand-soft), var(--shadow-sm);
+}
+
+.rs-scope [id^="resume-section-"] > div:first-child {
+  min-height: 68px;
+}
+
+/* Preview gets the same panel hierarchy as the editor. */
+.rs-scope .rs-preview-panel,
+.rs-scope [class*="w-[380px]"] > div {
+  border-radius: var(--radius-xl);
+  border-color: var(--border);
+  box-shadow: var(--shadow-md);
 }
 
 .rs-scrollbar::-webkit-scrollbar {
-  height: 0px;
-  width: 0px;
+  width: 0;
+  height: 0;
 }
 `;
+
 
 /* ============================================================
    SECTION META

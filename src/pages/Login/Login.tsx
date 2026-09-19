@@ -45,13 +45,16 @@ export default function Login() {
 
     try {
       setLoading(true);
+
       await login(cleanEmail, password);
+
       navigate("/dashboard", { replace: true });
     } catch (error: any) {
       const message =
         error?.response?.data?.message ??
         error?.message ??
         "Unable to sign in. Please check your credentials.";
+
       toast.error(message);
     } finally {
       setLoading(false);
@@ -59,176 +62,493 @@ export default function Login() {
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[var(--background)] text-[var(--text-primary)]">
+    <main className="min-h-screen bg-[var(--background)] text-[var(--text-primary)]">
       <PageTitle title="Login" />
-      {/* Animated gradient orbs - Light & Dark aware */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 overflow-hidden"
-      >
-        {/* Primary glow - top right */}
-        <div className="absolute -right-32 -top-32 h-[600px] w-[600px] rounded-full bg-[var(--brand)]/10 dark:bg-[var(--brand)]/20 blur-[140px] animate-pulse" />
 
-        {/* Secondary glow - bottom left */}
-        <div className="absolute -bottom-40 -left-40 h-[500px] w-[500px] rounded-full bg-blue-500/10 dark:bg-blue-500/15 blur-[120px] animate-pulse animation-delay-2000" />
+      {/* =====================================================
+          BACKGROUND
+      ===================================================== */}
 
-        {/* Accent glow - center */}
-        <div className="absolute left-1/2 top-1/2 h-[400px] w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-purple-500/5 dark:bg-purple-500/10 blur-[100px] animate-pulse animation-delay-1000" />
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div
+          className="
+            absolute
+            -right-40
+            -top-40
+            h-[520px]
+            w-[520px]
+            rounded-full
+            bg-[var(--brand)]/8
+            blur-[120px]
+            dark:bg-[var(--brand)]/12
+          "
+        />
 
-        {/* Subtle grid - Light & Dark */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,var(--border)_1px,transparent_1px),linear-gradient(to_bottom,var(--border)_1px,transparent_1px)] bg-[size:64px_64px] opacity-[0.03] dark:opacity-[0.06]" />
-
-        {/* Floating particles - decorative */}
-        <div className="absolute left-[10%] top-[20%] h-1 w-1 rounded-full bg-[var(--brand)]/20 blur-[1px]" />
-        <div className="absolute right-[15%] top-[30%] h-1.5 w-1.5 rounded-full bg-blue-400/15 blur-[1px]" />
-        <div className="absolute left-[20%] bottom-[25%] h-1 w-1 rounded-full bg-purple-400/15 blur-[1px]" />
-        <div className="absolute right-[25%] bottom-[35%] h-1.5 w-1.5 rounded-full bg-[var(--brand)]/20 blur-[1px]" />
+        <div
+          className="
+            absolute
+            -bottom-48
+            -left-40
+            h-[480px]
+            w-[480px]
+            rounded-full
+            bg-blue-500/8
+            blur-[120px]
+            dark:bg-blue-500/10
+          "
+        />
       </div>
 
-      {/* Header - Glassmorphism */}
-      <header className="absolute left-0 right-0 top-0 z-20 flex h-20 items-center justify-between border-b border-[var(--border)]/30 px-6 backdrop-blur-xl bg-[var(--surface)]/30 sm:px-8 lg:px-12">
+      {/* =====================================================
+          HEADER
+      ===================================================== */}
+
+      <header
+        className="
+          relative
+          z-10
+          flex
+          h-16
+          items-center
+          border-b
+          border-[var(--border)]/60
+          bg-[var(--surface)]/70
+          px-5
+          backdrop-blur-md
+          sm:px-8
+          lg:px-10
+        "
+      >
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--brand)] to-blue-0  shadow-lg shadow-[var(--brand)]/20">
-            <img src="/group.png" className="h-7 w-7" />
+          <div
+            className="
+              flex
+              h-9
+              w-9
+              items-center
+              justify-center
+              rounded-lg
+              bg-[var(--brand)]/10
+              ring-1
+              ring-[var(--brand)]/15
+            "
+          >
+            <img
+              src="/group.png"
+              alt="Team Work"
+              className="h-6 w-6 object-contain"
+            />
           </div>
-          <div>
-            <p className="text-sm font-semibold tracking-tight text-[var(--text-primary)]">
+
+          <div className="leading-none">
+            <p
+              className="
+                text-sm
+                font-semibold
+                tracking-tight
+                text-[var(--text-primary)]
+              "
+            >
               Team Work
             </p>
-            <p className="text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">
+
+            <p
+              className="
+                mt-1
+                text-[9px]
+                font-medium
+                uppercase
+                tracking-[0.14em]
+                text-[var(--text-muted)]
+              "
+            >
               Reporting System
             </p>
           </div>
         </div>
-
-
       </header>
 
-      {/* Main Content */}
-      <section className="relative z-10 flex min-h-screen items-center justify-center px-4 pb-12 pt-24">
-        <div className="w-full max-w-[400px]">
+      {/* =====================================================
+          LOGIN AREA
+      ===================================================== */}
 
+      <section
+        className="
+          relative
+          z-10
+          flex
+          min-h-[calc(100vh-4rem)]
+          items-center
+          justify-center
+          px-4
+          py-10
+          sm:px-6
+          sm:py-12
+        "
+      >
+        <div className="w-full max-w-[420px]">
+          {/* =================================================
+              LOGIN PANEL
+          ================================================= */}
 
-          {/* Login Card - Premium Glassmorphism */}
-          <div className="relative overflow-hidden rounded-2xl border border-[var(--border)]/30 bg-[var(--surface)]/40 shadow-2xl shadow-black/5 dark:shadow-black/40 backdrop-blur-xl">
-            {/* Card gradient border glow */}
-            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-[var(--brand)]/5 via-transparent to-blue-500/5 pointer-events-none" />
+          <div
+            className="
+              overflow-hidden
+              rounded-2xl
+              border
+              border-[var(--border)]/70
+              bg-[var(--surface)]
+              shadow-[0_12px_40px_rgba(15,23,42,0.06)]
+              dark:shadow-[0_16px_45px_rgba(0,0,0,0.22)]
+            "
+          >
+            {/* Top brand line */}
 
-            {/* Top accent line */}
-            <div className="relative h-[2px] w-full bg-gradient-to-r from-transparent via-[var(--brand)]/50 to-transparent" />
+            <div className="h-[3px] w-full bg-[var(--brand)]" />
 
-            <div className="relative p-6 sm:p-8">
-              {/* Icon with glassmorphism */}
-              <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--brand)]/10 border border-[var(--brand)]/10 shadow-lg shadow-[var(--brand)]/5 backdrop-blur-sm">
-                <HiOutlineShieldCheck className="h-6 w-6 text-[var(--brand)]" />
+            <div className="p-6 sm:p-8">
+              {/* =================================================
+                  HEADER
+              ================================================= */}
+
+              <div className="mb-7">
+                <div
+                  className="
+                    mb-5
+                    flex
+                    h-10
+                    w-10
+                    items-center
+                    justify-center
+                    rounded-xl
+                    bg-[var(--brand)]/10
+                    text-[var(--brand)]
+                  "
+                >
+                  <HiOutlineShieldCheck className="h-5 w-5" />
+                </div>
+
+                <h1
+                  className="
+                    text-xl
+                    font-semibold
+                    tracking-tight
+                    text-[var(--text-primary)]
+                    sm:text-[22px]
+                  "
+                >
+                  Welcome back
+                </h1>
+
+                <p
+                  className="
+                    mt-1.5
+                    text-sm
+                    leading-5
+                    text-[var(--text-muted)]
+                  "
+                >
+                  Sign in to continue to Team Work.
+                </p>
               </div>
 
-              <h1 className="text-2xl font-bold tracking-tight text-[var(--text-primary)]">
-                Welcome back
-              </h1>
-              <p className="mt-2 text-sm text-[var(--text-muted)]">
-                Sign in to access your reports and analytics
-              </p>
+              {/* =================================================
+                  FORM
+              ================================================= */}
 
-              {/* Form */}
-              <form onSubmit={handleSubmit} className="mt-7 space-y-5">
-                {/* Email */}
+              <form
+                onSubmit={handleSubmit}
+                className="space-y-5"
+              >
+                {/* EMAIL */}
+
                 <div>
                   <label
                     htmlFor="email"
-                    className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-[var(--text-secondary)]"
+                    className="
+                      mb-2
+                      block
+                      text-xs
+                      font-medium
+                      text-[var(--text-secondary)]
+                    "
                   >
                     Email address
                   </label>
-                  <div className="relative group">
-                    <HiOutlineEnvelope className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-[var(--text-subtle)] transition-colors group-focus-within:text-[var(--brand)]" />
+
+                  <div className="relative">
+                    <HiOutlineEnvelope
+                      className="
+                        pointer-events-none
+                        absolute
+                        left-3.5
+                        top-1/2
+                        h-[18px]
+                        w-[18px]
+                        -translate-y-1/2
+                        text-[var(--text-subtle)]
+                      "
+                    />
+
                     <input
                       id="email"
                       type="email"
                       value={email}
-                      onChange={(event) => setEmail(event.target.value)}
+                      onChange={(event) =>
+                        setEmail(event.target.value)
+                      }
                       autoComplete="email"
                       placeholder="name@company.com"
                       disabled={loading}
-                      className="h-12 w-full rounded-xl border border-[var(--border)]/50 bg-[var(--surface)]/50 pl-11 pr-4 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-subtle)] outline-none transition-all duration-200 focus:border-[var(--brand)]/50 focus:bg-[var(--surface)]/80 focus:shadow-[0_0_30px_-12px_var(--brand)]/20 disabled:cursor-not-allowed disabled:opacity-50 backdrop-blur-sm"
+                      className="
+                        h-11
+                        w-full
+                        rounded-lg
+                        border
+                        border-[var(--border)]
+                        bg-[var(--background)]
+                        pl-10.5
+                        pr-3.5
+                        text-sm
+                        text-[var(--text-primary)]
+                        placeholder:text-[var(--text-subtle)]
+                        outline-none
+                        transition
+                        duration-150
+                        focus:border-[var(--brand)]
+                        focus:ring-2
+                        focus:ring-[var(--brand)]/10
+                        disabled:cursor-not-allowed
+                        disabled:opacity-50
+                      "
                     />
                   </div>
                 </div>
 
-                {/* Password */}
-                <div>
-                  <div className="mb-1.5 flex items-center justify-between">
-                    <label
-                      htmlFor="password"
-                      className="text-xs font-medium uppercase tracking-wider text-[var(--text-secondary)]"
-                    >
-                      Password
-                    </label>
+                {/* PASSWORD */}
 
-                  </div>
-                  <div className="relative group">
-                    <HiOutlineLockClosed className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-[var(--text-subtle)] transition-colors group-focus-within:text-[var(--brand)]" />
+                <div>
+                  <label
+                    htmlFor="password"
+                    className="
+                      mb-2
+                      block
+                      text-xs
+                      font-medium
+                      text-[var(--text-secondary)]
+                    "
+                  >
+                    Password
+                  </label>
+
+                  <div className="relative">
+                    <HiOutlineLockClosed
+                      className="
+                        pointer-events-none
+                        absolute
+                        left-3.5
+                        top-1/2
+                        h-[18px]
+                        w-[18px]
+                        -translate-y-1/2
+                        text-[var(--text-subtle)]
+                      "
+                    />
+
                     <input
                       id="password"
-                      type={showPassword ? "text" : "password"}
+                      type={
+                        showPassword
+                          ? "text"
+                          : "password"
+                      }
                       value={password}
-                      onChange={(event) => setPassword(event.target.value)}
+                      onChange={(event) =>
+                        setPassword(event.target.value)
+                      }
                       autoComplete="current-password"
                       placeholder="Enter your password"
                       disabled={loading}
-                      className="h-12 w-full rounded-xl border border-[var(--border)]/50 bg-[var(--surface)]/50 pl-11 pr-12 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-subtle)] outline-none transition-all duration-200 focus:border-[var(--brand)]/50 focus:bg-[var(--surface)]/80 focus:shadow-[0_0_30px_-12px_var(--brand)]/20 disabled:cursor-not-allowed disabled:opacity-50 backdrop-blur-sm"
+                      className="
+                        h-11
+                        w-full
+                        rounded-lg
+                        border
+                        border-[var(--border)]
+                        bg-[var(--background)]
+                        pl-10.5
+                        pr-11
+                        text-sm
+                        text-[var(--text-primary)]
+                        placeholder:text-[var(--text-subtle)]
+                        outline-none
+                        transition
+                        duration-150
+                        focus:border-[var(--brand)]
+                        focus:ring-2
+                        focus:ring-[var(--brand)]/10
+                        disabled:cursor-not-allowed
+                        disabled:opacity-50
+                      "
                     />
+
                     <button
                       type="button"
-                      onClick={() => setShowPassword((value) => !value)}
+                      onClick={() =>
+                        setShowPassword(
+                          (value) => !value
+                        )
+                      }
                       disabled={loading}
-                      aria-label={showPassword ? "Hide password" : "Show password"}
-                      className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-[var(--text-subtle)] transition-colors hover:bg-[var(--surface)]/50 hover:text-[var(--text-secondary)]"
+                      aria-label={
+                        showPassword
+                          ? "Hide password"
+                          : "Show password"
+                      }
+                      className="
+                        absolute
+                        right-2
+                        top-1/2
+                        flex
+                        h-8
+                        w-8
+                        -translate-y-1/2
+                        items-center
+                        justify-center
+                        rounded-md
+                        text-[var(--text-subtle)]
+                        transition
+                        hover:bg-[var(--surface)]
+                        hover:text-[var(--text-secondary)]
+                      "
                     >
                       {showPassword ? (
-                        <HiOutlineEyeSlash className="h-5 w-5" />
+                        <HiOutlineEyeSlash className="h-[18px] w-[18px]" />
                       ) : (
-                        <HiOutlineEye className="h-5 w-5" />
+                        <HiOutlineEye className="h-[18px] w-[18px]" />
                       )}
                     </button>
                   </div>
                 </div>
 
-                {/* Submit Button */}
+                {/* SIGN IN */}
+
                 <button
                   type="submit"
                   disabled={loading}
-                  className="group relative mt-2 flex h-12 w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-[var(--brand)] to-blue-600 text-sm font-semibold tracking-wide text-white shadow-lg shadow-[var(--brand)]/20 transition-all duration-200 hover:shadow-[var(--brand)]/40 hover:scale-[1.02] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
+                  className="
+                    flex
+                    h-11
+                    w-full
+                    items-center
+                    justify-center
+                    gap-2
+                    rounded-lg
+                    bg-[var(--brand)]
+                    px-4
+                    text-sm
+                    font-semibold
+                    text-white
+                    shadow-sm
+                    shadow-[var(--brand)]/20
+                    transition
+                    duration-150
+                    hover:brightness-95
+                    active:scale-[0.99]
+                    disabled:cursor-not-allowed
+                    disabled:opacity-50
+                  "
                 >
-                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
                   {loading ? (
                     <>
-                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                      <span
+                        className="
+                          h-4
+                          w-4
+                          animate-spin
+                          rounded-full
+                          border-2
+                          border-white/30
+                          border-t-white
+                        "
+                      />
+
                       Signing in...
                     </>
                   ) : (
                     <>
                       Sign in
-                      <HiOutlineArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+
+                      <HiOutlineArrowRight className="h-4 w-4" />
                     </>
                   )}
                 </button>
               </form>
 
-              {/* Footer note - Glassmorphism */}
-              <div className="mt-6 flex items-center justify-center gap-2 border-t border-[var(--border)]/30 pt-5">
-                <HiOutlineLockClosed className="h-3.5 w-3.5 text-[var(--brand)]/70" />
-                <span className="text-xs text-[var(--text-muted)]">
+              {/* =================================================
+                  SECURITY NOTE
+              ================================================= */}
+
+              <div
+                className="
+                  mt-6
+                  flex
+                  items-center
+                  justify-center
+                  gap-1.5
+                  border-t
+                  border-[var(--border)]/60
+                  pt-5
+                "
+              >
+                <HiOutlineLockClosed
+                  className="
+                    h-3.5
+                    w-3.5
+                    text-[var(--brand)]/70
+                  "
+                />
+
+                <span
+                  className="
+                    text-[11px]
+                    text-[var(--text-muted)]
+                  "
+                >
                   Secured & encrypted access
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Footer */}
-          <div className="mt-6 flex items-center justify-between px-1">
-            <span className="text-[11px] text-[var(--text-muted)]">Team Work</span>
-            <span className="text-[11px] text-[var(--text-muted)]">
+          {/* =================================================
+              FOOTER
+          ================================================= */}
+
+          <div
+            className="
+              mt-5
+              flex
+              items-center
+              justify-between
+              px-1
+            "
+          >
+            <span
+              className="
+                text-[11px]
+                text-[var(--text-muted)]
+              "
+            >
+              Team Work
+            </span>
+
+            <span
+              className="
+                text-[11px]
+                text-[var(--text-muted)]
+              "
+            >
               © {new Date().getFullYear()}
             </span>
           </div>

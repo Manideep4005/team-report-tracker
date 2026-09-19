@@ -29,7 +29,7 @@ import PageTitle from "../../components/PageTitle";
 import UserAvatar from "../../components/UserAvatar";
 
 /* ================================================================
-   TYPES
+  TYPES
 ================================================================ */
 
 interface ReportItem {
@@ -73,7 +73,7 @@ interface DateGroup {
 }
 
 /* ================================================================
-   CONSTANTS
+  CONSTANTS
 ================================================================ */
 
 const REPORTS_PER_PAGE = 10;
@@ -81,7 +81,7 @@ const REPORTS_PER_PAGE = 10;
 const ALL_USERS = "all";
 
 /* ================================================================
-   SCREEN
+  SCREEN
 ================================================================ */
 
 export default function Reports() {
@@ -109,7 +109,7 @@ export default function Reports() {
 
   const { hasPermission } = useAuth();
   /* ==============================================================
-     USERS
+    USERS
   ============================================================== */
 
   const {
@@ -138,7 +138,7 @@ export default function Reports() {
 
 
   /* ==============================================================
-     REPORTS
+    REPORTS
   ============================================================== */
 
   const {
@@ -189,7 +189,7 @@ export default function Reports() {
 
 
   /* ==============================================================
-     REPORTS
+    REPORTS
   ============================================================== */
 
   const reports =
@@ -197,7 +197,7 @@ export default function Reports() {
 
 
   /* ==============================================================
-     PAGINATION
+    PAGINATION
   ============================================================== */
 
   const pagination =
@@ -205,7 +205,7 @@ export default function Reports() {
 
 
   /* ==============================================================
-     GROUP REPORTS BY DATE
+    GROUP REPORTS BY DATE
   ============================================================== */
 
   const groupedReports =
@@ -286,7 +286,7 @@ export default function Reports() {
 
 
   /* ==============================================================
-     COPY
+    COPY
   ============================================================== */
 
   const handleCopy = async (
@@ -314,7 +314,7 @@ export default function Reports() {
 
 
   /* ==============================================================
-     DATE CHANGE
+    DATE CHANGE
   ============================================================== */
 
   const handleDateChange = (
@@ -328,7 +328,7 @@ export default function Reports() {
 
 
   /* ==============================================================
-     CLEAR DATE
+    CLEAR DATE
   ============================================================== */
 
   const handleClearDate = () => {
@@ -340,7 +340,7 @@ export default function Reports() {
 
 
   /* ==============================================================
-     USER CHANGE
+    USER CHANGE
   ============================================================== */
 
   const handleUserChange = (
@@ -354,7 +354,7 @@ export default function Reports() {
 
 
   /* ==============================================================
-     CLEAR USER
+    CLEAR USER
   ============================================================== */
 
   const handleClearUser = () => {
@@ -366,7 +366,7 @@ export default function Reports() {
 
 
   /* ==============================================================
-     EXPORT
+    EXPORT
   ============================================================== */
 
   const handleExport = async (
@@ -465,7 +465,7 @@ export default function Reports() {
 
 
   /* ==============================================================
-     PAGE CHANGE
+    PAGE CHANGE
   ============================================================== */
 
   const handlePageChange = (
@@ -495,7 +495,7 @@ export default function Reports() {
 
 
   /* ==============================================================
-     TOTAL
+    TOTAL
   ============================================================== */
 
   const totalReports =
@@ -503,7 +503,7 @@ export default function Reports() {
 
 
   /* ==============================================================
-     TITLE
+    TITLE
   ============================================================== */
 
   const screenTitle =
@@ -513,518 +513,375 @@ export default function Reports() {
 
 
   /* ==============================================================
-     RENDER
+    RENDER
   ============================================================== */
 
   return (
     <div
       className="
-        mx-auto
-        w-full
-        max-w-[1100px]
-
-        px-4
-        py-5
-
-        sm:px-6
-        sm:py-7
-
-        lg:px-8
-        lg:py-8
-      "
+      mx-auto
+      w-full
+      max-w-[1100px]
+      px-4
+      py-5
+      sm:px-6
+      sm:py-6
+      lg:px-8
+      lg:py-7
+    "
     >
       <PageTitle title="All Reports" />
+
       {/* =========================================================
-          HEADER
-      ========================================================= */}
+        COMPACT REPORT TOOLBAR
+    ========================================================= */}
 
       <div
         className="
-          border-b
-          border-slate-200/80
-
-          pb-5
-
-          dark:border-zinc-800/80
-
-          sm:pb-6
-        "
+        border-b
+        border-slate-200/80
+        pb-5
+        dark:border-zinc-800/80
+      "
       >
+        {/* TOP ROW */}
 
         <div
           className="
-            flex
-            flex-col
-            gap-5
-
-            lg:flex-row
-            lg:items-end
-            lg:justify-between
-          "
+          flex
+          min-w-0
+          items-center
+          justify-between
+          gap-4
+        "
         >
+          {/* TITLE */}
 
-          {/* =====================================================
-              TITLE
-          ===================================================== */}
+          <div className="flex min-w-0 items-center gap-2.5">
 
-          <div className="min-w-0">
 
+            <h1
+              className="
+              min-w-0
+              truncate
+              text-lg
+              font-semibold
+              tracking-tight
+              text-slate-900
+              dark:text-white
+              sm:text-xl
+            "
+            >
+              {screenTitle}
+            </h1>
+          </div>
+
+          {/* COUNT */}
+
+          {!isLoading && (
             <div
               className="
-                flex
-                min-w-0
-                items-center
-                gap-2
-              "
+              flex
+              shrink-0
+              items-baseline
+              gap-1
+              whitespace-nowrap
+            "
             >
-
-              <HiOutlineUsers
+              <span
                 className="
-                  h-5
-                  w-5
-                  shrink-0
-
-                  text-indigo-500
-
-                  dark:text-indigo-400
-                "
-              />
-
-              <h1
-                className="
-                  min-w-0
-
-                  truncate
-
-                  text-[25px]
-                  font-bold
-                  tracking-[-0.035em]
-
-                  text-slate-950
-
-                  dark:text-white
-
-                  sm:text-3xl
-                "
+                text-lg
+                font-semibold
+                tracking-tight
+                text-slate-900
+                dark:text-white
+                sm:text-xl
+              "
               >
-                {screenTitle}
-              </h1>
+                {totalReports}
+              </span>
 
-            </div>
-
-
-            <p
-              className="
-                mt-1.5
-
-                text-sm
-
-                text-slate-500
-
+              <span
+                className="
+                text-xs
+                font-medium
+                text-slate-400
                 dark:text-zinc-500
               "
-            >
-
-              {selectedUser
-                ? `Viewing all reports submitted by ${selectedUser.name}.`
-                : "Browse the team's daily work reports."}
-
-            </p>
-
-          </div>
-
-
-          {/* =====================================================
-              FILTER AREA
-          ===================================================== */}
-
-          <div
-            className="
-              grid
-              w-full
-              grid-cols-1
-              gap-2
-
-              sm:grid-cols-2
-
-              lg:w-auto
-              lg:grid-cols-[minmax(210px,240px)_auto_auto]
-            "
-          >
-
-            {/* ===================================================
-                USER SELECTOR
-            =================================================== */}
-
-            <div
-              className="
-                relative
-                min-w-0
-              "
-            >
-
-              <select
-                value={selectedUserId}
-                onChange={(event) =>
-                  handleUserChange(
-                    event.target.value
-                  )
-                }
-
-                disabled={usersLoading}
-
-                className="
-                  block
-
-                  h-10
-                  w-full
-                  min-w-0
-
-                  appearance-none
-
-                  rounded-xl
-
-                  border
-                  border-slate-200
-
-                  bg-white
-
-                  pl-3.5
-                  pr-10
-
-                  text-xs
-                  font-semibold
-
-                  text-slate-700
-
-                  shadow-sm
-
-                  outline-none
-
-                  transition
-
-                  focus:border-indigo-400
-                  focus:ring-2
-                  focus:ring-indigo-100
-
-                  disabled:cursor-not-allowed
-                  disabled:opacity-60
-
-                  dark:border-zinc-800
-                  dark:bg-zinc-900
-                  dark:text-zinc-300
-
-                  dark:focus:border-indigo-500
-                  dark:focus:ring-indigo-500/10
-
-                  sm:text-sm
-                "
               >
-
-                <option value={ALL_USERS}>
-                  All users
-                </option>
-
-
-                {users.map(
-                  (user) => (
-
-                    <option
-                      key={
-                        user.id
-                      }
-
-                      value={
-                        user.id
-                      }
-                    >
-                      {user.name}
-                      {user.deletedAt
-                        ? " — Inactive"
-                        : ""}
-                    </option>
-
-                  )
-                )}
-
-              </select>
-
-
-              <HiOutlineChevronDown
-                className="
-                  pointer-events-none
-
-                  absolute
-                  right-3
-                  top-1/2
-
-                  h-4
-                  w-4
-
-                  -translate-y-1/2
-
-                  text-slate-400
-
-                  dark:text-zinc-500
-                "
-              />
-
+                {totalReports === 1 ? "report" : "reports"}
+              </span>
             </div>
-
-
-            {/* ===================================================
-                DATE
-            =================================================== */}
-
-            <div
-              className="
-                min-w-0
-              "
-            >
-
-              <DayPickerInput
-                value={date}
-                onChange={
-                  handleDateChange
-                }
-                placeholder="Filter by date"
-              />
-
-            </div>
-
-
-            {/* ===================================================
-                CLEAR
-            =================================================== */}
-
-            <button
-              type="button"
-
-              onClick={() => {
-                handleClearDate();
-                handleClearUser();
-              }}
-
-              disabled={
-                !date &&
-                selectedUserId ===
-                ALL_USERS
-              }
-
-              className="
-                inline-flex
-
-                h-10
-                w-full
-
-                items-center
-                justify-center
-                gap-1.5
-
-                rounded-xl
-
-                border
-                border-slate-200
-
-                bg-white
-
-                px-3.5
-
-                text-xs
-                font-semibold
-
-                text-slate-600
-
-                shadow-sm
-
-                transition
-
-                hover:border-slate-300
-                hover:bg-slate-50
-                hover:text-slate-900
-
-                disabled:cursor-not-allowed
-                disabled:opacity-35
-
-                dark:border-zinc-800
-                dark:bg-zinc-900
-                dark:text-zinc-400
-
-                dark:hover:border-zinc-700
-                dark:hover:bg-zinc-800
-                dark:hover:text-zinc-200
-
-                sm:w-auto
-              "
-            >
-
-              <HiOutlineXMark
-                className="
-                  h-4
-                  w-4
-                "
-              />
-
-              Clear
-
-            </button>
-
-          </div>
-
+          )}
         </div>
 
+        {/* FILTER / ACTION ROW */}
 
-        {/* =======================================================
-            EXPORT
-        ======================================================= */}
+        <div
+          className="
+          mt-4
+          grid
+          w-full
+          grid-cols-1
+          gap-2
+          sm:grid-cols-2
+          lg:flex
+          lg:items-center
+        "
+        >
+          {/* USER FILTER */}
 
-        {hasPermission("REPORT_EXPORT_ALL") && (
           <div
             className="
-              relative
-              mt-3
-
-              flex
-              w-full
-              justify-end
-            "
+            relative
+            min-w-0
+            lg:w-[220px]
+            xl:w-[240px]
+          "
           >
-
-            <button
-              type="button"
-              disabled={isExporting}
-              onClick={() => {
-                if (isExporting) {
-                  return;
-                }
-
-                setExportOpen(
-                  (open) => !open
-                );
-              }}
+            <select
+              value={selectedUserId}
+              onChange={(event) =>
+                handleUserChange(event.target.value)
+              }
+              disabled={usersLoading}
               className="
-                inline-flex
+              block
+              h-10
+              w-full
+              min-w-0
+              appearance-none
+              rounded-lg
+              border
+              border-slate-200
+              bg-white
+              pl-3
+              pr-9
+              text-sm
+              font-medium
+              text-slate-700
+              outline-none
+              transition
+              hover:border-slate-300
+              focus:border-indigo-400
+              focus:ring-2
+              focus:ring-indigo-100
+              disabled:cursor-not-allowed
+              disabled:opacity-60
+              dark:border-zinc-800
+              dark:bg-zinc-900
+              dark:text-zinc-300
+              dark:hover:border-zinc-700
+              dark:focus:border-indigo-500
+              dark:focus:ring-indigo-500/10
+            "
+            >
+              <option value={ALL_USERS}>
+                All users
+              </option>
 
+              {users.map((user) => (
+                <option
+                  key={user.id}
+                  value={user.id}
+                >
+                  {user.name}
+                  {user.deletedAt
+                    ? " — Inactive"
+                    : ""}
+                </option>
+              ))}
+            </select>
+
+            <HiOutlineChevronDown
+              className="
+              pointer-events-none
+              absolute
+              right-3
+              top-1/2
+              h-4
+              w-4
+              -translate-y-1/2
+              text-slate-400
+              dark:text-zinc-500
+            "
+            />
+          </div>
+
+          {/* DATE FILTER */}
+
+          <div
+            className="
+            min-w-0
+            sm:min-w-0
+            lg:w-[220px]
+          "
+          >
+            <DayPickerInput
+              value={date}
+              onChange={handleDateChange}
+              placeholder="Filter by date"
+            />
+          </div>
+
+          {/* CLEAR */}
+
+          <button
+            type="button"
+            onClick={() => {
+              handleClearDate();
+              handleClearUser();
+            }}
+            disabled={
+              !date &&
+              selectedUserId === ALL_USERS
+            }
+            className="
+            inline-flex
+            h-10
+            w-full
+            items-center
+            justify-center
+            gap-1.5
+            rounded-lg
+            border
+            border-slate-200
+            bg-white
+            px-3.5
+            text-sm
+            font-medium
+            text-slate-600
+            outline-none
+            transition
+            hover:border-slate-300
+            hover:bg-slate-50
+            hover:text-slate-900
+            disabled:cursor-not-allowed
+            disabled:opacity-35
+            dark:border-zinc-800
+            dark:bg-zinc-900
+            dark:text-zinc-400
+            dark:hover:border-zinc-700
+            dark:hover:bg-zinc-800
+            dark:hover:text-zinc-200
+            sm:w-auto
+            lg:shrink-0
+          "
+          >
+            <HiOutlineXMark className="h-4 w-4" />
+            Clear
+          </button>
+
+          {/* EXPORT */}
+
+          {hasPermission("REPORT_EXPORT_ALL") && (
+            <div
+              className="
+              relative
+              w-full
+              sm:col-span-2
+              lg:ml-auto
+              lg:w-auto
+            "
+            >
+              <button
+                type="button"
+                disabled={isExporting}
+                onClick={() => {
+                  if (isExporting) {
+                    return;
+                  }
+
+                  setExportOpen((open) => !open);
+                }}
+                className="
+                inline-flex
                 h-10
                 w-full
                 items-center
                 justify-center
                 gap-2
-
-                rounded-xl
-
+                rounded-lg
                 border
                 border-indigo-200
-
                 bg-indigo-50
-
                 px-4
-
-                text-xs
+                text-sm
                 font-semibold
-
                 text-indigo-700
-
-                shadow-sm
-
                 outline-none
-
                 transition
-
                 hover:border-indigo-300
                 hover:bg-indigo-100
-
                 focus:ring-2
                 focus:ring-indigo-100
-
                 disabled:cursor-not-allowed
                 disabled:opacity-70
-
                 dark:border-indigo-500/20
                 dark:bg-indigo-500/10
                 dark:text-indigo-400
-
                 dark:hover:border-indigo-500/30
                 dark:hover:bg-indigo-500/15
-
                 dark:focus:ring-indigo-500/10
-
                 sm:w-auto
               "
-            >
-
-              <HiOutlineArrowPath
-                className={`
+              >
+                <HiOutlineArrowPath
+                  className={`
                   h-4
                   w-4
-
-                  ${isExporting
-                    ? "animate-spin"
-                    : ""
-                  }
+                  ${isExporting ? "animate-spin" : ""}
                 `}
-              />
+                />
 
-              <span>
-                {isExporting
-                  ? "Exporting..."
-                  : "Export Excel"}
-              </span>
+                <span>
+                  {isExporting
+                    ? "Exporting..."
+                    : "Export Excel"}
+                </span>
 
-              {!isExporting && (
-                <HiOutlineChevronDown
-                  className={`
+                {!isExporting && (
+                  <HiOutlineChevronDown
+                    className={`
                     h-3.5
                     w-3.5
-
                     transition-transform
                     duration-200
-
                     ${exportOpen
-                      ? "rotate-180"
-                      : ""
-                    }
+                        ? "rotate-180"
+                        : ""
+                      }
                   `}
-                />
-              )}
+                  />
+                )}
+              </button>
 
-            </button>
+              {/* EXPORT MENU */}
 
-
-            {exportOpen &&
-              !isExporting && (
+              {exportOpen && !isExporting && (
                 <div
                   className="
-                    absolute
-                    right-0
-                    top-full
-                    z-30
-
-                    mt-2
-
-                    w-full
-                    min-w-[245px]
-
-                    overflow-hidden
-
-                    rounded-xl
-
-                    border
-                    border-slate-200
-
-                    bg-white
-
-                    p-1.5
-
-                    shadow-[0_12px_30px_rgba(15,23,42,0.12)]
-
-                    dark:border-zinc-800
-                    dark:bg-zinc-950
-                    dark:shadow-[0_12px_30px_rgba(0,0,0,0.3)]
-
-                    sm:w-auto
-                  "
+                  absolute
+                  right-0
+                  top-full
+                  z-50
+                  mt-2
+                  w-[calc(100vw-2rem)]
+                  max-w-[260px]
+                  overflow-hidden
+                  rounded-xl
+                  border
+                  border-slate-200
+                  bg-white
+                  p-1.5
+                  shadow-[0_12px_30px_rgba(15,23,42,0.12)]
+                  dark:border-zinc-800
+                  dark:bg-zinc-950
+                  dark:shadow-[0_12px_30px_rgba(0,0,0,0.3)]
+                  sm:w-[260px]
+                "
                 >
+                  {/* ALL */}
 
                   <button
                     type="button"
@@ -1032,34 +889,26 @@ export default function Reports() {
                       handleExport("all")
                     }
                     className="
-                      flex
-                      w-full
-
-                      items-center
-
-                      rounded-lg
-
-                      px-3
-                      py-2.5
-
-                      text-left
-
-                      text-xs
-                      font-semibold
-
-                      text-slate-700
-
-                      transition
-
-                      hover:bg-slate-50
-
-                      dark:text-zinc-300
-                      dark:hover:bg-zinc-900
-                    "
+                    flex
+                    w-full
+                    items-center
+                    rounded-lg
+                    px-3
+                    py-2.5
+                    text-left
+                    text-sm
+                    font-medium
+                    text-slate-700
+                    transition
+                    hover:bg-slate-50
+                    dark:text-zinc-300
+                    dark:hover:bg-zinc-900
+                  "
                   >
                     All Reports
                   </button>
 
+                  {/* DATE */}
 
                   <button
                     type="button"
@@ -1068,62 +917,47 @@ export default function Reports() {
                       handleExport("date")
                     }
                     className="
-                      flex
-                      w-full
-
-                      items-center
-
-                      rounded-lg
-
-                      px-3
-                      py-2.5
-
-                      text-left
-
-                      text-xs
-                      font-semibold
-
-                      text-slate-700
-
-                      transition
-
-                      hover:bg-slate-50
-
-                      disabled:cursor-not-allowed
-                      disabled:opacity-35
-
-                      dark:text-zinc-300
-                      dark:hover:bg-zinc-900
-                    "
+                    flex
+                    w-full
+                    items-center
+                    rounded-lg
+                    px-3
+                    py-2.5
+                    text-left
+                    text-sm
+                    font-medium
+                    text-slate-700
+                    transition
+                    hover:bg-slate-50
+                    disabled:cursor-not-allowed
+                    disabled:opacity-35
+                    dark:text-zinc-300
+                    dark:hover:bg-zinc-900
+                  "
                   >
                     Selected Date
                   </button>
 
+                  {/* MONTH */}
 
                   <div
                     className="
-                      mt-1
-
-                      border-t
-                      border-slate-100
-
-                      pt-1
-
-                      dark:border-zinc-900
-                    "
+                    mt-1
+                    border-t
+                    border-slate-100
+                    pt-1
+                    dark:border-zinc-900
+                  "
                   >
-
                     <div
                       className="
-                        flex
-                        items-center
-                        gap-2
-
-                        px-2
-                        py-1
-                      "
+                      flex
+                      items-center
+                      gap-2
+                      px-2
+                      py-1
+                    "
                     >
-
                       <input
                         type="month"
                         value={exportMonth}
@@ -1133,39 +967,28 @@ export default function Reports() {
                           )
                         }
                         className="
-                          h-9
-                          min-w-0
-                          flex-1
-
-                          rounded-lg
-
-                          border
-                          border-slate-200
-
-                          bg-white
-
-                          px-2.5
-
-                          text-[11px]
-                          font-medium
-
-                          text-slate-700
-
-                          outline-none
-
-                          focus:border-indigo-400
-                          focus:ring-2
-                          focus:ring-indigo-100
-
-                          dark:border-zinc-800
-                          dark:bg-zinc-900
-                          dark:text-zinc-300
-
-                          dark:focus:border-indigo-500
-                          dark:focus:ring-indigo-500/10
-                        "
+                        h-9
+                        min-w-0
+                        flex-1
+                        rounded-lg
+                        border
+                        border-slate-200
+                        bg-white
+                        px-2.5
+                        text-xs
+                        font-medium
+                        text-slate-700
+                        outline-none
+                        focus:border-indigo-400
+                        focus:ring-2
+                        focus:ring-indigo-100
+                        dark:border-zinc-800
+                        dark:bg-zinc-900
+                        dark:text-zinc-300
+                        dark:focus:border-indigo-500
+                        dark:focus:ring-indigo-500/10
+                      "
                       />
-
 
                       <button
                         type="button"
@@ -1174,289 +997,135 @@ export default function Reports() {
                           handleExport("month")
                         }
                         className="
-                          h-9
-                          shrink-0
-
-                          rounded-lg
-
-                          bg-indigo-600
-
-                          px-3
-
-                          text-[11px]
-                          font-semibold
-
-                          text-white
-
-                          shadow-sm
-
-                          transition
-
-                          hover:bg-indigo-700
-
-                          disabled:cursor-not-allowed
-                          disabled:opacity-40
-                        "
+                        h-9
+                        shrink-0
+                        rounded-lg
+                        bg-indigo-600
+                        px-3
+                        text-xs
+                        font-semibold
+                        text-white
+                        shadow-sm
+                        transition
+                        hover:bg-indigo-700
+                        disabled:cursor-not-allowed
+                        disabled:opacity-40
+                      "
                       >
                         Export
                       </button>
-
                     </div>
-
                   </div>
-
                 </div>
               )}
+            </div>
+          )}
+        </div>
 
-          </div>
-        )}
+        {/* ACTIVE FILTER */}
 
-
-        {/* =======================================================
-            ACTIVE FILTER / COUNT
-        ======================================================= */}
-
-        <div
-          className="
-            mt-4
-
-            flex
-            min-w-0
-            flex-wrap
-            items-center
-            gap-2
-          "
-        >
-
-          {!isLoading &&
-            totalReports > 0 && (
-
-              <div
-                className="
-                  inline-flex
-
-                  h-8
-                  items-center
-
-                  rounded-lg
-
-                  border
-                  border-indigo-100
-
-                  bg-indigo-50
-
-                  px-3
-
-                  text-[11px]
-                  font-bold
-
-                  text-indigo-600
-
-                  dark:border-indigo-500/20
-                  dark:bg-indigo-500/10
-                  dark:text-indigo-400
-                "
-              >
-
-                {totalReports}{" "}
-                {totalReports === 1
-                  ? "Report"
-                  : "Reports"}
-
-              </div>
-
-            )}
-
-
-          {selectedUser && (
-
+        {selectedUser && (
+          <div className="mt-3 flex min-w-0 items-center">
             <div
               className="
-                inline-flex
-                min-w-0
-                max-w-full
-
-                items-center
-                gap-1.5
-
-                rounded-lg
-
-                border
-                border-slate-200
-
-                bg-slate-50
-
-                px-2.5
-                py-1
-
-                text-[11px]
-                font-semibold
-
-                text-slate-600
-
-                dark:border-zinc-800
-                dark:bg-zinc-900
-                dark:text-zinc-400
-              "
+              inline-flex
+              min-w-0
+              max-w-full
+              items-center
+              gap-1.5
+              rounded-md
+              bg-slate-100
+              px-2.5
+              py-1
+              text-[11px]
+              font-medium
+              text-slate-600
+              dark:bg-zinc-900
+              dark:text-zinc-400
+            "
             >
-
               <span className="truncate">
                 {selectedUser.name}
               </span>
 
-
               {selectedUser.deletedAt && (
-
                 <span
                   className="
-                    shrink-0
-
-                    rounded-md
-
-                    border
-                    border-amber-200
-
-                    bg-amber-50
-
-                    px-1.5
-                    py-0.5
-
-                    text-[9px]
-                    font-bold
-
-                    uppercase
-                    tracking-wide
-
-                    text-amber-700
-
-                    dark:border-amber-500/20
-                    dark:bg-amber-500/10
-                    dark:text-amber-400
-                  "
+                  shrink-0
+                  rounded
+                  bg-amber-50
+                  px-1.5
+                  py-0.5
+                  text-[9px]
+                  font-bold
+                  uppercase
+                  tracking-wide
+                  text-amber-700
+                  dark:bg-amber-500/10
+                  dark:text-amber-400
+                "
                 >
                   Inactive
                 </span>
-
               )}
-
             </div>
-
-          )}
-
-        </div>
-
+          </div>
+        )}
       </div>
-
 
       {/* =========================================================
-          CONTENT
-      ========================================================= */}
+        CONTENT
+    ========================================================= */}
 
-      <div
-        className="
-          mt-7
-
-          sm:mt-8
-        "
-      >
-
+      <div className="mt-7 sm:mt-8">
         {isLoading ? (
-
           <SkeletonList />
-
         ) : isError ? (
-
           <ErrorState />
-
         ) : groupedReports.length > 0 ? (
-
           <>
-
             <div
               className="
-                space-y-8
-
-                sm:space-y-9
-              "
+              space-y-8
+              sm:space-y-9
+            "
             >
-
-              {groupedReports.map(
-                (group) => (
-
-                  <DateSection
-                    key={
-                      group.date
-                    }
-
-                    date={
-                      group.date
-                    }
-
-                    reports={
-                      group.reports
-                    }
-
-                    onCopy={
-                      handleCopy
-                    }
-                  />
-
-                )
-              )}
-
+              {groupedReports.map((group) => (
+                <DateSection
+                  key={group.date}
+                  date={group.date}
+                  reports={group.reports}
+                  onCopy={handleCopy}
+                />
+              ))}
             </div>
 
-
             {pagination &&
-              pagination.totalPages >
-              1 && (
-
+              pagination.totalPages > 1 && (
                 <Pagination
-                  pagination={
-                    pagination
-                  }
-
-                  isFetching={
-                    isFetching
-                  }
-
-                  onPageChange={
-                    handlePageChange
-                  }
+                  pagination={pagination}
+                  isFetching={isFetching}
+                  onPageChange={handlePageChange}
                 />
-
               )}
-
           </>
-
         ) : (
-
           <EmptyState
-            hasDateFilter={
-              Boolean(date)
-            }
-
+            hasDateFilter={Boolean(date)}
             hasUserFilter={
-              selectedUserId !==
-              ALL_USERS
+              selectedUserId !== ALL_USERS
             }
-
-            userName={
-              selectedUser?.name
-            }
+            userName={selectedUser?.name}
           />
-
         )}
-
       </div>
-
     </div>
   );
 }
 
 
 /* ================================================================
-   DATE SECTION
+  DATE SECTION
 ================================================================ */
 
 function DateSection({
@@ -1548,67 +1217,67 @@ function DateSection({
 
       <div
         className="
-          mb-4
+            mb-4
 
-          flex
-          flex-col
-          gap-3
+            flex
+            flex-col
+            gap-3
 
-          sm:mb-5
-          sm:flex-row
-          sm:items-center
-        "
+            sm:mb-5
+            sm:flex-row
+            sm:items-center
+          "
       >
 
         <div
           className="
-            flex
-            min-w-0
-            items-center
-            gap-3
-          "
+              flex
+              min-w-0
+              items-center
+              gap-3
+            "
         >
 
           <div
             className="
-              flex
+                flex
 
-              h-11
-              w-11
-              shrink-0
+                h-11
+                w-11
+                shrink-0
 
-              flex-col
-              items-center
-              justify-center
+                flex-col
+                items-center
+                justify-center
 
-              rounded-xl
+                rounded-xl
 
-              border
-              border-slate-200
+                border
+                border-slate-200
 
-              bg-white
+                bg-white
 
-              shadow-[0_3px_12px_rgba(15,23,42,0.04)]
+                shadow-[0_3px_12px_rgba(15,23,42,0.04)]
 
-              dark:border-zinc-800
-              dark:bg-zinc-950
-              dark:shadow-none
+                dark:border-zinc-800
+                dark:bg-zinc-950
+                dark:shadow-none
 
-              sm:h-12
-              sm:w-12
-            "
+                sm:h-12
+                sm:w-12
+              "
           >
 
             <span
               className="
-                text-sm
-                font-bold
-                leading-none
+                  text-sm
+                  font-bold
+                  leading-none
 
-                text-slate-900
+                  text-slate-900
 
-                dark:text-white
-              "
+                  dark:text-white
+                "
             >
               {day}
             </span>
@@ -1616,17 +1285,17 @@ function DateSection({
 
             <span
               className="
-                mt-1
+                  mt-1
 
-                text-[8px]
-                font-bold
+                  text-[8px]
+                  font-bold
 
-                tracking-[0.14em]
+                  tracking-[0.14em]
 
-                text-slate-400
+                  text-slate-400
 
-                dark:text-zinc-600
-              "
+                  dark:text-zinc-600
+                "
             >
               {month}
             </span>
@@ -1638,17 +1307,17 @@ function DateSection({
 
             <h2
               className="
-                truncate
+                  truncate
 
-                text-sm
-                font-bold
+                  text-sm
+                  font-bold
 
-                text-slate-900
+                  text-slate-900
 
-                dark:text-white
+                  dark:text-white
 
-                sm:text-[15px]
-              "
+                  sm:text-[15px]
+                "
             >
 
               <span className="sm:hidden">
@@ -1664,19 +1333,19 @@ function DateSection({
 
             <p
               className="
-                mt-0.5
+                  mt-0.5
 
-                text-[10px]
-                font-semibold
+                  text-[10px]
+                  font-semibold
 
-                uppercase
+                  uppercase
 
-                tracking-[0.12em]
+                  tracking-[0.12em]
 
-                text-slate-400
+                  text-slate-400
 
-                dark:text-zinc-600
-              "
+                  dark:text-zinc-600
+                "
             >
 
               {reports.length}{" "}
@@ -1694,16 +1363,16 @@ function DateSection({
 
         <div
           className="
-            hidden
-            h-px
-            flex-1
+              hidden
+              h-px
+              flex-1
 
-            bg-slate-200
+              bg-slate-200
 
-            dark:bg-zinc-800
+              dark:bg-zinc-800
 
-            sm:block
-          "
+              sm:block
+            "
         />
 
 
@@ -1715,57 +1384,57 @@ function DateSection({
           }
 
           className="
-            inline-flex
+              inline-flex
 
-            h-9
-            w-fit
-            shrink-0
+              h-9
+              w-fit
+              shrink-0
 
-            items-center
-            justify-center
-            gap-1.5
+              items-center
+              justify-center
+              gap-1.5
 
-            self-start
+              self-start
 
-            rounded-xl
+              rounded-xl
 
-            border
-            border-slate-200
+              border
+              border-slate-200
 
-            bg-white
+              bg-white
 
-            px-3
+              px-3
 
-            text-[11px]
-            font-semibold
+              text-[11px]
+              font-semibold
 
-            text-slate-600
+              text-slate-600
 
-            shadow-sm
+              shadow-sm
 
-            transition
+              transition
 
-            hover:border-slate-300
-            hover:bg-slate-50
-            hover:text-slate-900
+              hover:border-slate-300
+              hover:bg-slate-50
+              hover:text-slate-900
 
-            dark:border-zinc-800
-            dark:bg-zinc-900
-            dark:text-zinc-400
+              dark:border-zinc-800
+              dark:bg-zinc-900
+              dark:text-zinc-400
 
-            dark:hover:border-zinc-700
-            dark:hover:bg-zinc-800
-            dark:hover:text-zinc-200
+              dark:hover:border-zinc-700
+              dark:hover:bg-zinc-800
+              dark:hover:text-zinc-200
 
-            sm:self-auto
-          "
+              sm:self-auto
+            "
         >
 
           <HiOutlineClipboardDocument
             className="
-              h-3.5
-              w-3.5
-            "
+                h-3.5
+                w-3.5
+              "
           />
 
           Copy
@@ -1779,23 +1448,23 @@ function DateSection({
 
       <div
         className="
-          relative
+            relative
 
-          ml-2
+            ml-2
 
-          space-y-3
+            space-y-3
 
-          border-l
-          border-slate-200
+            border-l
+            border-slate-200
 
-          pl-5
+            pl-5
 
-          dark:border-zinc-800
+            dark:border-zinc-800
 
-          sm:ml-4
-          sm:space-y-4
-          sm:pl-7
-        "
+            sm:ml-4
+            sm:space-y-4
+            sm:pl-7
+          "
       >
 
         {reports.map(
@@ -1823,7 +1492,7 @@ function DateSection({
 
 
 /* ================================================================
-   REPORT CARD
+  REPORT CARD
 ================================================================ */
 
 function ReportCard({
@@ -1844,50 +1513,50 @@ function ReportCard({
   return (
     <article
       className="
-        group
+          group
 
-        relative
+          relative
 
-        min-w-0
-      "
+          min-w-0
+        "
     >
 
       {/* TIMELINE DOT */}
 
       <span
         className={`
-          absolute
+            absolute
 
-          -left-[25px]
-          top-5
+            -left-[25px]
+            top-5
 
-          h-2
-          w-2
+            h-2
+            w-2
 
-          rounded-full
+            rounded-full
 
-          border
-          border-white
+            border
+            border-white
 
-          shadow-[0_0_0_3px_rgba(99,102,241,0.08)]
+            shadow-[0_0_0_3px_rgba(99,102,241,0.08)]
 
-          dark:border-zinc-950
+            dark:border-zinc-950
 
-          sm:-left-[34px]
+            sm:-left-[34px]
 
-          ${isDeleted
+            ${isDeleted
             ? `
-                  bg-amber-500
-                  dark:bg-amber-400
-                  dark:shadow-[0_0_0_3px_rgba(245,158,11,0.08)]
-                `
+                    bg-amber-500
+                    dark:bg-amber-400
+                    dark:shadow-[0_0_0_3px_rgba(245,158,11,0.08)]
+                  `
             : `
-                  bg-indigo-500
-                  dark:bg-indigo-400
-                  dark:shadow-[0_0_0_3px_rgba(129,140,248,0.08)]
-                `
+                    bg-indigo-500
+                    dark:bg-indigo-400
+                    dark:shadow-[0_0_0_3px_rgba(129,140,248,0.08)]
+                  `
           }
-        `}
+          `}
       />
 
 
@@ -1895,99 +1564,99 @@ function ReportCard({
 
       <div
         className="
-          overflow-hidden
+            overflow-hidden
 
-          rounded-xl
+            rounded-xl
 
-          border
-          border-slate-200/80
+            border
+            border-slate-200/80
 
-          bg-white
+            bg-white
 
-          shadow-[0_3px_16px_rgba(15,23,42,0.035)]
+            shadow-[0_3px_16px_rgba(15,23,42,0.035)]
 
-          transition-all
-          duration-200
+            transition-all
+            duration-200
 
-          hover:-translate-y-0.5
+            hover:-translate-y-0.5
 
-          hover:border-slate-300
+            hover:border-slate-300
 
-          hover:shadow-[0_8px_24px_rgba(15,23,42,0.06)]
+            hover:shadow-[0_8px_24px_rgba(15,23,42,0.06)]
 
-          dark:border-zinc-800
-          dark:bg-zinc-950
-          dark:shadow-none
+            dark:border-zinc-800
+            dark:bg-zinc-950
+            dark:shadow-none
 
-          dark:hover:border-zinc-700
-        "
+            dark:hover:border-zinc-700
+          "
       >
 
         {/* USER HEADER */}
 
         <div
           className={`
-            flex
-            min-w-0
-            items-center
-            gap-3
+              flex
+              min-w-0
+              items-center
+              gap-3
 
-            border-b
+              border-b
 
-            px-4
-            py-3
+              px-4
+              py-3
 
-            dark:border-zinc-900
+              dark:border-zinc-900
 
-            sm:px-5
-            sm:py-3.5
+              sm:px-5
+              sm:py-3.5
 
-            ${isDeleted
+              ${isDeleted
               ? `
-                    border-amber-100
-                    bg-amber-50/40
-                    dark:bg-amber-500/[0.025]
-                  `
+                      border-amber-100
+                      bg-amber-50/40
+                      dark:bg-amber-500/[0.025]
+                    `
               : `
-                    border-slate-100
-                  `
+                      border-slate-100
+                    `
             }
-          `}
+            `}
         >
 
           {/* AVATAR */}
 
           <div
             className={`
-              flex
+                flex
 
-              h-9
-              w-9
-              shrink-0
+                h-9
+                w-9
+                shrink-0
 
-              items-center
-              justify-center
+                items-center
+                justify-center
 
-              rounded-full
+                rounded-full
 
-              text-[10px]
-              font-bold
+                text-[10px]
+                font-bold
 
-              ${isDeleted
+                ${isDeleted
                 ? `
-                      bg-amber-100
-                      text-amber-700
-                      dark:bg-amber-500/10
-                      dark:text-amber-400
-                    `
+                        bg-amber-100
+                        text-amber-700
+                        dark:bg-amber-500/10
+                        dark:text-amber-400
+                      `
                 : `
-                      bg-indigo-50
-                      text-indigo-600
-                      dark:bg-indigo-500/10
-                      dark:text-indigo-400
-                    `
+                        bg-indigo-50
+                        text-indigo-600
+                        dark:bg-indigo-500/10
+                        dark:text-indigo-400
+                      `
               }
-            `}
+              `}
           >
             <UserAvatar
               name={report.user.name}
@@ -2000,35 +1669,35 @@ function ReportCard({
 
           <div
             className="
-              min-w-0
-              flex-1
-            "
+                min-w-0
+                flex-1
+              "
           >
 
             <div
               className="
-                flex
-                min-w-0
-                flex-wrap
-                items-center
-                gap-1.5
-              "
+                  flex
+                  min-w-0
+                  flex-wrap
+                  items-center
+                  gap-1.5
+                "
             >
 
               <p
                 className="
-                  min-w-0
-                  max-w-full
+                    min-w-0
+                    max-w-full
 
-                  truncate
+                    truncate
 
-                  text-xs
-                  font-bold
+                    text-xs
+                    font-bold
 
-                  text-slate-900
+                    text-slate-900
 
-                  dark:text-white
-                "
+                    dark:text-white
+                  "
               >
                 {report.user.name}
               </p>
@@ -2041,16 +1710,16 @@ function ReportCard({
 
             <p
               className="
-                mt-0.5
+                  mt-0.5
 
-                truncate
+                  truncate
 
-                text-[10px]
+                  text-[10px]
 
-                text-slate-400
+                  text-slate-400
 
-                dark:text-zinc-600
-              "
+                  dark:text-zinc-600
+                "
             >
               {report.user.email}
             </p>
@@ -2064,26 +1733,26 @@ function ReportCard({
 
         <div
           className="
-            px-4
-            py-4
+              px-4
+              py-4
 
-            sm:px-5
-            sm:py-4
-          "
+              sm:px-5
+              sm:py-4
+            "
         >
 
           <p
             className="
-              whitespace-pre-wrap
-              break-words
+                whitespace-pre-wrap
+                break-words
 
-              text-[13px]
-              leading-6
+                text-[13px]
+                leading-6
 
-              text-slate-600
+                text-slate-600
 
-              dark:text-zinc-400
-            "
+                dark:text-zinc-400
+              "
           >
             {report.description}
           </p>
@@ -2098,7 +1767,7 @@ function ReportCard({
 
 
 /* ================================================================
-   PAGINATION WINDOW
+  PAGINATION WINDOW
 ================================================================ */
 
 function getPageWindow(
@@ -2169,7 +1838,7 @@ function getPageWindow(
 
 
 /* ================================================================
-   PAGINATION
+  PAGINATION
 ================================================================ */
 
 function Pagination({
@@ -2219,45 +1888,45 @@ function Pagination({
   return (
     <div
       className="
-        mt-6
+          mt-6
 
-        flex
-        flex-col
-        items-center
-        gap-3
+          flex
+          flex-col
+          items-center
+          gap-3
 
-        border-t
-        border-slate-200/70
+          border-t
+          border-slate-200/70
 
-        pt-5
+          pt-5
 
-        dark:border-zinc-800/70
+          dark:border-zinc-800/70
 
-        sm:flex-row
-        sm:justify-between
-      "
+          sm:flex-row
+          sm:justify-between
+        "
     >
 
       <p
         className="
-          text-[10px]
+            text-[10px]
 
-          text-slate-400
+            text-slate-400
 
-          dark:text-zinc-600
-        "
+            dark:text-zinc-600
+          "
       >
 
         Showing{" "}
 
         <span
           className="
-            font-semibold
+              font-semibold
 
-            text-slate-600
+              text-slate-600
 
-            dark:text-zinc-400
-          "
+              dark:text-zinc-400
+            "
         >
           {start}-{end}
         </span>
@@ -2266,12 +1935,12 @@ function Pagination({
 
         <span
           className="
-            font-semibold
+              font-semibold
 
-            text-slate-600
+              text-slate-600
 
-            dark:text-zinc-400
-          "
+              dark:text-zinc-400
+            "
         >
           {total}
         </span>
@@ -2283,28 +1952,28 @@ function Pagination({
 
       <div
         className="
-          flex
-          max-w-full
-          items-center
-          gap-1
+            flex
+            max-w-full
+            items-center
+            gap-1
 
-          overflow-x-auto
+            overflow-x-auto
 
-          rounded-xl
+            rounded-xl
 
-          border
-          border-slate-200
+            border
+            border-slate-200
 
-          bg-white
+            bg-white
 
-          p-1
+            p-1
 
-          shadow-sm
+            shadow-sm
 
-          dark:border-zinc-800
-          dark:bg-zinc-950
-          dark:shadow-none
-        "
+            dark:border-zinc-800
+            dark:bg-zinc-950
+            dark:shadow-none
+          "
       >
 
         {/* PREVIOUS */}
@@ -2326,38 +1995,38 @@ function Pagination({
           aria-label="Previous page"
 
           className="
-            flex
-            h-7
-            w-7
-            shrink-0
+              flex
+              h-7
+              w-7
+              shrink-0
 
-            items-center
-            justify-center
+              items-center
+              justify-center
 
-            rounded-lg
+              rounded-lg
 
-            text-slate-400
+              text-slate-400
 
-            transition
+              transition
 
-            hover:bg-slate-100
-            hover:text-slate-700
+              hover:bg-slate-100
+              hover:text-slate-700
 
-            disabled:cursor-not-allowed
-            disabled:opacity-30
+              disabled:cursor-not-allowed
+              disabled:opacity-30
 
-            dark:text-zinc-500
+              dark:text-zinc-500
 
-            dark:hover:bg-zinc-900
-            dark:hover:text-zinc-200
-          "
+              dark:hover:bg-zinc-900
+              dark:hover:text-zinc-200
+            "
         >
 
           <HiOutlineChevronLeft
             className="
-              h-3.5
-              w-3.5
-            "
+                h-3.5
+                w-3.5
+              "
           />
 
         </button>
@@ -2381,21 +2050,21 @@ function Pagination({
                   }
 
                   className="
-                    flex
+                      flex
 
-                    h-7
-                    w-5
-                    shrink-0
+                      h-7
+                      w-5
+                      shrink-0
 
-                    items-center
-                    justify-center
+                      items-center
+                      justify-center
 
-                    text-[10px]
+                      text-[10px]
 
-                    text-slate-300
+                      text-slate-300
 
-                    dark:text-zinc-700
-                  "
+                      dark:text-zinc-700
+                    "
                 >
                   ...
                 </span>
@@ -2433,46 +2102,46 @@ function Pagination({
                 }
 
                 className={`
-                  flex
+                    flex
 
-                  h-7
-                  min-w-7
-                  shrink-0
+                    h-7
+                    min-w-7
+                    shrink-0
 
-                  items-center
-                  justify-center
+                    items-center
+                    justify-center
 
-                  rounded-lg
+                    rounded-lg
 
-                  px-2
+                    px-2
 
-                  text-[10px]
-                  font-semibold
+                    text-[10px]
+                    font-semibold
 
-                  transition
+                    transition
 
-                  disabled:cursor-not-allowed
-                  disabled:opacity-60
+                    disabled:cursor-not-allowed
+                    disabled:opacity-60
 
-                  ${isActive
+                    ${isActive
                     ? `
-                          bg-indigo-600
-                          text-white
-                          shadow-sm
-                        `
+                            bg-indigo-600
+                            text-white
+                            shadow-sm
+                          `
                     : `
-                          text-slate-500
+                            text-slate-500
 
-                          hover:bg-slate-100
-                          hover:text-slate-800
+                            hover:bg-slate-100
+                            hover:text-slate-800
 
-                          dark:text-zinc-500
+                            dark:text-zinc-500
 
-                          dark:hover:bg-zinc-900
-                          dark:hover:text-zinc-200
-                        `
+                            dark:hover:bg-zinc-900
+                            dark:hover:text-zinc-200
+                          `
                   }
-                `}
+                  `}
               >
 
                 {entry}
@@ -2504,38 +2173,38 @@ function Pagination({
           aria-label="Next page"
 
           className="
-            flex
-            h-7
-            w-7
-            shrink-0
+              flex
+              h-7
+              w-7
+              shrink-0
 
-            items-center
-            justify-center
+              items-center
+              justify-center
 
-            rounded-lg
+              rounded-lg
 
-            text-slate-400
+              text-slate-400
 
-            transition
+              transition
 
-            hover:bg-slate-100
-            hover:text-slate-700
+              hover:bg-slate-100
+              hover:text-slate-700
 
-            disabled:cursor-not-allowed
-            disabled:opacity-30
+              disabled:cursor-not-allowed
+              disabled:opacity-30
 
-            dark:text-zinc-500
+              dark:text-zinc-500
 
-            dark:hover:bg-zinc-900
-            dark:hover:text-zinc-200
-          "
+              dark:hover:bg-zinc-900
+              dark:hover:text-zinc-200
+            "
         >
 
           <HiOutlineChevronRight
             className="
-              h-3.5
-              w-3.5
-            "
+                h-3.5
+                w-3.5
+              "
           />
 
         </button>
@@ -2548,7 +2217,7 @@ function Pagination({
 
 
 /* ================================================================
-   SKELETON
+  SKELETON
 ================================================================ */
 
 function SkeletonList() {
@@ -2556,10 +2225,10 @@ function SkeletonList() {
   return (
     <div
       className="
-        space-y-8
+          space-y-8
 
-        sm:space-y-9
-      "
+          sm:space-y-9
+        "
     >
 
       {[1, 2].map(
@@ -2573,66 +2242,66 @@ function SkeletonList() {
 
             <div
               className="
-                mb-5
+                  mb-5
 
-                flex
-                items-center
-                gap-3
-              "
+                  flex
+                  items-center
+                  gap-3
+                "
             >
 
               <div
                 className="
-                  h-11
-                  w-11
-                  shrink-0
-
-                  animate-pulse
-
-                  rounded-xl
-
-                  bg-slate-200
-
-                  dark:bg-zinc-800
-                "
-              />
-
-
-              <div
-                className="
-                  space-y-2
-                "
-              >
-
-                <div
-                  className="
-                    h-3
-                    w-36
+                    h-11
+                    w-11
+                    shrink-0
 
                     animate-pulse
 
-                    rounded
+                    rounded-xl
 
                     bg-slate-200
 
                     dark:bg-zinc-800
                   "
+              />
+
+
+              <div
+                className="
+                    space-y-2
+                  "
+              >
+
+                <div
+                  className="
+                      h-3
+                      w-36
+
+                      animate-pulse
+
+                      rounded
+
+                      bg-slate-200
+
+                      dark:bg-zinc-800
+                    "
                 />
 
 
                 <div
                   className="
-                    h-2.5
-                    w-24
+                      h-2.5
+                      w-24
 
-                    animate-pulse
+                      animate-pulse
 
-                    rounded
+                      rounded
 
-                    bg-slate-100
+                      bg-slate-100
 
-                    dark:bg-zinc-900
-                  "
+                      dark:bg-zinc-900
+                    "
                 />
 
               </div>
@@ -2642,20 +2311,20 @@ function SkeletonList() {
 
             <div
               className="
-                ml-2
+                  ml-2
 
-                space-y-4
+                  space-y-4
 
-                border-l
-                border-slate-200
+                  border-l
+                  border-slate-200
 
-                pl-5
+                  pl-5
 
-                dark:border-zinc-800
+                  dark:border-zinc-800
 
-                sm:ml-4
-                sm:pl-7
-              "
+                  sm:ml-4
+                  sm:pl-7
+                "
             >
 
               {[1, 2].map(
@@ -2667,85 +2336,85 @@ function SkeletonList() {
                     }
 
                     className="
-                      overflow-hidden
+                        overflow-hidden
 
-                      rounded-xl
+                        rounded-xl
 
-                      border
-                      border-slate-200
+                        border
+                        border-slate-200
 
-                      bg-white
+                        bg-white
 
-                      dark:border-zinc-800
-                      dark:bg-zinc-950
-                    "
+                        dark:border-zinc-800
+                        dark:bg-zinc-950
+                      "
                   >
 
                     <div
                       className="
-                        flex
+                          flex
 
-                        animate-pulse
+                          animate-pulse
 
-                        items-center
-                        gap-3
+                          items-center
+                          gap-3
 
-                        border-b
-                        border-slate-100
+                          border-b
+                          border-slate-100
 
-                        px-4
-                        py-3.5
+                          px-4
+                          py-3.5
 
-                        dark:border-zinc-900
-                      "
+                          dark:border-zinc-900
+                        "
                     >
 
                       <div
                         className="
-                          h-9
-                          w-9
-                          shrink-0
+                            h-9
+                            w-9
+                            shrink-0
 
-                          rounded-full
-
-                          bg-slate-200
-
-                          dark:bg-zinc-800
-                        "
-                      />
-
-
-                      <div
-                        className="
-                          space-y-2
-                        "
-                      >
-
-                        <div
-                          className="
-                            h-3
-                            w-24
-
-                            rounded
+                            rounded-full
 
                             bg-slate-200
 
                             dark:bg-zinc-800
                           "
+                      />
+
+
+                      <div
+                        className="
+                            space-y-2
+                          "
+                      >
+
+                        <div
+                          className="
+                              h-3
+                              w-24
+
+                              rounded
+
+                              bg-slate-200
+
+                              dark:bg-zinc-800
+                            "
                         />
 
 
                         <div
                           className="
-                            h-2.5
-                            w-32
+                              h-2.5
+                              w-32
 
-                            rounded
+                              rounded
 
-                            bg-slate-100
+                              bg-slate-100
 
-                            dark:bg-zinc-900
-                          "
+                              dark:bg-zinc-900
+                            "
                         />
 
                       </div>
@@ -2755,40 +2424,40 @@ function SkeletonList() {
 
                     <div
                       className="
-                        animate-pulse
+                          animate-pulse
 
-                        space-y-2
+                          space-y-2
 
-                        px-4
-                        py-5
-                      "
+                          px-4
+                          py-5
+                        "
                     >
 
                       <div
                         className="
-                          h-3
-                          w-full
+                            h-3
+                            w-full
 
-                          rounded
+                            rounded
 
-                          bg-slate-100
+                            bg-slate-100
 
-                          dark:bg-zinc-900
-                        "
+                            dark:bg-zinc-900
+                          "
                       />
 
 
                       <div
                         className="
-                          h-3
-                          w-5/6
+                            h-3
+                            w-5/6
 
-                          rounded
+                            rounded
 
-                          bg-slate-100
+                            bg-slate-100
 
-                          dark:bg-zinc-900
-                        "
+                            dark:bg-zinc-900
+                          "
                       />
 
                     </div>
@@ -2811,7 +2480,7 @@ function SkeletonList() {
 
 
 /* ================================================================
-   EMPTY
+  EMPTY
 ================================================================ */
 
 function EmptyState({
@@ -2868,61 +2537,61 @@ function EmptyState({
   return (
     <div
       className="
-        flex
-
-        min-h-[300px]
-        w-full
-
-        flex-col
-        items-center
-        justify-center
-
-        rounded-xl
-
-        border
-        border-dashed
-        border-slate-200
-
-        bg-white/60
-
-        px-5
-
-        text-center
-
-        dark:border-zinc-800
-        dark:bg-zinc-950/40
-
-        sm:min-h-[320px]
-        sm:px-6
-      "
-    >
-
-      <div
-        className="
           flex
 
-          h-12
-          w-12
+          min-h-[300px]
+          w-full
 
+          flex-col
           items-center
           justify-center
 
           rounded-xl
 
-          bg-slate-100
+          border
+          border-dashed
+          border-slate-200
 
-          text-slate-400
+          bg-white/60
 
-          dark:bg-zinc-900
-          dark:text-zinc-600
+          px-5
+
+          text-center
+
+          dark:border-zinc-800
+          dark:bg-zinc-950/40
+
+          sm:min-h-[320px]
+          sm:px-6
         "
+    >
+
+      <div
+        className="
+            flex
+
+            h-12
+            w-12
+
+            items-center
+            justify-center
+
+            rounded-xl
+
+            bg-slate-100
+
+            text-slate-400
+
+            dark:bg-zinc-900
+            dark:text-zinc-600
+          "
       >
 
         <HiOutlineDocumentMagnifyingGlass
           className="
-            h-5
-            w-5
-          "
+              h-5
+              w-5
+            "
         />
 
       </div>
@@ -2930,15 +2599,15 @@ function EmptyState({
 
       <h3
         className="
-          mt-4
+            mt-4
 
-          text-sm
-          font-bold
+            text-sm
+            font-bold
 
-          text-slate-900
+            text-slate-900
 
-          dark:text-white
-        "
+            dark:text-white
+          "
       >
         {title}
       </h3>
@@ -2946,17 +2615,17 @@ function EmptyState({
 
       <p
         className="
-          mt-2
+            mt-2
 
-          max-w-[340px]
+            max-w-[340px]
 
-          text-xs
-          leading-5
+            text-xs
+            leading-5
 
-          text-slate-400
+            text-slate-400
 
-          dark:text-zinc-600
-        "
+            dark:text-zinc-600
+          "
       >
         {description}
       </p>
@@ -2967,7 +2636,7 @@ function EmptyState({
 
 
 /* ================================================================
-   ERROR
+  ERROR
 ================================================================ */
 
 function ErrorState() {
@@ -2975,57 +2644,57 @@ function ErrorState() {
   return (
     <div
       className="
-        flex
-
-        min-h-[300px]
-        w-full
-
-        flex-col
-        items-center
-        justify-center
-
-        rounded-xl
-
-        border
-        border-red-200
-
-        bg-red-50/50
-
-        px-5
-
-        text-center
-
-        dark:border-red-500/20
-        dark:bg-red-500/5
-      "
-    >
-
-      <div
-        className="
           flex
 
-          h-12
-          w-12
+          min-h-[300px]
+          w-full
 
+          flex-col
           items-center
           justify-center
 
           rounded-xl
 
-          bg-red-100
+          border
+          border-red-200
 
-          text-red-500
+          bg-red-50/50
 
-          dark:bg-red-500/10
-          dark:text-red-400
+          px-5
+
+          text-center
+
+          dark:border-red-500/20
+          dark:bg-red-500/5
         "
+    >
+
+      <div
+        className="
+            flex
+
+            h-12
+            w-12
+
+            items-center
+            justify-center
+
+            rounded-xl
+
+            bg-red-100
+
+            text-red-500
+
+            dark:bg-red-500/10
+            dark:text-red-400
+          "
       >
 
         <HiOutlineXMark
           className="
-            h-5
-            w-5
-          "
+              h-5
+              w-5
+            "
         />
 
       </div>
@@ -3033,15 +2702,15 @@ function ErrorState() {
 
       <h3
         className="
-          mt-4
+            mt-4
 
-          text-sm
-          font-bold
+            text-sm
+            font-bold
 
-          text-slate-900
+            text-slate-900
 
-          dark:text-white
-        "
+            dark:text-white
+          "
       >
         Unable to load reports
       </h3>
@@ -3049,14 +2718,14 @@ function ErrorState() {
 
       <p
         className="
-          mt-2
+            mt-2
 
-          text-xs
+            text-xs
 
-          text-slate-500
+            text-slate-500
 
-          dark:text-zinc-500
-        "
+            dark:text-zinc-500
+          "
       >
         Something went wrong while loading the reports.
       </p>
