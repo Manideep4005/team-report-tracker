@@ -473,9 +473,9 @@ export default function PublicMonitorView() {
                                 Link unavailable
                             </h1>
 
-                            <p className="mt-3 text-sm leading-6 text-slate-500">
+                            {/* <p className="mt-3 text-sm leading-6 text-slate-500">
                                 {getErrorMessage()}
-                            </p>
+                            </p> */}
                         </div>
                     </div>
                 )}
