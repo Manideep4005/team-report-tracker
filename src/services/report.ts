@@ -157,6 +157,11 @@ export type ReportExportFilter =
   | {
     filter: "month";
     month: string;
+  }
+  | {
+    filter: "range";
+    from: string;
+    to: string;
   };
 
 export async function exportOwnReports(

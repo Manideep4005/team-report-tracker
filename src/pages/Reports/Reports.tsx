@@ -100,6 +100,13 @@ export default function Reports() {
   const [exportMonth, setExportMonth] =
     useState("");
 
+
+  const [exportFromDate, setExportFromDate] =
+    useState<Date | null>(null);
+
+  const [exportToDate, setExportToDate] =
+    useState<Date | null>(null);
+
   const [isExporting, setIsExporting] =
     useState(false);
 
@@ -370,7 +377,7 @@ export default function Reports() {
   ============================================================== */
 
   const handleExport = async (
-    type: "all" | "date" | "month"
+    type: "all" | "date" | "month" | "range"
   ) => {
     if (isExporting) {
       return;
@@ -411,6 +418,38 @@ export default function Reports() {
         });
       }
 
+      if (type === "range") {
+        if (!exportFromDate || !exportToDate) {
+          toast.error(
+            "Please select both From and To dates."
+          );
+          return;
+        }
+
+        const from =
+          format(exportFromDate, "yyyy-MM-dd");
+
+        const to =
+          format(exportToDate, "yyyy-MM-dd");
+
+        if (from > to) {
+          toast.error(
+            "From date cannot be after To date."
+          );
+          return;
+        }
+
+        response = await exportAllReports({
+          filter: "range",
+          from,
+          to,
+        });
+      }
+
+      if (!response) {
+        return;
+      }
+
       const blob =
         response instanceof Blob
           ? response
@@ -436,9 +475,24 @@ export default function Reports() {
       } else if (type === "date") {
         link.download =
           `team_reports_${dateParam}.xlsx`;
-      } else {
+      } else if (type === "month") {
         link.download =
           `team_reports_${exportMonth}.xlsx`;
+      } else {
+        const from =
+          format(
+            exportFromDate!,
+            "yyyy-MM-dd"
+          );
+
+        const to =
+          format(
+            exportToDate!,
+            "yyyy-MM-dd"
+          );
+
+        link.download =
+          `team_reports_${from}_to_${to}.xlsx`;
       }
 
       document.body.appendChild(link);
@@ -856,30 +910,31 @@ export default function Reports() {
                 )}
               </button>
 
+
               {/* EXPORT MENU */}
 
               {exportOpen && !isExporting && (
                 <div
                   className="
-                  absolute
-                  right-0
-                  top-full
-                  z-50
-                  mt-2
-                  w-[calc(100vw-2rem)]
-                  max-w-[260px]
-                  overflow-hidden
-                  rounded-xl
-                  border
-                  border-slate-200
-                  bg-white
-                  p-1.5
-                  shadow-[0_12px_30px_rgba(15,23,42,0.12)]
-                  dark:border-zinc-800
-                  dark:bg-zinc-950
-                  dark:shadow-[0_12px_30px_rgba(0,0,0,0.3)]
-                  sm:w-[260px]
-                "
+      absolute
+      right-0
+      top-full
+      z-50
+      mt-2
+      w-[calc(100vw-2rem)]
+      max-w-[280px]
+      overflow-visible
+      rounded-xl
+      border
+      border-slate-200
+      bg-white
+      p-1.5
+      shadow-[0_12px_30px_rgba(15,23,42,0.12)]
+      dark:border-zinc-800
+      dark:bg-zinc-950
+      dark:shadow-[0_0_30px_rgba(0,0,0,0.3)]
+      sm:w-[280px]
+    "
                 >
                   {/* ALL */}
 
@@ -889,21 +944,21 @@ export default function Reports() {
                       handleExport("all")
                     }
                     className="
-                    flex
-                    w-full
-                    items-center
-                    rounded-lg
-                    px-3
-                    py-2.5
-                    text-left
-                    text-sm
-                    font-medium
-                    text-slate-700
-                    transition
-                    hover:bg-slate-50
-                    dark:text-zinc-300
-                    dark:hover:bg-zinc-900
-                  "
+        flex
+        w-full
+        items-center
+        rounded-lg
+        px-3
+        py-2.5
+        text-left
+        text-sm
+        font-medium
+        text-slate-700
+        transition
+        hover:bg-slate-50
+        dark:text-zinc-300
+        dark:hover:bg-zinc-900
+      "
                   >
                     All Reports
                   </button>
@@ -917,46 +972,129 @@ export default function Reports() {
                       handleExport("date")
                     }
                     className="
-                    flex
-                    w-full
-                    items-center
-                    rounded-lg
-                    px-3
-                    py-2.5
-                    text-left
-                    text-sm
-                    font-medium
-                    text-slate-700
-                    transition
-                    hover:bg-slate-50
-                    disabled:cursor-not-allowed
-                    disabled:opacity-35
-                    dark:text-zinc-300
-                    dark:hover:bg-zinc-900
-                  "
+        flex
+        w-full
+        items-center
+        rounded-lg
+        px-3
+        py-2.5
+        text-left
+        text-sm
+        font-medium
+        text-slate-700
+        transition
+        hover:bg-slate-50
+        disabled:cursor-not-allowed
+        disabled:opacity-35
+        dark:text-zinc-300
+        dark:hover:bg-zinc-900
+      "
                   >
                     Selected Date
                   </button>
+
+                  {/* DATE RANGE */}
+
+                  <div
+                    className="
+        mt-1
+        border-t
+        border-slate-100
+        pt-2
+        dark:border-zinc-900
+      "
+                  >
+                    <p
+                      className="
+          px-2
+          pb-1.5
+          text-[10px]
+          font-semibold
+          uppercase
+          tracking-wider
+          text-slate-400
+          dark:text-zinc-600
+        "
+                    >
+                      Date Range
+                    </p>
+
+                    <div className="space-y-2 px-2">
+                      <DayPickerInput
+                        value={exportFromDate}
+                        onChange={setExportFromDate}
+                        placeholder="From date"
+                      />
+
+                      <DayPickerInput
+                        value={exportToDate}
+                        onChange={setExportToDate}
+                        placeholder="To date"
+                      />
+
+                      <button
+                        type="button"
+                        disabled={
+                          !exportFromDate ||
+                          !exportToDate
+                        }
+                        onClick={() =>
+                          handleExport("range")
+                        }
+                        className="
+            h-9
+            w-full
+            rounded-lg
+            bg-indigo-600
+            px-3
+            text-xs
+            font-semibold
+            text-white
+            shadow-sm
+            transition
+            hover:bg-indigo-700
+            disabled:cursor-not-allowed
+            disabled:opacity-40
+          "
+                      >
+                        Export Date Range
+                      </button>
+                    </div>
+                  </div>
 
                   {/* MONTH */}
 
                   <div
                     className="
-                    mt-1
-                    border-t
-                    border-slate-100
-                    pt-1
-                    dark:border-zinc-900
-                  "
+        mt-2
+        border-t
+        border-slate-100
+        pt-2
+        dark:border-zinc-900
+      "
                   >
+                    <p
+                      className="
+          px-2
+          pb-1.5
+          text-[10px]
+          font-semibold
+          uppercase
+          tracking-wider
+          text-slate-400
+          dark:text-zinc-600
+        "
+                    >
+                      Month
+                    </p>
+
                     <div
                       className="
-                      flex
-                      items-center
-                      gap-2
-                      px-2
-                      py-1
-                    "
+          flex
+          items-center
+          gap-2
+          px-2
+        "
                     >
                       <input
                         type="month"
@@ -967,27 +1105,27 @@ export default function Reports() {
                           )
                         }
                         className="
-                        h-9
-                        min-w-0
-                        flex-1
-                        rounded-lg
-                        border
-                        border-slate-200
-                        bg-white
-                        px-2.5
-                        text-xs
-                        font-medium
-                        text-slate-700
-                        outline-none
-                        focus:border-indigo-400
-                        focus:ring-2
-                        focus:ring-indigo-100
-                        dark:border-zinc-800
-                        dark:bg-zinc-900
-                        dark:text-zinc-300
-                        dark:focus:border-indigo-500
-                        dark:focus:ring-indigo-500/10
-                      "
+            h-9
+            min-w-0
+            flex-1
+            rounded-lg
+            border
+            border-slate-200
+            bg-white
+            px-2.5
+            text-xs
+            font-medium
+            text-slate-700
+            outline-none
+            focus:border-indigo-400
+            focus:ring-2
+            focus:ring-indigo-100
+            dark:border-zinc-800
+            dark:bg-zinc-900
+            dark:text-zinc-300
+            dark:focus:border-indigo-500
+            dark:focus:ring-indigo-500/10
+          "
                       />
 
                       <button
@@ -997,20 +1135,20 @@ export default function Reports() {
                           handleExport("month")
                         }
                         className="
-                        h-9
-                        shrink-0
-                        rounded-lg
-                        bg-indigo-600
-                        px-3
-                        text-xs
-                        font-semibold
-                        text-white
-                        shadow-sm
-                        transition
-                        hover:bg-indigo-700
-                        disabled:cursor-not-allowed
-                        disabled:opacity-40
-                      "
+            h-9
+            shrink-0
+            rounded-lg
+            bg-indigo-600
+            px-3
+            text-xs
+            font-semibold
+            text-white
+            shadow-sm
+            transition
+            hover:bg-indigo-700
+            disabled:cursor-not-allowed
+            disabled:opacity-40
+          "
                       >
                         Export
                       </button>

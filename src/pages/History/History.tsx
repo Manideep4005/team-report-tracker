@@ -85,6 +85,12 @@ export default function History() {
   const [exportMonth, setExportMonth] =
     useState("");
 
+  const [exportFromDate, setExportFromDate] =
+    useState<Date | null>(null);
+
+  const [exportToDate, setExportToDate] =
+    useState<Date | null>(null);
+
   const [isExporting, setIsExporting] =
     useState(false);
 
@@ -171,6 +177,7 @@ export default function History() {
       | "all"
       | "date"
       | "month"
+      | "range"
   ) => {
     try {
       setIsExporting(true);
@@ -205,7 +212,6 @@ export default function History() {
           );
 
           setIsExporting(false);
-
           return;
         }
 
@@ -213,6 +219,49 @@ export default function History() {
           await exportOwnReports({
             filter: "date",
             date: dateParam,
+          });
+      }
+
+      /* =========================================================
+         DATE RANGE
+      ========================================================= */
+
+      else if (type === "range") {
+        if (!exportFromDate || !exportToDate) {
+          toast.warning(
+            "Please select both From and To dates."
+          );
+
+          setIsExporting(false);
+          return;
+        }
+
+        const from =
+          format(
+            exportFromDate,
+            "yyyy-MM-dd"
+          );
+
+        const to =
+          format(
+            exportToDate,
+            "yyyy-MM-dd"
+          );
+
+        if (from > to) {
+          toast.warning(
+            "From date cannot be after To date."
+          );
+
+          setIsExporting(false);
+          return;
+        }
+
+        blob =
+          await exportOwnReports({
+            filter: "range",
+            from,
+            to,
           });
       }
 
@@ -227,7 +276,6 @@ export default function History() {
           );
 
           setIsExporting(false);
-
           return;
         }
 
@@ -263,6 +311,23 @@ export default function History() {
       if (type === "month") {
         filename =
           `reports_${exportMonth}.xlsx`;
+      }
+
+      if (type === "range") {
+        const from =
+          format(
+            exportFromDate!,
+            "yyyy-MM-dd"
+          );
+
+        const to =
+          format(
+            exportToDate!,
+            "yyyy-MM-dd"
+          );
+
+        filename =
+          `reports_${from}_to_${to}.xlsx`;
       }
 
       link.setAttribute(
@@ -385,86 +450,86 @@ export default function History() {
       =========================================================== */}
 
       <style>{`
-        @keyframes historyReveal {
+@keyframes historyReveal {
           from {
-            opacity: 0;
-            transform: translateY(8px);
-          }
+    opacity: 0;
+    transform: translateY(8px);
+  }
 
           to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
-        @keyframes exportSpin {
+@keyframes exportSpin {
           from {
-            transform: rotate(0deg);
-          }
+    transform: rotate(0deg);
+  }
 
           to {
-            transform: rotate(360deg);
-          }
-        }
+    transform: rotate(360deg);
+  }
+}
 
-        @keyframes exportPulse {
-          0% {
-            transform: scale(1);
-          }
+@keyframes exportPulse {
+  0 % {
+    transform: scale(1);
+  }
 
-          50% {
-            transform: scale(0.97);
-          }
+  50 % {
+    transform: scale(0.97);
+  }
 
-          100% {
-            transform: scale(1);
-          }
-        }
+  100 % {
+    transform: scale(1);
+  }
+}
 
-        @keyframes exportMenuReveal {
+@keyframes exportMenuReveal {
           from {
-            opacity: 0;
-            transform: translateY(-4px) scale(0.98);
-          }
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
 
           to {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-          }
-        }
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
 
-        .export-spin {
-          animation: exportSpin 0.8s linear infinite;
-        }
+        .export -spin {
+  animation: exportSpin 0.8s linear infinite;
+}
 
-        .export-menu-reveal {
-          animation: exportMenuReveal 0.16s ease-out forwards;
-          transform-origin: top right;
-        }
+        .export -menu - reveal {
+  animation: exportMenuReveal 0.16s ease - out forwards;
+  transform - origin: top right;
+}
 
-        .export-clicking {
-          animation: exportPulse 0.25s ease-out;
-        }
+        .export -clicking {
+  animation: exportPulse 0.25s ease - out;
+}
 
-        @media (prefers-reduced-motion: reduce) {
-          .history-reveal {
-            animation: none !important;
-            opacity: 1 !important;
-          }
+@media(prefers - reduced - motion: reduce) {
+          .history - reveal {
+    animation: none!important;
+    opacity: 1!important;
+  }
 
-          .export-spin {
-            animation: none !important;
-          }
+          .export -spin {
+    animation: none!important;
+  }
 
-          .export-menu-reveal {
-            animation: none !important;
-          }
+          .export -menu - reveal {
+    animation: none!important;
+  }
 
-          .export-clicking {
-            animation: none !important;
-          }
-        }
-      `}</style>
+          .export -clicking {
+    animation: none!important;
+  }
+}
+`}</style>
 
 
       {/* ===========================================================
@@ -728,46 +793,47 @@ export default function History() {
                 }
 
                 className={`
-                inline-flex
-                h-10
-                w-full
+inline-flex
+h-10
+w-full
 
-                items-center
-                justify-center
-                gap-1.5
+items-center
+justify-center
+gap-2
 
-                rounded-xl
+rounded-xl
 
-                bg-indigo-600
+bg-indigo-600
 
-                px-3.5
+px-4
 
-                text-xs
-                font-semibold
+text-sm
+font-semibold
 
-                text-white
+text-white
 
-                shadow-sm
+shadow-sm
 
-                transition-all
-                duration-200
+transition-all
+duration-200
 
-                hover:bg-indigo-500
-                hover:shadow-md
-                hover:shadow-indigo-500/15
+hover:bg-indigo-500
+hover:shadow-md
+hover:shadow-indigo-500/15
 
-                active:scale-[0.97]
+active:scale-[0.97]
 
-                disabled:cursor-not-allowed
-                disabled:opacity-70
+disabled:cursor-not-allowed
+disabled:opacity-70
 
-                sm:w-auto
+sm:min-w-[104px]
+sm:w-auto
 
                 ${isExporting
                     ? "export-clicking"
                     : ""
                   }
-              `}
+`}
               >
 
                 {isExporting ? (
@@ -819,10 +885,10 @@ export default function History() {
 
                     mt-2
 
-                    w-full
-                    min-w-[240px]
-
-                    overflow-hidden
+                    w-[calc(100vw-2rem)]
+                    max-w-[360px]
+                    min-w-0
+                    overflow-visible
 
                     rounded-xl
 
@@ -840,7 +906,7 @@ export default function History() {
                     dark:bg-zinc-950
                     dark:shadow-black/30
 
-                    sm:w-[270px]
+                    sm:w-[360px]
                   "
                 >
 
@@ -1042,12 +1108,121 @@ export default function History() {
                       "
                     >
                       {dateParam
-                        ? `Export ${dateParam}`
+                        ? `Export ${dateParam} `
                         : "Select a date first"}
                     </span>
 
                   </button>
 
+
+                  {/* =================================================
+                      DATE RANGE
+                  ================================================= */}
+
+                  <div
+                    className="
+                      mt-1
+                      border-t
+                      border-slate-100
+                      pt-1
+                      dark:border-zinc-900
+                    "
+                  >
+                    <div
+                      className="
+                        px-3
+                        pt-2
+                        pb-1
+                      "
+                    >
+                      <span
+                        className="
+                          text-[10px]
+                          font-bold
+                          uppercase
+                          tracking-[0.1em]
+                          text-slate-400
+                          dark:text-zinc-600
+                        "
+                      >
+                        Date Range
+                      </span>
+                    </div>
+
+                    <div
+                      className="
+                        grid
+                        grid-cols-1
+                        gap-2
+                        px-2
+                        pb-2
+                        sm:grid-cols-2
+                      "
+                    >
+                      <div className="min-w-0">
+                        <DayPickerInput
+                          value={exportFromDate}
+                          onChange={
+                            setExportFromDate
+                          }
+                          placeholder="From date"
+                        />
+                      </div>
+
+                      <div className="min-w-0">
+                        <DayPickerInput
+                          value={exportToDate}
+                          onChange={
+                            setExportToDate
+                          }
+                          placeholder="To date"
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={
+                        !exportFromDate ||
+                        !exportToDate
+                      }
+                      onClick={() =>
+                        handleExport(
+                          "range"
+                        )
+                      }
+                      className="
+                        mx-2
+                        mb-2
+                        inline-flex
+                        h-9
+                        w-[calc(100%-1rem)]
+                        items-center
+                        justify-center
+                        gap-1.5
+                        rounded-lg
+                        bg-indigo-600
+                        px-3.5
+                        text-xs
+                        font-semibold
+                        text-white
+                        shadow-sm
+                        transition-all
+                        duration-200
+                        hover:bg-indigo-500
+                        hover:shadow-md
+                        hover:shadow-indigo-500/15
+                        active:scale-[0.96]
+                        disabled:cursor-not-allowed
+                        disabled:opacity-40
+                      "
+                    >
+                      <HiOutlineArrowDownTray
+                        className="h-3.5 w-3.5"
+                      />
+                      Export Range
+                    </button>
+                  </div>
 
                   {/* =================================================
                       MONTH DIVIDER
@@ -1099,7 +1274,9 @@ export default function History() {
 
                     <div
                       className="
-                        flex
+                        grid
+                        grid-cols-[minmax(0,1fr)_auto]
+                        items-center
                         gap-2
 
                         px-2
@@ -1175,7 +1352,7 @@ export default function History() {
                         className="
                           inline-flex
                           h-9
-
+                          min-w-[88px]
                           shrink-0
 
                           items-center
@@ -1186,12 +1363,14 @@ export default function History() {
 
                           bg-indigo-600
 
-                          px-3
+                          px-3.5
 
-                          text-[11px]
+                          text-xs
                           font-semibold
 
                           text-white
+
+                          shadow-sm
 
                           transition-all
                           duration-200
@@ -1403,7 +1582,7 @@ function TimelineEntry({
         "auto";
 
       textarea.style.height =
-        `${textarea.scrollHeight}px`;
+        `${textarea.scrollHeight} px`;
 
     }
 
@@ -1641,7 +1820,7 @@ function TimelineEntry({
           "historyReveal 0.4s cubic-bezier(0.22,1,0.36,1) forwards",
 
         animationDelay:
-          `${Math.min(index, 12) * 40}ms`,
+          `${Math.min(index, 12) * 40} ms`,
       }}
     >
 
@@ -2627,7 +2806,7 @@ function Pagination({
             ) {
               return (
                 <span
-                  key={`gap-${index}`}
+                  key={`gap - ${index} `}
 
                   className="
                     flex
@@ -2677,25 +2856,25 @@ function Pagination({
                 }
 
                 className={`
-                  flex
+flex
 
-                  h-7
-                  min-w-7
+h - 7
+min - w - 7
 
-                  items-center
-                  justify-center
+items - center
+justify - center
 
-                  rounded-lg
+rounded - lg
 
-                  px-2
+px - 2
 
-                  text-[10px]
-                  font-semibold
+text - [10px]
+font - semibold
 
-                  transition
+transition
 
-                  disabled:cursor-not-allowed
-                  disabled:opacity-60
+disabled: cursor - not - allowed
+disabled: opacity - 60
 
                   ${isActive
                     ? `
@@ -2715,7 +2894,7 @@ function Pagination({
                           dark:hover:text-zinc-200
                         `
                   }
-                `}
+`}
               >
                 {entry}
               </button>
