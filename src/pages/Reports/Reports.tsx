@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 
@@ -11,6 +12,7 @@ import {
   HiOutlineUsers,
   HiOutlineChevronDown,
   HiOutlineArrowPath,
+  HiOutlineArrowDownTray,
 } from "react-icons/hi2";
 
 import { format } from "date-fns";
@@ -97,6 +99,9 @@ export default function Reports() {
   const [exportOpen, setExportOpen] =
     useState(false);
 
+  const [userOpen, setUserOpen] =
+    useState(false);
+
   const [exportMonth, setExportMonth] =
     useState("");
 
@@ -109,6 +114,36 @@ export default function Reports() {
 
   const [isExporting, setIsExporting] =
     useState(false);
+
+  const exportRef = useRef<HTMLDivElement>(null);
+  const userRef = useRef<HTMLDivElement>(null);
+
+  /* =============================================================
+       CLOSE EXPORT MENU ON OUTSIDE CLICK
+       (matches History.tsx behavior)
+  ============================================================= */
+
+  useEffect(() => {
+    if (!exportOpen && !userOpen) return;
+
+    const handleOutsideClick = (event: MouseEvent) => {
+      const target = event.target as Node;
+
+      if (exportRef.current && !exportRef.current.contains(target)) {
+        setExportOpen(false);
+      }
+
+      if (userRef.current && !userRef.current.contains(target)) {
+        setUserOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+    };
+  }, [exportOpen, userOpen]);
 
   const dateParam = date
     ? format(date, "yyyy-MM-dd")
@@ -223,11 +258,7 @@ export default function Reports() {
       }
 
 
-      const groups =
-        new Map<
-          string,
-          ReportItem[]
-        >();
+      const groups = new Map<string, ReportItem[]>();
 
 
       for (const report of reports) {
@@ -386,6 +417,12 @@ export default function Reports() {
     try {
       setIsExporting(true);
 
+      /*
+       * Close dropdown immediately
+       * when export begins (matches History.tsx).
+       */
+      setExportOpen(false);
+
       let response;
 
       if (type === "all") {
@@ -503,8 +540,6 @@ export default function Reports() {
 
       window.URL.revokeObjectURL(url);
 
-      setExportOpen(false);
-
       toast.success(
         "Excel exported successfully."
       );
@@ -520,6 +555,8 @@ export default function Reports() {
 
   /* ==============================================================
     PAGE CHANGE
+    (already scrolls smoothly to top on every page change —
+    prev, next, or a specific page number)
   ============================================================== */
 
   const handlePageChange = (
@@ -549,21 +586,16 @@ export default function Reports() {
 
 
   /* ==============================================================
-    TOTAL
-  ============================================================== */
-
-  const totalReports =
-    pagination?.total ?? 0;
-
-
-  /* ==============================================================
     TITLE
   ============================================================== */
 
   const screenTitle =
     selectedUser
-      ? `${selectedUser.name} 's Reports`
+      ? `${selectedUser.name}'s Reports`
       : "Team Reports";
+
+  const hasActiveFilters =
+    Boolean(date) || selectedUserId !== ALL_USERS;
 
 
   /* ==============================================================
@@ -573,464 +605,768 @@ export default function Reports() {
   return (
     <div
       className="
-      mx-auto
-      w-full
-      max-w-[1100px]
-      px-4
-      py-5
-      sm:px-6
-      sm:py-6
-      lg:px-8
-      lg:py-7
-    "
+    relative
+    z-0
+    mx-auto
+    w-full
+    max-w-[1100px]
+    min-w-0
+    px-4
+    py-5
+    sm:px-6
+    sm:py-7
+    lg:px-8
+    lg:py-8
+  "
     >
       <PageTitle title="All Reports" />
 
-      {/* =========================================================
-        COMPACT REPORT TOOLBAR
-    ========================================================= */}
+      {/* ===========================================================
+          PAGE HEADER
+          (mirrors History.tsx's structure and toolbar styling)
+      =========================================================== */}
 
       <div
         className="
-        border-b
-        border-slate-200/80
-        pb-5
-        dark:border-zinc-800/80
-      "
+          relative
+          z-10
+          flex
+          flex-col
+          gap-5
+
+          border-b
+          border-slate-200/80
+
+          pb-5
+
+          dark:border-zinc-800/80
+
+          sm:gap-6
+          sm:pb-6
+
+          lg:flex-row
+          lg:items-end
+          lg:justify-between
+        "
       >
-        {/* TOP ROW */}
+
+        {/* =========================================================
+            TITLE
+        ========================================================= */}
+
+        <div className="min-w-0">
+
+          <h1
+            className="
+              truncate
+
+              text-[26px]
+              font-bold
+              tracking-[-0.035em]
+
+              text-slate-950
+
+              dark:text-white
+
+              sm:text-3xl
+            "
+          >
+            {screenTitle}
+          </h1>
+
+          <p
+            className="
+              mt-1.5
+
+              text-sm
+
+              text-slate-500
+
+              dark:text-zinc-500
+            "
+          >
+            Browse and manage team work reports.
+          </p>
+
+        </div>
+
+
+        {/* =========================================================
+            PREMIUM FILTER TOOLBAR
+        ========================================================= */}
 
         <div
           className="
-          flex
-          min-w-0
-          items-center
-          justify-between
-          gap-4
-        "
+            relative
+            z-[10]
+            flex
+            w-full
+            flex-wrap
+            items-center
+            gap-2
+
+            rounded-2xl
+            border
+            border-slate-200/80
+            bg-white/80
+            p-1.5
+
+            shadow-[0_8px_30px_-18px_rgba(15,23,42,0.25)]
+            backdrop-blur-sm
+
+            dark:border-zinc-800
+            dark:bg-zinc-950/80
+            dark:shadow-none
+
+            sm:w-auto
+            sm:flex-nowrap
+
+            lg:border-0
+            lg:bg-transparent
+            lg:p-0
+            lg:shadow-none
+            lg:backdrop-blur-0
+          "
         >
-          {/* TITLE */}
 
-          <div className="flex min-w-0 items-center gap-2.5">
+          {/* REPORT COUNT */}
 
-
-            <h1
-              className="
-              min-w-0
-              truncate
-              text-lg
-              font-semibold
-              tracking-tight
-              text-slate-900
-              dark:text-white
-              sm:text-xl
-            "
-            >
-              {screenTitle}
-            </h1>
-          </div>
-
-          {/* COUNT */}
-
-          {!isLoading && (
+          {!isLoading && pagination && pagination.total > 0 && (
             <div
               className="
-              flex
-              shrink-0
-              items-baseline
-              gap-1
-              whitespace-nowrap
-            "
+                flex
+                h-9
+                shrink-0
+                items-center
+                justify-center
+                gap-2
+                rounded-xl
+                bg-slate-50
+                px-3
+
+                dark:bg-zinc-900
+              "
             >
               <span
                 className="
-                text-lg
-                font-semibold
-                tracking-tight
-                text-slate-900
-                dark:text-white
-                sm:text-xl
-              "
+                  flex
+                  h-5
+                  min-w-5
+                  items-center
+                  justify-center
+                  rounded-md
+                  bg-indigo-100
+                  px-1.5
+                  text-[10px]
+                  font-bold
+                  tabular-nums
+                  text-indigo-600
+
+                  dark:bg-indigo-500/10
+                  dark:text-indigo-400
+                "
               >
-                {totalReports}
+                {pagination.total}
               </span>
 
               <span
                 className="
-                text-xs
-                font-medium
-                text-slate-400
-                dark:text-zinc-500
-              "
+                  text-[11px]
+                  font-medium
+                  text-slate-500
+                  dark:text-zinc-500
+                "
               >
-                {totalReports === 1 ? "report" : "reports"}
+                {pagination.total === 1
+                  ? "Report"
+                  : "Reports"}
               </span>
             </div>
           )}
-        </div>
 
-        {/* FILTER / ACTION ROW */}
+          {/* DIVIDER */}
 
-        <div
-          className="
-          mt-4
-          grid
-          w-full
-          grid-cols-1
-          gap-2
-          sm:grid-cols-2
-          lg:flex
-          lg:items-center
-        "
-        >
+          {!isLoading &&
+            pagination &&
+            pagination.total > 0 && (
+              <div
+                className="
+                  hidden
+                  h-5
+                  w-px
+                  bg-slate-200
+                  sm:block
+                  dark:bg-zinc-800
+                "
+              />
+            )}
+
           {/* USER FILTER */}
 
-          <div
-            className="
-            relative
-            min-w-0
-            lg:w-[220px]
-            xl:w-[240px]
-          "
-          >
-            <select
-              value={selectedUserId}
-              onChange={(event) =>
-                handleUserChange(event.target.value)
-              }
+          <div ref={userRef} className="relative min-w-0">
+            <button
+              type="button"
               disabled={usersLoading}
-              className="
-              block
-              h-10
-              w-full
-              min-w-0
-              appearance-none
-              rounded-lg
-              border
-              border-slate-200
-              bg-white
-              pl-3
-              pr-9
-              text-sm
-              font-medium
-              text-slate-700
-              outline-none
-              transition
-              hover:border-slate-300
-              focus:border-indigo-400
-              focus:ring-2
-              focus:ring-indigo-100
-              disabled:cursor-not-allowed
-              disabled:opacity-60
-              dark:border-zinc-800
-              dark:bg-zinc-900
-              dark:text-zinc-300
-              dark:hover:border-zinc-700
-              dark:focus:border-indigo-500
-              dark:focus:ring-indigo-500/10
-            "
+              aria-haspopup="listbox"
+              aria-expanded={userOpen}
+              onClick={() => {
+                setUserOpen((current) => !current);
+                setExportOpen(false);
+              }}
+              className={`
+                flex h-9 w-full min-w-0 items-center gap-2 rounded-xl
+                border px-2.5 text-left text-[11px] font-semibold outline-none
+                transition-all active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60
+                sm:w-[180px]
+                ${userOpen
+                  ? "border-indigo-300 bg-indigo-50 text-indigo-700 dark:border-indigo-500/40 dark:bg-indigo-500/10 dark:text-indigo-300"
+                  : "border-slate-200 bg-slate-50 text-slate-600 hover:border-indigo-200 hover:bg-indigo-50/60 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-indigo-500/30 dark:hover:bg-indigo-500/10"
+                }
+              `}
             >
-              <option value={ALL_USERS}>
-                All users
-              </option>
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-[9px] font-bold text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300">
+                {selectedUser
+                  ? selectedUser.name.trim().charAt(0).toUpperCase()
+                  : <HiOutlineUsers className="h-3.5 w-3.5" />}
+              </span>
+              <span className="min-w-0 flex-1 truncate">
+                {selectedUser?.name ?? "All users"}
+                {selectedUser?.deletedAt ? " · Inactive" : ""}
+              </span>
+              <HiOutlineChevronDown className={`h-3.5 w-3.5 shrink-0 text-slate-400 transition-transform dark:text-zinc-500 ${userOpen ? "rotate-180 text-indigo-500" : ""}`} />
+            </button>
 
-              {users.map((user) => (
-                <option
-                  key={user.id}
-                  value={user.id}
+            {userOpen && (
+              <div
+                className="absolute right-0 top-full z-[10000] mt-2 w-[min(320px,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-1.5 shadow-[0_20px_50px_-18px_rgba(15,23,42,0.28)] dark:border-zinc-800 dark:bg-zinc-950 dark:shadow-[0_20px_50px_-18px_rgba(0,0,0,0.7)]"
+                role="listbox"
+              >
+                <div className="px-2.5 pb-1.5 pt-2">
+                  <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-slate-400 dark:text-zinc-600">Filter by user</p>
+                </div>
+
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={selectedUserId === ALL_USERS}
+                  onClick={() => { handleClearUser(); setUserOpen(false); }}
+                  className={`flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left transition-all ${selectedUserId === ALL_USERS ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300" : "text-slate-600 hover:bg-slate-50 dark:text-zinc-300 dark:hover:bg-zinc-900"}`}
                 >
-                  {user.name}
-                  {user.deletedAt
-                    ? " — Inactive"
-                    : ""}
-                </option>
-              ))}
-            </select>
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300">
+                    <HiOutlineUsers className="h-4 w-4" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[11px] font-semibold">All users</span>
+                    <span className="block text-[9px] text-slate-400 dark:text-zinc-600">Show the complete team</span>
+                  </span>
+                  {selectedUserId === ALL_USERS && <span className="h-2 w-2 shrink-0 rounded-full bg-indigo-500" />}
+                </button>
 
-            <HiOutlineChevronDown
-              className="
-              pointer-events-none
-              absolute
-              right-3
-              top-1/2
-              h-4
-              w-4
-              -translate-y-1/2
-              text-slate-400
-              dark:text-zinc-500
-            "
-            />
+                <div className="my-1 border-t border-slate-100 dark:border-zinc-800" />
+
+                <div className="max-h-64 overflow-y-auto">
+                  {users.map((user) => {
+                    const active = user.id === selectedUserId;
+                    // const initial = user.name.trim().charAt(0).toUpperCase();
+                    return (
+                      <button
+                        key={user.id}
+                        type="button"
+                        role="option"
+                        aria-selected={active}
+                        onClick={() => { handleUserChange(user.id); setUserOpen(false); }}
+                        className={`flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left transition-all ${active ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300" : "text-slate-600 hover:bg-slate-50 dark:text-zinc-300 dark:hover:bg-zinc-900"}`}
+                      >
+                        <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[10px] font-bold ${user.deletedAt ? "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400" : active ? "bg-indigo-100 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300" : "bg-slate-100 text-slate-500 dark:bg-zinc-900 dark:text-zinc-400"}`}>
+                          <UserAvatar
+                            name={user.name}
+                            avatarUrl={user.avatarUrl}
+                          />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-[11px] font-semibold">{user.name}</span>
+                          <span className="block text-[9px] text-slate-400 dark:text-zinc-600">{user.deletedAt ? "Inactive user" : "Team member"}</span>
+                        </span>
+                        {user.deletedAt && <span className="shrink-0 rounded-md bg-amber-50 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide text-amber-700 dark:bg-amber-500/10 dark:text-amber-400">Inactive</span>}
+                        {active && <span className="h-2 w-2 shrink-0 rounded-full bg-indigo-500" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* DATE FILTER */}
 
-          <div
-            className="
-            min-w-0
-            sm:min-w-0
-            lg:w-[220px]
-          "
-          >
-            <DayPickerInput
-              value={date}
-              onChange={handleDateChange}
-              placeholder="Filter by date"
-            />
+          <div className="min-w-0 w-full sm:w-[180px]">
+            <div className="min-w-0">
+              <DayPickerInput
+                value={date}
+                onChange={handleDateChange}
+                placeholder="Filter by date"
+              />
+            </div>
           </div>
 
           {/* CLEAR */}
 
-          <button
-            type="button"
-            onClick={() => {
-              handleClearDate();
-              handleClearUser();
-            }}
-            disabled={
-              !date &&
-              selectedUserId === ALL_USERS
-            }
-            className="
-            inline-flex
-            h-10
-            w-full
-            items-center
-            justify-center
-            gap-1.5
-            rounded-lg
-            border
-            border-slate-200
-            bg-white
-            px-3.5
-            text-sm
-            font-medium
-            text-slate-600
-            outline-none
-            transition
-            hover:border-slate-300
-            hover:bg-slate-50
-            hover:text-slate-900
-            disabled:cursor-not-allowed
-            disabled:opacity-35
-            dark:border-zinc-800
-            dark:bg-zinc-900
-            dark:text-zinc-400
-            dark:hover:border-zinc-700
-            dark:hover:bg-zinc-800
-            dark:hover:text-zinc-200
-            sm:w-auto
-            lg:shrink-0
-          "
-          >
-            <HiOutlineXMark className="h-4 w-4" />
-            Clear
-          </button>
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={() => {
+                handleClearDate();
+                handleClearUser();
+              }}
+              className="
+                inline-flex
+                h-9
+                w-full
+                shrink-0
+                sm:w-auto
+                items-center
+                justify-center
+                gap-1.5
+                rounded-xl
+                px-3
+                text-[11px]
+                font-semibold
+                text-slate-500
+                transition-all
+                duration-200
+
+                hover:bg-slate-100
+                hover:text-slate-800
+
+                active:scale-[0.97]
+
+                dark:text-zinc-500
+                dark:hover:bg-zinc-800
+                dark:hover:text-zinc-200
+              "
+            >
+              <HiOutlineXMark className="h-3.5 w-3.5" />
+              Clear
+            </button>
+          )}
 
           {/* EXPORT */}
 
           {hasPermission("REPORT_EXPORT_ALL") && (
             <div
-              className="
-              relative
-              w-full
-              sm:col-span-2
-              lg:ml-auto
-              lg:w-auto
-            "
+              ref={exportRef}
+              className="relative z-[70] w-full shrink-0 sm:w-auto"
             >
               <button
                 type="button"
+                onClick={() =>
+                  setExportOpen((current) => !current)
+                }
                 disabled={isExporting}
-                onClick={() => {
-                  if (isExporting) {
-                    return;
+                aria-expanded={exportOpen}
+                className={`
+                  inline-flex
+                  h-9
+                  w-full
+                  items-center
+                  justify-center
+                  gap-2
+                  rounded-xl
+                  px-3.5
+                  text-[11px]
+                  font-semibold
+                  transition-all
+                  duration-200
+
+                  sm:w-auto
+
+                  lg:px-4
+
+                  ${exportOpen
+                    ? `
+                      bg-slate-900
+                      text-white
+                      shadow-md
+                      shadow-slate-900/15
+                      dark:bg-white
+                      dark:text-zinc-900
+                    `
+                    : `
+                      bg-indigo-600
+                      text-white
+                      shadow-sm
+                      shadow-indigo-500/15
+                      hover:bg-indigo-500
+                      hover:shadow-md
+                    `
                   }
 
-                  setExportOpen((open) => !open);
-                }}
-                className="
-                inline-flex
-                h-10
-                w-full
-                items-center
-                justify-center
-                gap-2
-                rounded-lg
-                border
-                border-indigo-200
-                bg-indigo-50
-                px-4
-                text-sm
-                font-semibold
-                text-indigo-700
-                outline-none
-                transition
-                hover:border-indigo-300
-                hover:bg-indigo-100
-                focus:ring-2
-                focus:ring-indigo-100
-                disabled:cursor-not-allowed
-                disabled:opacity-70
-                dark:border-indigo-500/20
-                dark:bg-indigo-500/10
-                dark:text-indigo-400
-                dark:hover:border-indigo-500/30
-                dark:hover:bg-indigo-500/15
-                dark:focus:ring-indigo-500/10
-                sm:w-auto
-              "
-              >
-                <HiOutlineArrowPath
-                  className={`
-                  h-4
-                  w-4
-                  ${isExporting ? "animate-spin" : ""}
+                  active:scale-[0.97]
+
+                  disabled:cursor-not-allowed
+                  disabled:opacity-60
                 `}
-                />
+              >
+                {isExporting ? (
+                  <HiOutlineArrowPath
+                    className="h-3.5 w-3.5 animate-spin"
+                  />
+                ) : (
+                  <HiOutlineArrowDownTray
+                    className={`
+                      h-3.5
+                      w-3.5
+                      transition-transform
+                      duration-200
+                      ${exportOpen ? "-translate-y-px" : ""}
+                    `}
+                  />
+                )}
 
                 <span>
                   {isExporting
                     ? "Exporting..."
-                    : "Export Excel"}
+                    : "Export"}
                 </span>
-
-                {!isExporting && (
-                  <HiOutlineChevronDown
-                    className={`
-                    h-3.5
-                    w-3.5
-                    transition-transform
-                    duration-200
-                    ${exportOpen
-                        ? "rotate-180"
-                        : ""
-                      }
-                  `}
-                  />
-                )}
               </button>
 
-
-              {/* EXPORT MENU */}
+              {/* EXPORT POPOVER */}
 
               {exportOpen && !isExporting && (
                 <div
                   className="
-      absolute
-      right-0
-      top-full
-      z-50
-      mt-2
-      w-[calc(100vw-2rem)]
-      max-w-[280px]
-      overflow-visible
-      rounded-xl
-      border
-      border-slate-200
-      bg-white
-      p-1.5
-      shadow-[0_12px_30px_rgba(15,23,42,0.12)]
-      dark:border-zinc-800
-      dark:bg-zinc-950
-      dark:shadow-[0_0_30px_rgba(0,0,0,0.3)]
-      sm:w-[280px]
-    "
+                    fixed
+                    left-3
+                    right-3
+                    top-1/2
+                    z-[9999]
+                    max-h-[calc(100vh-2rem)]
+                    -translate-y-1/2
+                    overflow-y-auto
+                    rounded-2xl
+
+                    w-auto
+                    max-w-none
+                    overflow-visible
+
+                    rounded-2xl
+                    border
+                    border-slate-200/80
+                    bg-white
+
+                    shadow-[0_20px_50px_-18px_rgba(15,23,42,0.25)]
+
+                    dark:border-zinc-800
+                    dark:bg-zinc-950
+                    dark:shadow-[0_20px_50px_-18px_rgba(0,0,0,0.65)]
+
+                    sm:absolute
+                    sm:left-auto
+                    sm:right-0
+                    sm:top-full
+                    sm:mt-2.5
+                    sm:w-[370px]
+                    sm:max-h-[calc(100vh-7rem)]
+                    sm:translate-y-0
+                  "
                 >
-                  {/* ALL */}
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handleExport("all")
-                    }
-                    className="
-        flex
-        w-full
-        items-center
-        rounded-lg
-        px-3
-        py-2.5
-        text-left
-        text-sm
-        font-medium
-        text-slate-700
-        transition
-        hover:bg-slate-50
-        dark:text-zinc-300
-        dark:hover:bg-zinc-900
-      "
-                  >
-                    All Reports
-                  </button>
-
-                  {/* DATE */}
-
-                  <button
-                    type="button"
-                    disabled={!dateParam}
-                    onClick={() =>
-                      handleExport("date")
-                    }
-                    className="
-        flex
-        w-full
-        items-center
-        rounded-lg
-        px-3
-        py-2.5
-        text-left
-        text-sm
-        font-medium
-        text-slate-700
-        transition
-        hover:bg-slate-50
-        disabled:cursor-not-allowed
-        disabled:opacity-35
-        dark:text-zinc-300
-        dark:hover:bg-zinc-900
-      "
-                  >
-                    Selected Date
-                  </button>
-
-                  {/* DATE RANGE */}
+                  {/* POPOVER HEADER */}
 
                   <div
                     className="
-        mt-1
-        border-t
-        border-slate-100
-        pt-2
-        dark:border-zinc-900
-      "
+                      flex
+                      items-center
+                      justify-between
+                      border-b
+                      border-slate-100
+                      px-4
+                      py-3.5
+
+                      dark:border-zinc-800
+                    "
                   >
-                    <p
+                    <div className="flex items-center gap-2.5">
+                      <div
+                        className="
+                          flex
+                          h-8
+                          w-8
+                          items-center
+                          justify-center
+                          rounded-lg
+                          bg-indigo-50
+                          text-indigo-600
+
+                          dark:bg-indigo-500/10
+                          dark:text-indigo-400
+                        "
+                      >
+                        <HiOutlineArrowDownTray className="h-4 w-4" />
+                      </div>
+
+                      <div>
+                        <p
+                          className="
+                            text-xs
+                            font-semibold
+                            text-slate-900
+                            dark:text-white
+                          "
+                        >
+                          Export reports
+                        </p>
+
+                        <p
+                          className="
+                            mt-0.5
+                            text-[10px]
+                            text-slate-400
+                            dark:text-zinc-600
+                          "
+                        >
+                          Choose what you want to export
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setExportOpen(false)}
                       className="
-          px-2
-          pb-1.5
-          text-[10px]
-          font-semibold
-          uppercase
-          tracking-wider
-          text-slate-400
-          dark:text-zinc-600
-        "
+                        flex
+                        h-7
+                        w-7
+                        items-center
+                        justify-center
+                        rounded-lg
+                        text-slate-400
+                        transition
+                        hover:bg-slate-100
+                        hover:text-slate-700
+
+                        dark:text-zinc-500
+                        dark:hover:bg-zinc-900
+                        dark:hover:text-zinc-200
+                      "
                     >
-                      Date Range
-                    </p>
+                      <HiOutlineXMark className="h-4 w-4" />
+                    </button>
+                  </div>
 
-                    <div className="space-y-2 px-2">
-                      <DayPickerInput
-                        value={exportFromDate}
-                        onChange={setExportFromDate}
-                        placeholder="From date"
-                      />
+                  {/* EXPORT OPTIONS */}
 
-                      <DayPickerInput
-                        value={exportToDate}
-                        onChange={setExportToDate}
-                        placeholder="To date"
+                  <div className="p-2">
+                    {/* ALL */}
+
+                    <button
+                      type="button"
+                      onClick={() => handleExport("all")}
+                      className="
+                        group
+                        flex
+                        w-full
+                        items-center
+                        gap-3
+                        rounded-xl
+                        px-3
+                        py-2.5
+                        text-left
+                        transition-all
+                        duration-150
+
+                        hover:bg-slate-50
+
+                        dark:hover:bg-zinc-900
+                      "
+                    >
+                      <div
+                        className="
+                          flex
+                          h-8
+                          w-8
+                          shrink-0
+                          items-center
+                          justify-center
+                          rounded-lg
+                          bg-slate-100
+                          text-slate-500
+                          transition
+                          group-hover:bg-indigo-50
+                          group-hover:text-indigo-600
+
+                          dark:bg-zinc-900
+                          dark:text-zinc-500
+                          dark:group-hover:bg-indigo-500/10
+                          dark:group-hover:text-indigo-400
+                        "
+                      >
+                        <HiOutlineArrowDownTray className="h-3.5 w-3.5" />
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <p
+                          className="
+                            text-[11px]
+                            font-semibold
+                            text-slate-800
+                            dark:text-zinc-100
+                          "
+                        >
+                          All reports
+                        </p>
+
+                        <p
+                          className="
+                            mt-0.5
+                            text-[10px]
+                            text-slate-400
+                            dark:text-zinc-600
+                          "
+                        >
+                          Export the complete team history
+                        </p>
+                      </div>
+
+                      <HiOutlineChevronRight
+                        className="
+                          h-3.5
+                          w-3.5
+                          text-slate-300
+                          transition-transform
+                          group-hover:translate-x-0.5
+                          group-hover:text-indigo-500
+
+                          dark:text-zinc-700
+                        "
                       />
+                    </button>
+
+                    {/* SELECTED DATE */}
+
+                    <button
+                      type="button"
+                      disabled={!dateParam}
+                      onClick={() => handleExport("date")}
+                      className="
+                        group
+                        flex
+                        w-full
+                        items-center
+                        gap-3
+                        rounded-xl
+                        px-3
+                        py-2.5
+                        text-left
+                        transition-all
+                        duration-150
+
+                        hover:bg-slate-50
+
+                        disabled:cursor-not-allowed
+                        disabled:opacity-40
+
+                        dark:hover:bg-zinc-900
+                      "
+                    >
+                      <div
+                        className="
+                          flex
+                          h-8
+                          w-8
+                          shrink-0
+                          items-center
+                          justify-center
+                          rounded-lg
+                          bg-slate-100
+                          text-slate-500
+
+                          dark:bg-zinc-900
+                          dark:text-zinc-500
+                        "
+                      >
+                        <HiOutlineDocumentMagnifyingGlass className="h-3.5 w-3.5" />
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <p
+                          className="
+                            text-[11px]
+                            font-semibold
+                            text-slate-800
+                            dark:text-zinc-100
+                          "
+                        >
+                          Selected date
+                        </p>
+
+                        <p
+                          className="
+                            mt-0.5
+                            truncate
+                            text-[10px]
+                            text-slate-400
+                            dark:text-zinc-600
+                          "
+                        >
+                          {dateParam
+                            ? `Export reports from ${dateParam}`
+                            : "Select a date first"}
+                        </p>
+                      </div>
+
+                      {dateParam && (
+                        <HiOutlineChevronRight
+                          className="
+                            h-3.5
+                            w-3.5
+                            text-slate-300
+                            transition-transform
+                            group-hover:translate-x-0.5
+                            dark:text-zinc-700
+                          "
+                        />
+                      )}
+                    </button>
+
+                    {/* DATE RANGE */}
+
+                    <div
+                      className="
+                        mt-1
+                        border-t
+                        border-slate-100
+                        pt-2
+                        dark:border-zinc-800
+                      "
+                    >
+                      <div className="px-3 pb-1.5">
+                        <span
+                          className="
+                            text-[9px]
+                            font-bold
+                            uppercase
+                            tracking-[0.12em]
+                            text-slate-400
+                            dark:text-zinc-600
+                          "
+                        >
+                          Date range
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-2 px-2 sm:grid-cols-2">
+                        <DayPickerInput
+                          value={exportFromDate}
+                          onChange={setExportFromDate}
+                          placeholder="From date"
+                        />
+
+                        <DayPickerInput
+                          value={exportToDate}
+                          onChange={setExportToDate}
+                          placeholder="To date"
+                        />
+                      </div>
 
                       <button
                         type="button"
@@ -1038,120 +1374,141 @@ export default function Reports() {
                           !exportFromDate ||
                           !exportToDate
                         }
-                        onClick={() =>
-                          handleExport("range")
-                        }
+                        onClick={() => handleExport("range")}
                         className="
-            h-9
-            w-full
-            rounded-lg
-            bg-indigo-600
-            px-3
-            text-xs
-            font-semibold
-            text-white
-            shadow-sm
-            transition
-            hover:bg-indigo-700
-            disabled:cursor-not-allowed
-            disabled:opacity-40
-          "
+                          mx-2
+                          mt-2
+                          mb-1
+                          inline-flex
+                          h-9
+                          w-[calc(100%-1rem)]
+                          items-center
+                          justify-center
+                          gap-1.5
+                          rounded-lg
+                          bg-indigo-600
+                          px-3
+                          text-[11px]
+                          font-semibold
+                          text-white
+                          transition-all
+                          duration-200
+
+                          hover:bg-indigo-500
+                          hover:shadow-md
+                          hover:shadow-indigo-500/15
+
+                          active:scale-[0.97]
+
+                          disabled:cursor-not-allowed
+                          disabled:opacity-35
+                        "
                       >
-                        Export Date Range
+                        <HiOutlineArrowDownTray className="h-3.5 w-3.5" />
+                        Export date range
                       </button>
                     </div>
-                  </div>
 
-                  {/* MONTH */}
-
-                  <div
-                    className="
-        mt-2
-        border-t
-        border-slate-100
-        pt-2
-        dark:border-zinc-900
-      "
-                  >
-                    <p
-                      className="
-          px-2
-          pb-1.5
-          text-[10px]
-          font-semibold
-          uppercase
-          tracking-wider
-          text-slate-400
-          dark:text-zinc-600
-        "
-                    >
-                      Month
-                    </p>
+                    {/* MONTH */}
 
                     <div
                       className="
-          flex
-          items-center
-          gap-2
-          px-2
-        "
+                        mt-2
+                        border-t
+                        border-slate-100
+                        pt-2
+                        dark:border-zinc-800
+                      "
                     >
-                      <input
-                        type="month"
-                        value={exportMonth}
-                        onChange={(event) =>
-                          setExportMonth(
-                            event.target.value
-                          )
-                        }
-                        className="
-            h-9
-            min-w-0
-            flex-1
-            rounded-lg
-            border
-            border-slate-200
-            bg-white
-            px-2.5
-            text-xs
-            font-medium
-            text-slate-700
-            outline-none
-            focus:border-indigo-400
-            focus:ring-2
-            focus:ring-indigo-100
-            dark:border-zinc-800
-            dark:bg-zinc-900
-            dark:text-zinc-300
-            dark:focus:border-indigo-500
-            dark:focus:ring-indigo-500/10
-          "
-                      />
+                      <div className="px-3 pb-1.5">
+                        <span
+                          className="
+                            text-[9px]
+                            font-bold
+                            uppercase
+                            tracking-[0.12em]
+                            text-slate-400
+                            dark:text-zinc-600
+                          "
+                        >
+                          Month
+                        </span>
+                      </div>
 
-                      <button
-                        type="button"
-                        disabled={!exportMonth}
-                        onClick={() =>
-                          handleExport("month")
-                        }
+                      <div
                         className="
-            h-9
-            shrink-0
-            rounded-lg
-            bg-indigo-600
-            px-3
-            text-xs
-            font-semibold
-            text-white
-            shadow-sm
-            transition
-            hover:bg-indigo-700
-            disabled:cursor-not-allowed
-            disabled:opacity-40
-          "
+                          grid
+                          grid-cols-[minmax(0,1fr)_auto]
+                          gap-2
+                          px-2
+                          pb-1
+                        "
                       >
-                        Export
-                      </button>
+                        <input
+                          type="month"
+                          value={exportMonth}
+                          onChange={(event) =>
+                            setExportMonth(event.target.value)
+                          }
+                          className="
+                            h-9
+                            min-w-0
+                            rounded-lg
+                            border
+                            border-slate-200
+                            bg-white
+                            px-2.5
+                            text-[11px]
+                            text-slate-700
+                            outline-none
+                            transition
+
+                            focus:border-indigo-400
+                            focus:ring-4
+                            focus:ring-indigo-500/10
+
+                            dark:border-zinc-800
+                            dark:bg-zinc-900
+                            dark:text-zinc-200
+                            dark:focus:border-indigo-500/50
+                          "
+                        />
+
+                        <button
+                          type="button"
+                          disabled={!exportMonth}
+                          onClick={() =>
+                            handleExport("month")
+                          }
+                          className="
+                            inline-flex
+                            h-9
+                            min-w-[82px]
+                            items-center
+                            justify-center
+                            gap-1.5
+                            rounded-lg
+                            bg-indigo-600
+                            px-3
+                            text-[11px]
+                            font-semibold
+                            text-white
+                            transition-all
+
+                            hover:bg-indigo-500
+                            hover:shadow-md
+                            hover:shadow-indigo-500/15
+
+                            active:scale-[0.97]
+
+                            disabled:cursor-not-allowed
+                            disabled:opacity-35
+                          "
+                        >
+                          <HiOutlineArrowDownTray className="h-3.5 w-3.5" />
+                          Export
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1160,12 +1517,14 @@ export default function Reports() {
           )}
         </div>
 
-        {/* ACTIVE FILTER */}
+      </div>
 
-        {selectedUser && (
-          <div className="mt-3 flex min-w-0 items-center">
-            <div
-              className="
+      {/* ACTIVE FILTER TAG */}
+
+      {selectedUser && (
+        <div className="mt-3 flex min-w-0 items-center">
+          <div
+            className="
               inline-flex
               min-w-0
               max-w-full
@@ -1178,17 +1537,20 @@ export default function Reports() {
               text-[11px]
               font-medium
               text-slate-600
+
               dark:bg-zinc-900
               dark:text-zinc-400
             "
-            >
-              <span className="truncate">
-                {selectedUser.name}
-              </span>
+          >
+            <HiOutlineUsers className="h-3 w-3 shrink-0" />
 
-              {selectedUser.deletedAt && (
-                <span
-                  className="
+            <span className="truncate">
+              {selectedUser.name}
+            </span>
+
+            {selectedUser.deletedAt && (
+              <span
+                className="
                   shrink-0
                   rounded
                   bg-amber-50
@@ -1199,17 +1561,17 @@ export default function Reports() {
                   uppercase
                   tracking-wide
                   text-amber-700
+
                   dark:bg-amber-500/10
                   dark:text-amber-400
                 "
-                >
-                  Inactive
-                </span>
-              )}
-            </div>
+              >
+                Inactive
+              </span>
+            )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* =========================================================
         CONTENT

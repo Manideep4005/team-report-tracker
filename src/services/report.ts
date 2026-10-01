@@ -4,6 +4,7 @@ export interface ReportUser {
   id: string;
   name: string;
   email: string;
+  avatarUrl: string;
   deletedAt: string | null;
 }
 

@@ -833,13 +833,12 @@ function PermissionModal({
   }) => Promise<void>;
 }) {
   const [code, setCode] = useState(permission?.code ?? "");
-
   const [name, setName] = useState(permission?.name ?? "");
-
-  const [description, setDescription] = useState(permission?.description ?? "");
+  const [description, setDescription] = useState(
+    permission?.description ?? "",
+  );
 
   const [saving, setSaving] = useState(false);
-
   const [error, setError] = useState("");
 
   async function submit(event: FormEvent) {
@@ -849,19 +848,16 @@ function PermissionModal({
 
     if (!code.trim()) {
       setError("Permission code is required.");
-
       return;
     }
 
     if (!/^[A-Z0-9_]+$/i.test(code.trim())) {
       setError("Code can contain only letters, numbers and underscores.");
-
       return;
     }
 
     if (!name.trim()) {
       setError("Permission name is required.");
-
       return;
     }
 
@@ -870,13 +866,13 @@ function PermissionModal({
 
       await onSave({
         code: code.trim().toUpperCase(),
-
         name: name.trim(),
-
         description: description.trim(),
       });
     } catch (err: any) {
-      setError(err?.response?.data?.message || "Failed to save permission.");
+      setError(
+        err?.response?.data?.message || "Failed to save permission.",
+      );
     } finally {
       setSaving(false);
     }
@@ -886,87 +882,88 @@ function PermissionModal({
     <ModalBackdrop onClose={onClose}>
       <div
         className="
-                    flex
-                    max-h-[94vh]
-                    w-full
-                    flex-col
-                    overflow-hidden
-                    rounded-t-2xl
-                    border
-                    border-slate-200
-                    bg-white
-                    shadow-2xl
-                    sm:max-h-[90vh]
-                    sm:max-w-lg
-                    sm:rounded-2xl
-                    dark:border-zinc-800
-                    dark:bg-zinc-950
-                "
+          flex
+          max-h-[92vh]
+          w-[calc(100%-1.5rem)]
+          flex-col
+          overflow-hidden
+          rounded-2xl
+          border
+          border-slate-200/80
+          bg-white
+          shadow-[0_20px_60px_-15px_rgba(15,23,42,0.25)]
+          sm:w-full
+          sm:max-w-lg
+          dark:border-zinc-800
+          dark:bg-zinc-950
+          dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.65)]
+        "
       >
-        {/* HEADER */}
+        {/* ============================================================
+            HEADER
+        ============================================================ */}
 
         <div
           className="
-                        flex
-                        shrink-0
-                        items-start
-                        justify-between
-                        border-b
-                        border-slate-200
-                        px-5
-                        py-4
-                        dark:border-zinc-800
-                    "
+            flex
+            shrink-0
+            items-center
+            justify-between
+            border-b
+            border-slate-100
+            px-5
+            py-4
+            dark:border-zinc-800
+          "
         >
-          <div>
+          <div className="flex min-w-0 items-center gap-3">
+            {/* Permission icon */}
+
             <div
               className="
-                                flex
-                                items-center
-                                gap-2
-                            "
+                flex
+                h-9
+                w-9
+                shrink-0
+                items-center
+                justify-center
+                rounded-lg
+                bg-slate-100
+                text-slate-600
+                dark:bg-zinc-900
+                dark:text-zinc-300
+              "
             >
-              <div
-                className="
-                                    flex
-                                    h-8
-                                    w-8
-                                    items-center
-                                    justify-center
-                                    rounded-lg
-                                    bg-indigo-50
-                                    text-indigo-600
-                                    dark:bg-indigo-500/10
-                                    dark:text-indigo-400
-                                "
-              >
-                <HiOutlineShieldCheck className="h-4 w-4" />
-              </div>
+              <HiOutlineShieldCheck className="h-[18px] w-[18px]" />
+            </div>
 
+            <div className="min-w-0">
               <h2
                 className="
-                                    text-sm
-                                    font-bold
-                                    text-slate-900
-                                    dark:text-white
-                                "
+                  truncate
+                  text-[14px]
+                  font-semibold
+                  text-slate-900
+                  dark:text-white
+                "
               >
                 {permission ? "Edit Permission" : "Create Permission"}
               </h2>
-            </div>
 
-            <p
-              className="
-                                mt-2
-                                text-xs
-                                text-slate-500
-                                dark:text-zinc-500
-                            "
-            >
-              {permission
-                ? "Update permission details and access information."
-                : "Create a permission that can be assigned to roles."}
-            </p>
+              <p
+                className="
+                  mt-0.5
+                  truncate
+                  text-[11px]
+                  text-slate-500
+                  dark:text-zinc-500
+                "
+              >
+                {permission
+                  ? "Update permission details and access information."
+                  : "Create a permission that can be assigned to roles."}
+              </p>
+            </div>
           </div>
 
           <button
@@ -974,155 +971,353 @@ function PermissionModal({
             onClick={onClose}
             disabled={saving}
             className="
-                            inline-flex
-                            h-8
-                            w-8
-                            shrink-0
-                            items-center
-                            justify-center
-                            rounded-lg
-                            text-slate-400
-                            transition
-                            hover:bg-slate-100
-                            hover:text-slate-700
-                            dark:text-zinc-500
-                            dark:hover:bg-zinc-900
-                            dark:hover:text-zinc-200
-                        "
+              ml-3
+              flex
+              h-8
+              w-8
+              shrink-0
+              items-center
+              justify-center
+              rounded-lg
+              text-slate-400
+              transition-all
+              hover:bg-slate-100
+              hover:text-slate-700
+              disabled:cursor-not-allowed
+              disabled:opacity-50
+              dark:text-zinc-500
+              dark:hover:bg-zinc-900
+              dark:hover:text-zinc-200
+            "
           >
-            <HiOutlineXMark className="h-5 w-5" />
+            <HiOutlineXMark className="h-[18px] w-[18px]" />
           </button>
         </div>
 
-        {/* BODY */}
+        {/* ============================================================
+            FORM
+        ============================================================ */}
 
         <form
           onSubmit={submit}
-          className="
-                        min-h-0
-                        overflow-y-auto
-                    "
+          className="flex min-h-0 flex-1 flex-col"
         >
+          {/* ============================================================
+              BODY
+          ============================================================ */}
+
           <div
             className="
-                            space-y-5
-                            p-5
-                        "
+              min-h-0
+              flex-1
+              overflow-y-auto
+              px-5
+              py-5
+              sm:px-6
+            "
           >
-            {/* CODE */}
+            <div className="space-y-5">
+              {/* ======================================================
+                  PERMISSION DETAILS
+              ====================================================== */}
 
-            <div>
-              <label className="label">Permission Code</label>
+              <section>
+                <div className="mb-3">
+                  <h3
+                    className="
+                      text-[12px]
+                      font-semibold
+                      text-slate-800
+                      dark:text-zinc-200
+                    "
+                  >
+                    Permission details
+                  </h3>
 
-              <input
-                value={code}
-                onChange={(event) => setCode(event.target.value)}
-                placeholder="REPORT_EXPORT"
-                className="
-                                    input
-                                    font-mono
-                                    text-xs
-                                    uppercase
-                                "
-                disabled={saving}
-                autoFocus
-              />
+                  <p
+                    className="
+                      mt-0.5
+                      text-[11px]
+                      text-slate-400
+                      dark:text-zinc-500
+                    "
+                  >
+                    Define the permission identifier and what it allows.
+                  </p>
+                </div>
 
-              <p
-                className="
-                                    mt-1.5
-                                    text-[10px]
-                                    text-slate-400
-                                    dark:text-zinc-600
-                                "
-              >
-                Use uppercase letters, numbers and underscores.
-              </p>
+                <div className="space-y-4">
+                  {/* ==================================================
+                      PERMISSION CODE
+                  ================================================== */}
+
+                  <div>
+                    <label
+                      className="
+                        mb-1.5
+                        block
+                        text-[11px]
+                        font-medium
+                        text-slate-600
+                        dark:text-zinc-400
+                      "
+                    >
+                      Permission code
+                    </label>
+
+                    <input
+                      value={code}
+                      onChange={(event) => setCode(event.target.value)}
+                      placeholder="REPORT_EXPORT"
+                      disabled={saving}
+                      autoFocus
+                      className="
+                        h-10
+                        w-full
+                        rounded-lg
+                        border
+                        border-slate-200
+                        bg-white
+                        px-3
+                        font-mono
+                        text-[12px]
+                        font-medium
+                        uppercase
+                        tracking-wide
+                        text-slate-800
+                        outline-none
+                        transition-all
+                        placeholder:font-sans
+                        placeholder:font-normal
+                        placeholder:normal-case
+                        placeholder:tracking-normal
+                        placeholder:text-slate-400
+                        hover:border-slate-300
+                        focus:border-slate-400
+                        focus:ring-2
+                        focus:ring-slate-100
+                        disabled:cursor-not-allowed
+                        disabled:opacity-60
+                        dark:border-zinc-800
+                        dark:bg-zinc-900
+                        dark:text-zinc-100
+                        dark:placeholder:text-zinc-600
+                        dark:hover:border-zinc-700
+                        dark:focus:border-zinc-700
+                        dark:focus:ring-zinc-800
+                      "
+                    />
+
+                    <p
+                      className="
+                        mt-1.5
+                        text-[10px]
+                        text-slate-400
+                        dark:text-zinc-600
+                      "
+                    >
+                      Use uppercase letters, numbers and underscores.
+                    </p>
+                  </div>
+
+                  {/* ==================================================
+                      PERMISSION NAME
+                  ================================================== */}
+
+                  <div>
+                    <label
+                      className="
+                        mb-1.5
+                        block
+                        text-[11px]
+                        font-medium
+                        text-slate-600
+                        dark:text-zinc-400
+                      "
+                    >
+                      Permission name
+                    </label>
+
+                    <input
+                      value={name}
+                      onChange={(event) => setName(event.target.value)}
+                      placeholder="Export Reports"
+                      disabled={saving}
+                      className="
+                        h-10
+                        w-full
+                        rounded-lg
+                        border
+                        border-slate-200
+                        bg-white
+                        px-3
+                        text-[13px]
+                        text-slate-800
+                        outline-none
+                        transition-all
+                        placeholder:text-slate-400
+                        hover:border-slate-300
+                        focus:border-slate-400
+                        focus:ring-2
+                        focus:ring-slate-100
+                        disabled:cursor-not-allowed
+                        disabled:opacity-60
+                        dark:border-zinc-800
+                        dark:bg-zinc-900
+                        dark:text-zinc-100
+                        dark:placeholder:text-zinc-600
+                        dark:hover:border-zinc-700
+                        dark:focus:border-zinc-700
+                        dark:focus:ring-zinc-800
+                      "
+                    />
+                  </div>
+
+                  {/* ==================================================
+                      DESCRIPTION
+                  ================================================== */}
+
+                  <div>
+                    <label
+                      className="
+                        mb-1.5
+                        block
+                        text-[11px]
+                        font-medium
+                        text-slate-600
+                        dark:text-zinc-400
+                      "
+                    >
+                      Description
+                      <span className="ml-1 font-normal text-slate-400">
+                        Optional
+                      </span>
+                    </label>
+
+                    <textarea
+                      value={description}
+                      onChange={(event) =>
+                        setDescription(event.target.value)
+                      }
+                      placeholder="Allow users to export reports."
+                      rows={4}
+                      disabled={saving}
+                      className="
+                        min-h-[96px]
+                        w-full
+                        resize-none
+                        rounded-lg
+                        border
+                        border-slate-200
+                        bg-white
+                        px-3
+                        py-2.5
+                        text-[13px]
+                        leading-5
+                        text-slate-800
+                        outline-none
+                        transition-all
+                        placeholder:text-slate-400
+                        hover:border-slate-300
+                        focus:border-slate-400
+                        focus:ring-2
+                        focus:ring-slate-100
+                        disabled:cursor-not-allowed
+                        disabled:opacity-60
+                        dark:border-zinc-800
+                        dark:bg-zinc-900
+                        dark:text-zinc-100
+                        dark:placeholder:text-zinc-600
+                        dark:hover:border-zinc-700
+                        dark:focus:border-zinc-700
+                        dark:focus:ring-zinc-800
+                      "
+                    />
+                  </div>
+                </div>
+              </section>
+
+              {/* ======================================================
+                  ERROR
+              ====================================================== */}
+
+              {error && (
+                <div
+                  className="
+                    flex
+                    items-start
+                    gap-2
+                    rounded-lg
+                    border
+                    border-red-200
+                    bg-red-50
+                    px-3
+                    py-2.5
+                    text-[11px]
+                    font-medium
+                    leading-4
+                    text-red-600
+                    dark:border-red-900/30
+                    dark:bg-red-950/20
+                    dark:text-red-400
+                  "
+                >
+                  <span className="mt-0.5 shrink-0">!</span>
+                  <span>{error}</span>
+                </div>
+              )}
             </div>
-
-            {/* NAME */}
-
-            <div>
-              <label className="label">Permission Name</label>
-
-              <input
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                placeholder="Export Reports"
-                className="input"
-                disabled={saving}
-              />
-            </div>
-
-            {/* DESCRIPTION */}
-
-            <div>
-              <label className="label">Description</label>
-
-              <textarea
-                value={description}
-                onChange={(event) => setDescription(event.target.value)}
-                placeholder="Allow users to export reports."
-                rows={4}
-                className="
-                                    input
-                                    resize-none
-                                "
-                disabled={saving}
-              />
-            </div>
-
-            {/* ERROR */}
-
-            {error && (
-              <div
-                className="
-                                    rounded-lg
-                                    border
-                                    border-red-200
-                                    bg-red-50
-                                    px-3
-                                    py-2.5
-                                    text-xs
-                                    font-medium
-                                    text-red-600
-                                    dark:border-red-900/30
-                                    dark:bg-red-950/20
-                                    dark:text-red-400
-                                "
-              >
-                {error}
-              </div>
-            )}
           </div>
 
-          {/* FOOTER */}
+          {/* ============================================================
+              FOOTER
+          ============================================================ */}
 
           <div
             className="
-                            flex
-                            shrink-0
-                            flex-col-reverse
-                            gap-2
-                            border-t
-                            border-slate-200
-                            px-5
-                            py-4
-                            dark:border-zinc-800
-                            sm:flex-row
-                            sm:justify-end
-                        "
+              flex
+              shrink-0
+              flex-col-reverse
+              gap-2
+              border-t
+              border-slate-100
+              bg-white
+              px-5
+              py-3.5
+              sm:flex-row
+              sm:justify-end
+              sm:px-6
+              dark:border-zinc-800
+              dark:bg-zinc-950
+            "
           >
             <button
               type="button"
               onClick={onClose}
               disabled={saving}
               className="
-                                btn-secondary
-                                w-full
-                                text-xs
-                                sm:w-auto
-                            "
+                h-9
+                w-full
+                rounded-lg
+                border
+                border-slate-200
+                bg-white
+                px-4
+                text-xs
+                font-medium
+                text-slate-600
+                transition-all
+                hover:bg-slate-50
+                hover:text-slate-800
+                disabled:cursor-not-allowed
+                disabled:opacity-50
+                sm:w-auto
+                dark:border-zinc-800
+                dark:bg-zinc-900
+                dark:text-zinc-400
+                dark:hover:bg-zinc-800
+                dark:hover:text-zinc-200
+              "
             >
               Cancel
             </button>
@@ -1131,11 +1326,28 @@ function PermissionModal({
               type="submit"
               disabled={saving}
               className="
-                                btn-primary
-                                w-full
-                                text-xs
-                                sm:w-auto
-                            "
+                inline-flex
+                h-9
+                w-full
+                items-center
+                justify-center
+                rounded-lg
+                bg-slate-900
+                px-4
+                text-xs
+                font-semibold
+                text-white
+                shadow-sm
+                transition-all
+                hover:bg-slate-800
+                active:scale-[0.98]
+                disabled:cursor-not-allowed
+                disabled:opacity-50
+                sm:w-auto
+                dark:bg-white
+                dark:text-zinc-900
+                dark:hover:bg-zinc-200
+              "
             >
               {saving
                 ? "Saving..."

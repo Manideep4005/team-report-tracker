@@ -21,7 +21,7 @@ import PublicMonitorView
     from "./pages/PublicMonitorView/PublicMonitorView";
 import Chat from "./pages/Chat/Chat";
 import Resume from "./pages/Resume/Resume";
-import Profile from "./pages/Profile/Profile";
+import Profile from "./pages/ResumeProfile/ResumeProfile";
 
 
 
@@ -210,7 +210,7 @@ function App() {
             />
 
             <Route
-                path="/profile"
+                path="/resume-profile"
                 element={
                     <ProtectedRoute
                     >

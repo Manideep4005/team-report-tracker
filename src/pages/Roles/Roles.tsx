@@ -794,9 +794,7 @@ function CreateRoleModal({
   }) => void;
 }) {
   const [name, setName] = useState("");
-
   const [description, setDescription] = useState("");
-
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
 
   function togglePermission(id: string) {
@@ -820,15 +818,12 @@ function CreateRoleModal({
 
     if (!name.trim()) {
       toast.warning("Role name is required.");
-
       return;
     }
 
     onSubmit({
       name: name.trim(),
-
       description: description.trim() || undefined,
-
       permissionIds: selectedPermissions,
     });
   }
@@ -837,60 +832,85 @@ function CreateRoleModal({
     <ModalBackdrop onClose={onClose}>
       <div
         className="
-                    flex
-                    max-h-[94vh]
-                    w-full
-                    flex-col
-                    overflow-hidden
-                    rounded-t-2xl
-                    border
-                    border-slate-200
-                    bg-white
-                    shadow-2xl
-                    sm:max-h-[90vh]
-                    sm:max-w-2xl
-                    sm:rounded-2xl
-                    dark:border-zinc-800
-                    dark:bg-zinc-950
-                "
+          flex
+          max-h-[92vh]
+          w-[calc(100%-1.5rem)]
+          flex-col
+          overflow-hidden
+          rounded-2xl
+          border
+          border-slate-200/80
+          bg-white
+          shadow-[0_20px_60px_-15px_rgba(15,23,42,0.25)]
+          sm:w-full
+          sm:max-w-2xl
+          dark:border-zinc-800
+          dark:bg-zinc-950
+          dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.65)]
+        "
       >
-        {/* HEADER */}
+        {/* ============================================================
+            HEADER
+        ============================================================ */}
 
         <div
           className="
-                        flex
-                        shrink-0
-                        items-start
-                        justify-between
-                        border-b
-                        border-slate-200
-                        px-5
-                        py-4
-                        dark:border-zinc-800
-                    "
+            flex
+            shrink-0
+            items-center
+            justify-between
+            border-b
+            border-slate-100
+            px-5
+            py-4
+            dark:border-zinc-800
+          "
         >
-          <div>
-            <h2
+          <div className="flex min-w-0 items-center gap-3">
+            {/* Role icon */}
+            <div
               className="
-                                text-sm
-                                font-bold
-                                text-slate-900
-                                dark:text-white
-                            "
+                flex
+                h-9
+                w-9
+                shrink-0
+                items-center
+                justify-center
+                rounded-lg
+                bg-slate-100
+                text-slate-600
+                dark:bg-zinc-900
+                dark:text-zinc-300
+              "
             >
-              Create Role
-            </h2>
+              <HiOutlineShieldCheck className="h-[18px] w-[18px]" />
+            </div>
 
-            <p
-              className="
-                                mt-1
-                                text-xs
-                                text-slate-500
-                                dark:text-zinc-500
-                            "
-            >
-              Create a role and assign its permissions.
-            </p>
+            <div className="min-w-0">
+              <h2
+                className="
+                  truncate
+                  text-[14px]
+                  font-semibold
+                  text-slate-900
+                  dark:text-white
+                "
+              >
+                Create Role
+              </h2>
+
+              <p
+                className="
+                  mt-0.5
+                  truncate
+                  text-[11px]
+                  text-slate-500
+                  dark:text-zinc-500
+                "
+              >
+                Add a new role and configure its permissions
+              </p>
+            </div>
           </div>
 
           <button
@@ -898,116 +918,323 @@ function CreateRoleModal({
             onClick={onClose}
             disabled={loading}
             className="
-                            inline-flex
-                            h-8
-                            w-8
-                            items-center
-                            justify-center
-                            rounded-lg
-                            text-slate-400
-                            transition
-                            hover:bg-slate-100
-                            hover:text-slate-700
-                            dark:text-zinc-500
-                            dark:hover:bg-zinc-900
-                            dark:hover:text-zinc-200
-                        "
+              ml-3
+              flex
+              h-8
+              w-8
+              shrink-0
+              items-center
+              justify-center
+              rounded-lg
+              text-slate-400
+              transition-all
+              hover:bg-slate-100
+              hover:text-slate-700
+              disabled:cursor-not-allowed
+              disabled:opacity-50
+              dark:text-zinc-500
+              dark:hover:bg-zinc-900
+              dark:hover:text-zinc-200
+            "
           >
-            <HiOutlineXMark className="h-5 w-5" />
+            <HiOutlineXMark className="h-[18px] w-[18px]" />
           </button>
         </div>
 
-        {/* BODY */}
+        {/* ============================================================
+            FORM
+        ============================================================ */}
 
         <form
           onSubmit={handleSubmit}
-          className="
-                        flex
-                        min-h-0
-                        flex-1
-                        flex-col
-                    "
+          className="flex min-h-0 flex-1 flex-col"
         >
+          {/* ============================================================
+              BODY
+          ============================================================ */}
+
           <div
             className="
-                            min-h-0
-                            flex-1
-                            overflow-y-auto
-                            p-5
-                        "
+              min-h-0
+              flex-1
+              overflow-y-auto
+              px-5
+              py-5
+              sm:px-6
+            "
           >
             <div className="space-y-5">
-              {/* NAME */}
+              {/* ======================================================
+                  ROLE DETAILS
+              ====================================================== */}
 
-              <div>
-                <label className="label">Role Name</label>
+              <section>
+                <div className="mb-3">
+                  <h3
+                    className="
+                      text-[12px]
+                      font-semibold
+                      text-slate-800
+                      dark:text-zinc-200
+                    "
+                  >
+                    Role details
+                  </h3>
 
-                <input
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  placeholder="e.g. TEAM_LEAD"
-                  className="input"
-                  autoFocus
-                />
-              </div>
+                  <p
+                    className="
+                      mt-0.5
+                      text-[11px]
+                      text-slate-400
+                      dark:text-zinc-500
+                    "
+                  >
+                    Add the basic information for this role.
+                  </p>
+                </div>
 
-              {/* DESCRIPTION */}
+                <div className="space-y-4">
+                  {/* ROLE NAME */}
 
-              <div>
-                <label className="label">Description</label>
+                  <div>
+                    <label
+                      className="
+                        mb-1.5
+                        block
+                        text-[11px]
+                        font-medium
+                        text-slate-600
+                        dark:text-zinc-400
+                      "
+                    >
+                      Role name
+                    </label>
 
-                <textarea
-                  value={description}
-                  onChange={(event) => setDescription(event.target.value)}
-                  placeholder="Describe what this role can do..."
-                  rows={3}
+                    <input
+                      value={name}
+                      onChange={(event) => setName(event.target.value)}
+                      placeholder="e.g. TEAM_LEAD"
+                      className="
+                        h-10
+                        w-full
+                        rounded-lg
+                        border
+                        border-slate-200
+                        bg-white
+                        px-3
+                        text-[13px]
+                        text-slate-800
+                        outline-none
+                        transition-all
+                        placeholder:text-slate-400
+                        hover:border-slate-300
+                        focus:border-slate-400
+                        focus:ring-2
+                        focus:ring-slate-100
+                        dark:border-zinc-800
+                        dark:bg-zinc-900
+                        dark:text-zinc-100
+                        dark:placeholder:text-zinc-600
+                        dark:hover:border-zinc-700
+                        dark:focus:border-zinc-700
+                        dark:focus:ring-zinc-800
+                      "
+                      autoFocus
+                    />
+                  </div>
+
+                  {/* DESCRIPTION */}
+
+                  <div>
+                    <label
+                      className="
+                        mb-1.5
+                        block
+                        text-[11px]
+                        font-medium
+                        text-slate-600
+                        dark:text-zinc-400
+                      "
+                    >
+                      Description
+                      <span className="ml-1 font-normal text-slate-400">
+                        Optional
+                      </span>
+                    </label>
+
+                    <textarea
+                      value={description}
+                      onChange={(event) => setDescription(event.target.value)}
+                      placeholder="Describe what this role can do..."
+                      rows={3}
+                      className="
+                        min-h-[82px]
+                        w-full
+                        resize-none
+                        rounded-lg
+                        border
+                        border-slate-200
+                        bg-white
+                        px-3
+                        py-2.5
+                        text-[13px]
+                        leading-5
+                        text-slate-800
+                        outline-none
+                        transition-all
+                        placeholder:text-slate-400
+                        hover:border-slate-300
+                        focus:border-slate-400
+                        focus:ring-2
+                        focus:ring-slate-100
+                        dark:border-zinc-800
+                        dark:bg-zinc-900
+                        dark:text-zinc-100
+                        dark:placeholder:text-zinc-600
+                        dark:hover:border-zinc-700
+                        dark:focus:border-zinc-700
+                        dark:focus:ring-zinc-800
+                      "
+                    />
+                  </div>
+                </div>
+              </section>
+
+              {/* ======================================================
+                  PERMISSIONS
+              ====================================================== */}
+
+              <section
+                className="
+                  overflow-hidden
+                  rounded-xl
+                  border
+                  border-slate-200
+                  bg-slate-50/60
+                  dark:border-zinc-800
+                  dark:bg-zinc-900/40
+                "
+              >
+                <div
                   className="
-                                        input
-                                        resize-none
-                                    "
-                />
-              </div>
+                    flex
+                    items-center
+                    justify-between
+                    border-b
+                    border-slate-200
+                    px-4
+                    py-3
+                    dark:border-zinc-800
+                  "
+                >
+                  <div>
+                    <h3
+                      className="
+                        text-[12px]
+                        font-semibold
+                        text-slate-800
+                        dark:text-zinc-200
+                      "
+                    >
+                      Permissions
+                    </h3>
 
-              {/* PERMISSIONS */}
+                    <p
+                      className="
+                        mt-0.5
+                        text-[11px]
+                        text-slate-400
+                        dark:text-zinc-500
+                      "
+                    >
+                      Choose what this role can access.
+                    </p>
+                  </div>
 
-              <PermissionSelector
-                permissions={permissions}
-                permissionsLoading={permissionsLoading}
-                selectedPermissions={selectedPermissions}
-                onToggle={togglePermission}
-                onSelectAll={selectAll}
-                onClearAll={clearAll}
-              />
+                  <div
+                    className="
+                      shrink-0
+                      rounded-md
+                      bg-white
+                      px-2
+                      py-1
+                      text-[10px]
+                      font-medium
+                      text-slate-500
+                      ring-1
+                      ring-slate-200
+                      dark:bg-zinc-900
+                      dark:text-zinc-400
+                      dark:ring-zinc-800
+                    "
+                  >
+                    {selectedPermissions.length}/{permissions.length}
+                  </div>
+                </div>
+
+                <div className="p-3">
+                  <PermissionSelector
+                    permissions={permissions}
+                    permissionsLoading={permissionsLoading}
+                    selectedPermissions={selectedPermissions}
+                    onToggle={togglePermission}
+                    onSelectAll={selectAll}
+                    onClearAll={clearAll}
+                  />
+                </div>
+              </section>
             </div>
           </div>
 
-          {/* FOOTER */}
+          {/* ============================================================
+              FOOTER
+          ============================================================ */}
 
           <div
             className="
-                            flex
-                            shrink-0
-                            flex-col-reverse
-                            gap-2
-                            border-t
-                            border-slate-200
-                            px-5
-                            py-4
-                            dark:border-zinc-800
-                            sm:flex-row
-                            sm:justify-end
-                        "
+              flex
+              shrink-0
+              flex-col-reverse
+              gap-2
+              border-t
+              border-slate-100
+              bg-white
+              px-5
+              py-3.5
+              sm:flex-row
+              sm:justify-end
+              sm:px-6
+              dark:border-zinc-800
+              dark:bg-zinc-950
+            "
           >
             <button
               type="button"
               onClick={onClose}
               disabled={loading}
               className="
-                                btn-secondary
-                                w-full
-                                text-xs
-                                sm:w-auto
-                            "
+                h-9
+                w-full
+                rounded-lg
+                border
+                border-slate-200
+                bg-white
+                px-4
+                text-xs
+                font-medium
+                text-slate-600
+                transition-all
+                hover:bg-slate-50
+                hover:text-slate-800
+                disabled:cursor-not-allowed
+                disabled:opacity-50
+                sm:w-auto
+                dark:border-zinc-800
+                dark:bg-zinc-900
+                dark:text-zinc-400
+                dark:hover:bg-zinc-800
+                dark:hover:text-zinc-200
+              "
             >
               Cancel
             </button>
@@ -1016,11 +1243,28 @@ function CreateRoleModal({
               type="submit"
               disabled={loading}
               className="
-                                btn-primary
-                                w-full
-                                text-xs
-                                sm:w-auto
-                            "
+                inline-flex
+                h-9
+                w-full
+                items-center
+                justify-center
+                rounded-lg
+                bg-slate-900
+                px-4
+                text-xs
+                font-semibold
+                text-white
+                shadow-sm
+                transition-all
+                hover:bg-slate-800
+                active:scale-[0.98]
+                disabled:cursor-not-allowed
+                disabled:opacity-50
+                sm:w-auto
+                dark:bg-white
+                dark:text-zinc-900
+                dark:hover:bg-zinc-200
+              "
             >
               {loading ? "Creating..." : "Create Role"}
             </button>
@@ -1055,14 +1299,12 @@ function EditRoleModal({
   }) => void;
 }) {
   const [name, setName] = useState(role.name);
-
   const [description, setDescription] = useState(role.description ?? "");
-
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
 
   /* ============================================================
-       LOAD EXISTING PERMISSIONS
-    ============================================================ */
+     LOAD EXISTING PERMISSIONS
+  ============================================================ */
 
   useEffect(() => {
     if (!permissions.length || !role.permissions.length) {
@@ -1101,15 +1343,12 @@ function EditRoleModal({
 
     if (!name.trim()) {
       toast.warning("Role name is required.");
-
       return;
     }
 
     onSubmit({
       name: name.trim(),
-
       description: description.trim() || undefined,
-
       permissionIds: selectedPermissions,
     });
   }
@@ -1118,60 +1357,85 @@ function EditRoleModal({
     <ModalBackdrop onClose={onClose}>
       <div
         className="
-                    flex
-                    max-h-[94vh]
-                    w-full
-                    flex-col
-                    overflow-hidden
-                    rounded-t-2xl
-                    border
-                    border-slate-200
-                    bg-white
-                    shadow-2xl
-                    sm:max-h-[90vh]
-                    sm:max-w-2xl
-                    sm:rounded-2xl
-                    dark:border-zinc-800
-                    dark:bg-zinc-950
-                "
+          flex
+          max-h-[92vh]
+          w-[calc(100%-1.5rem)]
+          flex-col
+          overflow-hidden
+          rounded-2xl
+          border
+          border-slate-200/80
+          bg-white
+          shadow-[0_20px_60px_-15px_rgba(15,23,42,0.25)]
+          sm:w-full
+          sm:max-w-2xl
+          dark:border-zinc-800
+          dark:bg-zinc-950
+          dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.65)]
+        "
       >
-        {/* HEADER */}
+        {/* ============================================================
+            HEADER
+        ============================================================ */}
 
         <div
           className="
-                        flex
-                        shrink-0
-                        items-start
-                        justify-between
-                        border-b
-                        border-slate-200
-                        px-5
-                        py-4
-                        dark:border-zinc-800
-                    "
+            flex
+            shrink-0
+            items-center
+            justify-between
+            border-b
+            border-slate-100
+            px-5
+            py-4
+            dark:border-zinc-800
+          "
         >
-          <div>
-            <h2
+          <div className="flex min-w-0 items-center gap-3">
+            {/* Role icon */}
+            <div
               className="
-                                text-sm
-                                font-bold
-                                text-slate-900
-                                dark:text-white
-                            "
+                flex
+                h-9
+                w-9
+                shrink-0
+                items-center
+                justify-center
+                rounded-lg
+                bg-slate-100
+                text-slate-600
+                dark:bg-zinc-900
+                dark:text-zinc-300
+              "
             >
-              Edit Role
-            </h2>
+              <HiOutlineShieldCheck className="h-[18px] w-[18px]" />
+            </div>
 
-            <p
-              className="
-                                mt-1
-                                text-xs
-                                text-slate-500
-                                dark:text-zinc-500
-                            "
-            >
-              Update role details and permissions.
-            </p>
+            <div className="min-w-0">
+              <h2
+                className="
+                  truncate
+                  text-[14px]
+                  font-semibold
+                  text-slate-900
+                  dark:text-white
+                "
+              >
+                Edit Role
+              </h2>
+
+              <p
+                className="
+                  mt-0.5
+                  truncate
+                  text-[11px]
+                  text-slate-500
+                  dark:text-zinc-500
+                "
+              >
+                Configure role details and permissions
+              </p>
+            </div>
           </div>
 
           <button
@@ -1179,111 +1443,322 @@ function EditRoleModal({
             onClick={onClose}
             disabled={loading}
             className="
-                            inline-flex
-                            h-8
-                            w-8
-                            items-center
-                            justify-center
-                            rounded-lg
-                            text-slate-400
-                            transition
-                            hover:bg-slate-100
-                            dark:text-zinc-500
-                            dark:hover:bg-zinc-900
-                        "
+              ml-3
+              flex
+              h-8
+              w-8
+              shrink-0
+              items-center
+              justify-center
+              rounded-lg
+              text-slate-400
+              transition-all
+              hover:bg-slate-100
+              hover:text-slate-700
+              disabled:cursor-not-allowed
+              disabled:opacity-50
+              dark:text-zinc-500
+              dark:hover:bg-zinc-900
+              dark:hover:text-zinc-200
+            "
           >
-            <HiOutlineXMark className="h-5 w-5" />
+            <HiOutlineXMark className="h-[18px] w-[18px]" />
           </button>
         </div>
 
-        {/* BODY */}
+        {/* ============================================================
+            FORM
+        ============================================================ */}
 
         <form
           onSubmit={handleSubmit}
-          className="
-                        flex
-                        min-h-0
-                        flex-1
-                        flex-col
-                    "
+          className="flex min-h-0 flex-1 flex-col"
         >
+          {/* ============================================================
+              BODY
+          ============================================================ */}
+
           <div
             className="
-                            min-h-0
-                            flex-1
-                            overflow-y-auto
-                            p-5
-                        "
+              min-h-0
+              flex-1
+              overflow-y-auto
+              px-5
+              py-5
+              sm:px-6
+            "
           >
             <div className="space-y-5">
-              {/* NAME */}
+              {/* ======================================================
+                  ROLE DETAILS
+              ====================================================== */}
 
-              <div>
-                <label className="label">Role Name</label>
+              <section>
+                <div className="mb-3">
+                  <h3
+                    className="
+                      text-[12px]
+                      font-semibold
+                      text-slate-800
+                      dark:text-zinc-200
+                    "
+                  >
+                    Role details
+                  </h3>
 
-                <input
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  className="input"
-                />
-              </div>
+                  <p
+                    className="
+                      mt-0.5
+                      text-[11px]
+                      text-slate-400
+                      dark:text-zinc-500
+                    "
+                  >
+                    Update the basic information for this role.
+                  </p>
+                </div>
 
-              {/* DESCRIPTION */}
+                <div className="space-y-4">
+                  {/* ROLE NAME */}
 
-              <div>
-                <label className="label">Description</label>
+                  <div>
+                    <label
+                      className="
+                        mb-1.5
+                        block
+                        text-[11px]
+                        font-medium
+                        text-slate-600
+                        dark:text-zinc-400
+                      "
+                    >
+                      Role name
+                    </label>
 
-                <textarea
-                  value={description}
-                  onChange={(event) => setDescription(event.target.value)}
-                  rows={3}
+                    <input
+                      value={name}
+                      onChange={(event) => setName(event.target.value)}
+                      placeholder="Enter role name"
+                      className="
+                        h-10
+                        w-full
+                        rounded-lg
+                        border
+                        border-slate-200
+                        bg-white
+                        px-3
+                        text-[13px]
+                        text-slate-800
+                        outline-none
+                        transition-all
+                        placeholder:text-slate-400
+                        hover:border-slate-300
+                        focus:border-slate-400
+                        focus:ring-2
+                        focus:ring-slate-100
+                        dark:border-zinc-800
+                        dark:bg-zinc-900
+                        dark:text-zinc-100
+                        dark:placeholder:text-zinc-600
+                        dark:hover:border-zinc-700
+                        dark:focus:border-zinc-700
+                        dark:focus:ring-zinc-800
+                      "
+                    />
+                  </div>
+
+                  {/* DESCRIPTION */}
+
+                  <div>
+                    <label
+                      className="
+                        mb-1.5
+                        block
+                        text-[11px]
+                        font-medium
+                        text-slate-600
+                        dark:text-zinc-400
+                      "
+                    >
+                      Description
+                      <span className="ml-1 font-normal text-slate-400">
+                        Optional
+                      </span>
+                    </label>
+
+                    <textarea
+                      value={description}
+                      onChange={(event) => setDescription(event.target.value)}
+                      rows={3}
+                      placeholder="Briefly describe what this role is responsible for..."
+                      className="
+                        min-h-[82px]
+                        w-full
+                        resize-none
+                        rounded-lg
+                        border
+                        border-slate-200
+                        bg-white
+                        px-3
+                        py-2.5
+                        text-[13px]
+                        leading-5
+                        text-slate-800
+                        outline-none
+                        transition-all
+                        placeholder:text-slate-400
+                        hover:border-slate-300
+                        focus:border-slate-400
+                        focus:ring-2
+                        focus:ring-slate-100
+                        dark:border-zinc-800
+                        dark:bg-zinc-900
+                        dark:text-zinc-100
+                        dark:placeholder:text-zinc-600
+                        dark:hover:border-zinc-700
+                        dark:focus:border-zinc-700
+                        dark:focus:ring-zinc-800
+                      "
+                    />
+                  </div>
+                </div>
+              </section>
+
+              {/* ======================================================
+                  PERMISSIONS
+              ====================================================== */}
+
+              <section
+                className="
+                  overflow-hidden
+                  rounded-xl
+                  border
+                  border-slate-200
+                  bg-slate-50/60
+                  dark:border-zinc-800
+                  dark:bg-zinc-900/40
+                "
+              >
+                <div
                   className="
-                                        input
-                                        resize-none
-                                    "
-                />
-              </div>
+                    flex
+                    items-center
+                    justify-between
+                    border-b
+                    border-slate-200
+                    px-4
+                    py-3
+                    dark:border-zinc-800
+                  "
+                >
+                  <div>
+                    <h3
+                      className="
+                        text-[12px]
+                        font-semibold
+                        text-slate-800
+                        dark:text-zinc-200
+                      "
+                    >
+                      Permissions
+                    </h3>
 
-              {/* PERMISSIONS */}
+                    <p
+                      className="
+                        mt-0.5
+                        text-[11px]
+                        text-slate-400
+                        dark:text-zinc-500
+                      "
+                    >
+                      Choose what this role can access.
+                    </p>
+                  </div>
 
-              <PermissionSelector
-                permissions={permissions}
-                permissionsLoading={permissionsLoading}
-                selectedPermissions={selectedPermissions}
-                onToggle={togglePermission}
-                onSelectAll={selectAll}
-                onClearAll={clearAll}
-              />
+                  <div
+                    className="
+                      shrink-0
+                      rounded-md
+                      bg-white
+                      px-2
+                      py-1
+                      text-[10px]
+                      font-medium
+                      text-slate-500
+                      ring-1
+                      ring-slate-200
+                      dark:bg-zinc-900
+                      dark:text-zinc-400
+                      dark:ring-zinc-800
+                    "
+                  >
+                    {selectedPermissions.length}/{permissions.length}
+                  </div>
+                </div>
+
+                <div className="p-3">
+                  <PermissionSelector
+                    permissions={permissions}
+                    permissionsLoading={permissionsLoading}
+                    selectedPermissions={selectedPermissions}
+                    onToggle={togglePermission}
+                    onSelectAll={selectAll}
+                    onClearAll={clearAll}
+                  />
+                </div>
+              </section>
             </div>
           </div>
 
-          {/* FOOTER */}
+          {/* ============================================================
+              FOOTER
+          ============================================================ */}
 
           <div
             className="
-                            flex
-                            shrink-0
-                            flex-col-reverse
-                            gap-2
-                            border-t
-                            border-slate-200
-                            px-5
-                            py-4
-                            dark:border-zinc-800
-                            sm:flex-row
-                            sm:justify-end
-                        "
+              flex
+              shrink-0
+              flex-col-reverse
+              gap-2
+              border-t
+              border-slate-100
+              bg-white
+              px-5
+              py-3.5
+              sm:flex-row
+              sm:justify-end
+              sm:px-6
+              dark:border-zinc-800
+              dark:bg-zinc-950
+            "
           >
             <button
               type="button"
               onClick={onClose}
               disabled={loading}
               className="
-                                btn-secondary
-                                w-full
-                                text-xs
-                                sm:w-auto
-                            "
+                h-9
+                w-full
+                rounded-lg
+                border
+                border-slate-200
+                bg-white
+                px-4
+                text-xs
+                font-medium
+                text-slate-600
+                transition-all
+                hover:bg-slate-50
+                hover:text-slate-800
+                disabled:cursor-not-allowed
+                disabled:opacity-50
+                sm:w-auto
+                dark:border-zinc-800
+                dark:bg-zinc-900
+                dark:text-zinc-400
+                dark:hover:bg-zinc-800
+                dark:hover:text-zinc-200
+              "
             >
               Cancel
             </button>
@@ -1292,11 +1767,28 @@ function EditRoleModal({
               type="submit"
               disabled={loading}
               className="
-                                btn-primary
-                                w-full
-                                text-xs
-                                sm:w-auto
-                            "
+                inline-flex
+                h-9
+                w-full
+                items-center
+                justify-center
+                rounded-lg
+                bg-slate-900
+                px-4
+                text-xs
+                font-semibold
+                text-white
+                shadow-sm
+                transition-all
+                hover:bg-slate-800
+                active:scale-[0.98]
+                disabled:cursor-not-allowed
+                disabled:opacity-50
+                sm:w-auto
+                dark:bg-white
+                dark:text-zinc-900
+                dark:hover:bg-zinc-200
+              "
             >
               {loading ? "Saving..." : "Save Changes"}
             </button>

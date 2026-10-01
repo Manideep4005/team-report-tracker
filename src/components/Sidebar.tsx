@@ -14,7 +14,6 @@ import {
   HiOutlineShieldCheck,
   HiOutlineSquares2X2,
   HiOutlineSun,
-  HiOutlineUserCircle,
   HiOutlineUsers,
   HiOutlineXMark,
 } from "react-icons/hi2";
@@ -103,7 +102,7 @@ export default function Sidebar({ open, collapsed, onClose, onToggleCollapse }: 
         <NavItem to="/chat" label="Chat" icon={<HiOutlineChatBubbleLeftRight size={19} />} visible={hasPermission("CHATS_VIEW")} mobile={mobile} />
         <NavItem to="/history" label="My Reports" icon={<HiOutlineClock size={19} />} visible={hasPermission("REPORT_VIEW_OWN")} mobile={mobile} />
         <NavItem to="/reports" label="All Reports" icon={<HiOutlineDocumentText size={19} />} visible={hasPermission("REPORT_VIEW_ALL")} mobile={mobile} />
-        <NavItem to="/resume" label="Resume" icon={<HiOutlineDocumentText size={19} />} visible={hasPermission("RESUME_VIEW")} mobile={mobile} />
+        <NavItem to="/resume" label="Resume Editor" icon={<HiOutlineDocumentText size={19} />} visible={hasPermission("RESUME_VIEW")} mobile={mobile} />
       </div>
       {showManagementSection && <div className="mb-7 last:mb-0">
         {!collapsed || mobile ? <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--text-subtle)]">Management</p> : <div className="mx-auto mb-3 h-px w-7 bg-[var(--border-subtle)]" />}
@@ -137,7 +136,7 @@ export default function Sidebar({ open, collapsed, onClose, onToggleCollapse }: 
         <div className="flex items-center gap-3 border-b border-[var(--border-subtle)] p-4"><UserAvatar name={user.name} avatarUrl={user.avatarUrl} /><div className="min-w-0"><p className="truncate text-sm font-semibold text-[var(--text-primary)]">{user?.name}</p><p className="mt-0.5 truncate text-xs text-[var(--text-muted)]">{user?.email}</p></div></div>
         <div className="p-1.5">
           <button type="button" onClick={() => setThemeOpen(true)} className="flex min-h-10 w-full items-center justify-between gap-3 rounded-[var(--radius-md)] px-3 text-left text-xs font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"><span className="flex min-w-0 items-center gap-2.5"><span className="flex h-6 w-6 shrink-0 items-center justify-center text-[var(--text-muted)]">{theme === "dark" ? <HiOutlineMoon size={17} /> : theme === "light" ? <HiOutlineSun size={17} /> : <span className="text-[15px]">🖥️</span>}</span>Theme</span><span className="shrink-0 text-[10px] font-medium capitalize text-[var(--text-muted)]">{theme === "system" ? "System" : theme}</span></button>
-          <button type="button" onClick={() => goTo("/profile")} className="flex min-h-10 w-full items-center gap-2.5 rounded-[var(--radius-md)] px-3 text-left text-xs font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"><span className="flex h-6 w-6 items-center justify-center text-[var(--text-muted)]"><HiOutlineUserCircle size={17} /></span>Profile</button>
+          <button type="button" onClick={() => goTo("/resume-profile")} className="flex min-h-10 w-full items-center gap-2.5 rounded-[var(--radius-md)] px-3 text-left text-xs font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"><span className="flex h-6 w-6 items-center justify-center text-[var(--text-muted)]"><HiOutlineDocumentText size={17} /></span>Resume Profile</button>
           <button type="button" onClick={() => goTo("/settings")} className="flex min-h-10 w-full items-center gap-2.5 rounded-[var(--radius-md)] px-3 text-left text-xs font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"><span className="flex h-6 w-6 items-center justify-center text-[var(--text-muted)]"><HiOutlineCog6Tooth size={17} /></span>Settings</button>
           <div className="my-1 border-t border-[var(--border-subtle)]" />
           <button type="button" onClick={handleLogout} className="flex min-h-10 w-full items-center gap-2.5 rounded-[var(--radius-md)] px-3 text-left text-xs font-medium text-[var(--danger)] transition-colors hover:bg-[var(--danger-soft)]"><span className="flex h-6 w-6 items-center justify-center"><HiOutlineArrowRightOnRectangle size={17} /></span>Logout</button>

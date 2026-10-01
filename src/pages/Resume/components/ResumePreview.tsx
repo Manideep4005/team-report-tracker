@@ -858,11 +858,9 @@ function GenericItem({
             ? clean(item.description)
             : stringArray(item.description).join("\n");
 
-    const dates = formatDateRange(
-        item.startDate,
-        item.endDate,
-        item.currentlyWorking,
-    );
+    const dates =
+        formatDateRange(item.startDate, item.endDate, item.currentlyWorking) ||
+        clean(item.date);
 
     const value =
         clean(item.value) ||
