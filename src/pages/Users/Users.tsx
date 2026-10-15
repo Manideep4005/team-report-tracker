@@ -403,7 +403,7 @@ function CreateUserModal({
 
     onSubmit({
       name: name.trim(),
-      username: username.trim().toLowerCase(),
+      username: username.trim(),
       email: email.trim(),
       roleId,
     });
@@ -533,7 +533,7 @@ function EditUserModal({
 
     onSubmit({
       name: name.trim(),
-      username: username.trim().toLowerCase(),
+      username: username.trim(),
       email: email.trim(),
       roleId,
     });
@@ -646,16 +646,16 @@ function UserCard({
   return (
     <article
       className={`overflow-hidden rounded-2xl border bg-white shadow-[0_3px_18px_rgba(15,23,42,0.04)] transition-all duration-200 dark:bg-zinc-950 dark:shadow-none ${inactive
-          ? "border-amber-200/80 bg-amber-50/[0.18] hover:border-amber-300 hover:shadow-[0_8px_24px_rgba(245,158,11,0.07)] dark:border-amber-500/20 dark:bg-amber-500/[0.025]"
-          : "border-slate-200/80 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_8px_24px_rgba(15,23,42,0.06)] dark:border-zinc-800 dark:hover:border-zinc-700"
+        ? "border-amber-200/80 bg-amber-50/[0.18] hover:border-amber-300 hover:shadow-[0_8px_24px_rgba(245,158,11,0.07)] dark:border-amber-500/20 dark:bg-amber-500/[0.025]"
+        : "border-slate-200/80 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_8px_24px_rgba(15,23,42,0.06)] dark:border-zinc-800 dark:hover:border-zinc-700"
         }`}
     >
       {/* HEADER */}
       <div className="flex min-w-0 items-start gap-3 border-b border-slate-100 px-4 py-4 dark:border-zinc-900 sm:px-5">
         <div
           className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${inactive
-              ? "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400"
-              : "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400"
+            ? "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400"
+            : "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400"
             }`}
         >
           <UserAvatar name={user.name} avatarUrl={user.avatarUrl} />
@@ -1082,8 +1082,8 @@ export default function Users() {
 
               <span
                 className={`rounded-full border px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.08em] ${showInactive
-                    ? "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-400"
-                    : "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400"
+                  ? "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-400"
+                  : "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400"
                   }`}
               >
                 {showInactive ? "Inactive" : "Active"}
@@ -1147,8 +1147,8 @@ export default function Users() {
                 setSearch("");
               }}
               className={`h-8 rounded-lg px-3 text-[10px] font-semibold transition sm:px-4 ${!showInactive
-                  ? "bg-indigo-600 text-white shadow-sm"
-                  : "text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-zinc-500 dark:hover:bg-zinc-900 dark:hover:text-zinc-200"
+                ? "bg-indigo-600 text-white shadow-sm"
+                : "text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-zinc-500 dark:hover:bg-zinc-900 dark:hover:text-zinc-200"
                 }`}
             >
               Active
@@ -1161,8 +1161,8 @@ export default function Users() {
                 setSearch("");
               }}
               className={`h-8 rounded-lg px-3 text-[10px] font-semibold transition sm:px-4 ${showInactive
-                  ? "bg-amber-500 text-white shadow-sm"
-                  : "text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-zinc-500 dark:hover:bg-zinc-900 dark:hover:text-zinc-200"
+                ? "bg-amber-500 text-white shadow-sm"
+                : "text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-zinc-500 dark:hover:bg-zinc-900 dark:hover:text-zinc-200"
                 }`}
             >
               Inactive
@@ -1253,9 +1253,12 @@ export default function Users() {
           roles={roles}
           loading={updateMutation.isPending}
           onClose={closeModal}
-          onSubmit={(payload) =>
-            updateMutation.mutate({ id: selectedUser.id, payload })
-          }
+          onSubmit={(payload) => {
+            updateMutation.mutate({
+              id: selectedUser.id,
+              payload,
+            });
+          }}
         />
       )}
 
