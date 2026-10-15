@@ -17,6 +17,7 @@ import {
   HiOutlineUsers,
   HiOutlineXMark,
   HiOutlineEnvelope,
+  HiOutlinePencilSquare,
 } from "react-icons/hi2";
 import { NavLink, useNavigate } from "react-router-dom";
 import { createPortal } from "react-dom";
@@ -104,7 +105,7 @@ export default function Sidebar({ open, collapsed, onClose, onToggleCollapse }: 
         <NavItem to="/chat" label="Chat" icon={<HiOutlineChatBubbleLeftRight size={19} />} visible={hasPermission("CHATS_VIEW")} mobile={mobile} />
         <NavItem to="/history" label="My Reports" icon={<HiOutlineClock size={19} />} visible={hasPermission("REPORT_VIEW_OWN")} mobile={mobile} />
         <NavItem to="/reports" label="All Reports" icon={<HiOutlineDocumentText size={19} />} visible={hasPermission("REPORT_VIEW_ALL")} mobile={mobile} />
-        <NavItem to="/resume" label="Resume Editor" icon={<HiOutlineDocumentText size={19} />} visible={hasPermission("RESUME_VIEW")} mobile={mobile} />
+        <NavItem to="/resume" label="Resume Editor" icon={<HiOutlinePencilSquare size={19} />} visible={hasPermission("RESUME_VIEW")} mobile={mobile} />
       </div>
       {showManagementSection && <div className="mb-7 last:mb-0">
         {!collapsed || mobile ? <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--text-subtle)]">Management</p> : <div className="mx-auto mb-3 h-px w-7 bg-[var(--border-subtle)]" />}
