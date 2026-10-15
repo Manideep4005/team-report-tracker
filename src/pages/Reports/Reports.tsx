@@ -1,5 +1,5 @@
-
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 
@@ -82,6 +82,92 @@ const REPORTS_PER_PAGE = 10;
 
 const ALL_USERS = "all";
 
+/* Tailwind `sm` breakpoint */
+const MOBILE_MAX_WIDTH = 639;
+
+/* ================================================================
+  HOOKS
+================================================================ */
+
+function useIsMobile() {
+  const query = `(max-width: ${MOBILE_MAX_WIDTH}px)`;
+
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== "undefined"
+      ? window.matchMedia(query).matches
+      : false
+  );
+
+  useEffect(() => {
+    const mql = window.matchMedia(query);
+
+    const onChange = (event: MediaQueryListEvent) =>
+      setIsMobile(event.matches);
+
+    setIsMobile(mql.matches);
+
+    mql.addEventListener("change", onChange);
+
+    return () => mql.removeEventListener("change", onChange);
+  }, [query]);
+
+  return isMobile;
+}
+
+/* ================================================================
+  MOBILE SHEET
+  Rendered through a portal into <body> so it can never be
+  clipped / re-positioned by a parent's backdrop-filter,
+  overflow, transform or z-index stacking context.
+================================================================ */
+
+function MobileSheet({
+  onClose,
+  children,
+}: {
+  onClose: () => void;
+  children: ReactNode;
+}) {
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[10000] flex items-center justify-center p-4 sm:hidden"
+      role="dialog"
+      aria-modal="true"
+    >
+      {/* BACKDROP */}
+      <button
+        type="button"
+        aria-label="Close"
+        onClick={onClose}
+        className="absolute inset-0 cursor-default bg-slate-900/40 backdrop-blur-[2px] dark:bg-black/60"
+      />
+
+      {/* CENTERED MODAL */}
+      <div
+        className="
+          relative
+          w-full
+          max-w-[420px]
+          max-h-[calc(100dvh-2rem)]
+          overflow-y-auto
+          overscroll-contain
+          rounded-2xl
+          border
+          border-slate-200/80
+          bg-white
+          shadow-[0_20px_50px_-18px_rgba(15,23,42,0.35)]
+
+          dark:border-zinc-800
+          dark:bg-zinc-950
+        "
+      >
+        {children}
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 /* ================================================================
   SCREEN
 ================================================================ */
@@ -118,12 +204,15 @@ export default function Reports() {
   const exportRef = useRef<HTMLDivElement>(null);
   const userRef = useRef<HTMLDivElement>(null);
 
+  const isMobile = useIsMobile();
+
   /* =============================================================
-       CLOSE EXPORT MENU ON OUTSIDE CLICK
-       (matches History.tsx behavior)
+       CLOSE MENUS ON OUTSIDE CLICK (desktop only)
+       On mobile the sheet backdrop handles closing.
   ============================================================= */
 
   useEffect(() => {
+    if (isMobile) return;
     if (!exportOpen && !userOpen) return;
 
     const handleOutsideClick = (event: MouseEvent) => {
@@ -143,7 +232,42 @@ export default function Reports() {
     return () => {
       document.removeEventListener("mousedown", handleOutsideClick);
     };
+  }, [exportOpen, userOpen, isMobile]);
+
+  /* =============================================================
+       ESCAPE CLOSES MENUS
+  ============================================================= */
+
+  useEffect(() => {
+    if (!exportOpen && !userOpen) return;
+
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setExportOpen(false);
+        setUserOpen(false);
+      }
+    };
+
+    document.addEventListener("keydown", handleKey);
+
+    return () => document.removeEventListener("keydown", handleKey);
   }, [exportOpen, userOpen]);
+
+  /* =============================================================
+       LOCK PAGE SCROLL WHILE A MOBILE SHEET IS OPEN
+  ============================================================= */
+
+  useEffect(() => {
+    if (!isMobile || (!exportOpen && !userOpen)) return;
+
+    const previous = document.body.style.overflow;
+
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [isMobile, exportOpen, userOpen]);
 
   const dateParam = date
     ? format(date, "yyyy-MM-dd")
@@ -599,6 +723,530 @@ export default function Reports() {
 
 
   /* ==============================================================
+    USER DROPDOWN CONTENT
+    (shared between desktop popover and mobile sheet)
+  ============================================================== */
+
+  const userPanelContent = (
+    <>
+      <div className="flex items-center justify-between px-2.5 pb-1.5 pt-2">
+        <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-slate-400 dark:text-zinc-600">Filter by user</p>
+
+        <button
+          type="button"
+          onClick={() => setUserOpen(false)}
+          aria-label="Close"
+          className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:text-zinc-500 dark:hover:bg-zinc-900 dark:hover:text-zinc-200 sm:hidden"
+        >
+          <HiOutlineXMark className="h-4 w-4" />
+        </button>
+      </div>
+
+      <button
+        type="button"
+        role="option"
+        aria-selected={selectedUserId === ALL_USERS}
+        onClick={() => { handleClearUser(); setUserOpen(false); }}
+        className={`flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left transition-all ${selectedUserId === ALL_USERS ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300" : "text-slate-600 hover:bg-slate-50 dark:text-zinc-300 dark:hover:bg-zinc-900"}`}
+      >
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300">
+          <HiOutlineUsers className="h-4 w-4" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-[11px] font-semibold">All users</span>
+          <span className="block text-[9px] text-slate-400 dark:text-zinc-600">Show the complete team</span>
+        </span>
+        {selectedUserId === ALL_USERS && <span className="h-2 w-2 shrink-0 rounded-full bg-indigo-500" />}
+      </button>
+
+      <div className="my-1 border-t border-slate-100 dark:border-zinc-800" />
+
+      <div className="max-h-[60dvh] overflow-y-auto overscroll-contain sm:max-h-64">
+        {users.map((user) => {
+          const active = user.id === selectedUserId;
+          return (
+            <button
+              key={user.id}
+              type="button"
+              role="option"
+              aria-selected={active}
+              onClick={() => { handleUserChange(user.id); setUserOpen(false); }}
+              className={`flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left transition-all ${active ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300" : "text-slate-600 hover:bg-slate-50 dark:text-zinc-300 dark:hover:bg-zinc-900"}`}
+            >
+              <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[10px] font-bold ${user.deletedAt ? "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400" : active ? "bg-indigo-100 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300" : "bg-slate-100 text-slate-500 dark:bg-zinc-900 dark:text-zinc-400"}`}>
+                <UserAvatar
+                  name={user.name}
+                  avatarUrl={user.avatarUrl}
+                />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[11px] font-semibold">{user.name}</span>
+                <span className="block text-[9px] text-slate-400 dark:text-zinc-600">{user.deletedAt ? "Inactive user" : "Team member"}</span>
+              </span>
+              {user.deletedAt && <span className="shrink-0 rounded-md bg-amber-50 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide text-amber-700 dark:bg-amber-500/10 dark:text-amber-400">Inactive</span>}
+              {active && <span className="h-2 w-2 shrink-0 rounded-full bg-indigo-500" />}
+            </button>
+          );
+        })}
+      </div>
+    </>
+  );
+
+
+  /* ==============================================================
+    EXPORT PANEL CONTENT
+    (shared between desktop popover and mobile sheet)
+  ============================================================== */
+
+  const exportPanelContent = (
+    <>
+      {/* POPOVER HEADER */}
+
+      <div
+        className="
+          flex
+          items-center
+          justify-between
+          border-b
+          border-slate-100
+          px-4
+          py-3.5
+
+          dark:border-zinc-800
+        "
+      >
+        <div className="flex items-center gap-2.5">
+          <div
+            className="
+              flex
+              h-8
+              w-8
+              items-center
+              justify-center
+              rounded-lg
+              bg-indigo-50
+              text-indigo-600
+
+              dark:bg-indigo-500/10
+              dark:text-indigo-400
+            "
+          >
+            <HiOutlineArrowDownTray className="h-4 w-4" />
+          </div>
+
+          <div>
+            <p
+              className="
+                text-xs
+                font-semibold
+                text-slate-900
+                dark:text-white
+              "
+            >
+              Export reports
+            </p>
+
+            <p
+              className="
+                mt-0.5
+                text-[10px]
+                text-slate-400
+                dark:text-zinc-600
+              "
+            >
+              Choose what you want to export
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setExportOpen(false)}
+          aria-label="Close"
+          className="
+            flex
+            h-7
+            w-7
+            items-center
+            justify-center
+            rounded-lg
+            text-slate-400
+            transition
+            hover:bg-slate-100
+            hover:text-slate-700
+
+            dark:text-zinc-500
+            dark:hover:bg-zinc-900
+            dark:hover:text-zinc-200
+          "
+        >
+          <HiOutlineXMark className="h-4 w-4" />
+        </button>
+      </div>
+
+      {/* EXPORT OPTIONS */}
+
+      <div className="p-2">
+        {/* ALL */}
+
+        <button
+          type="button"
+          onClick={() => handleExport("all")}
+          className="
+            group
+            flex
+            w-full
+            items-center
+            gap-3
+            rounded-xl
+            px-3
+            py-2.5
+            text-left
+            transition-all
+            duration-150
+
+            hover:bg-slate-50
+
+            dark:hover:bg-zinc-900
+          "
+        >
+          <div
+            className="
+              flex
+              h-8
+              w-8
+              shrink-0
+              items-center
+              justify-center
+              rounded-lg
+              bg-slate-100
+              text-slate-500
+              transition
+              group-hover:bg-indigo-50
+              group-hover:text-indigo-600
+
+              dark:bg-zinc-900
+              dark:text-zinc-500
+              dark:group-hover:bg-indigo-500/10
+              dark:group-hover:text-indigo-400
+            "
+          >
+            <HiOutlineArrowDownTray className="h-3.5 w-3.5" />
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <p
+              className="
+                text-[11px]
+                font-semibold
+                text-slate-800
+                dark:text-zinc-100
+              "
+            >
+              All reports
+            </p>
+
+            <p
+              className="
+                mt-0.5
+                text-[10px]
+                text-slate-400
+                dark:text-zinc-600
+              "
+            >
+              Export the complete team history
+            </p>
+          </div>
+
+          <HiOutlineChevronRight
+            className="
+              h-3.5
+              w-3.5
+              text-slate-300
+              transition-transform
+              group-hover:translate-x-0.5
+              group-hover:text-indigo-500
+
+              dark:text-zinc-700
+            "
+          />
+        </button>
+
+        {/* SELECTED DATE */}
+
+        <button
+          type="button"
+          disabled={!dateParam}
+          onClick={() => handleExport("date")}
+          className="
+            group
+            flex
+            w-full
+            items-center
+            gap-3
+            rounded-xl
+            px-3
+            py-2.5
+            text-left
+            transition-all
+            duration-150
+
+            hover:bg-slate-50
+
+            disabled:cursor-not-allowed
+            disabled:opacity-40
+
+            dark:hover:bg-zinc-900
+          "
+        >
+          <div
+            className="
+              flex
+              h-8
+              w-8
+              shrink-0
+              items-center
+              justify-center
+              rounded-lg
+              bg-slate-100
+              text-slate-500
+
+              dark:bg-zinc-900
+              dark:text-zinc-500
+            "
+          >
+            <HiOutlineDocumentMagnifyingGlass className="h-3.5 w-3.5" />
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <p
+              className="
+                text-[11px]
+                font-semibold
+                text-slate-800
+                dark:text-zinc-100
+              "
+            >
+              Selected date
+            </p>
+
+            <p
+              className="
+                mt-0.5
+                truncate
+                text-[10px]
+                text-slate-400
+                dark:text-zinc-600
+              "
+            >
+              {dateParam
+                ? `Export reports from ${dateParam}`
+                : "Select a date first"}
+            </p>
+          </div>
+
+          {dateParam && (
+            <HiOutlineChevronRight
+              className="
+                h-3.5
+                w-3.5
+                text-slate-300
+                transition-transform
+                group-hover:translate-x-0.5
+                dark:text-zinc-700
+              "
+            />
+          )}
+        </button>
+
+        {/* DATE RANGE */}
+
+        <div
+          className="
+            mt-1
+            border-t
+            border-slate-100
+            pt-2
+            dark:border-zinc-800
+          "
+        >
+          <div className="px-3 pb-1.5">
+            <span
+              className="
+                text-[9px]
+                font-bold
+                uppercase
+                tracking-[0.12em]
+                text-slate-400
+                dark:text-zinc-600
+              "
+            >
+              Date range
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 gap-2 px-2 sm:grid-cols-2">
+            <DayPickerInput
+              value={exportFromDate}
+              onChange={setExportFromDate}
+              placeholder="From date"
+            />
+
+            <DayPickerInput
+              value={exportToDate}
+              onChange={setExportToDate}
+              placeholder="To date"
+            />
+          </div>
+
+          <button
+            type="button"
+            disabled={
+              !exportFromDate ||
+              !exportToDate
+            }
+            onClick={() => handleExport("range")}
+            className="
+              mx-2
+              mt-2
+              mb-1
+              inline-flex
+              h-9
+              w-[calc(100%-1rem)]
+              items-center
+              justify-center
+              gap-1.5
+              rounded-lg
+              bg-indigo-600
+              px-3
+              text-[11px]
+              font-semibold
+              text-white
+              transition-all
+              duration-200
+
+              hover:bg-indigo-500
+              hover:shadow-md
+              hover:shadow-indigo-500/15
+
+              active:scale-[0.97]
+
+              disabled:cursor-not-allowed
+              disabled:opacity-35
+            "
+          >
+            <HiOutlineArrowDownTray className="h-3.5 w-3.5" />
+            Export date range
+          </button>
+        </div>
+
+        {/* MONTH */}
+
+        <div
+          className="
+            mt-2
+            border-t
+            border-slate-100
+            pt-2
+            dark:border-zinc-800
+          "
+        >
+          <div className="px-3 pb-1.5">
+            <span
+              className="
+                text-[9px]
+                font-bold
+                uppercase
+                tracking-[0.12em]
+                text-slate-400
+                dark:text-zinc-600
+              "
+            >
+              Month
+            </span>
+          </div>
+
+          <div
+            className="
+              grid
+              grid-cols-[minmax(0,1fr)_auto]
+              gap-2
+              px-2
+              pb-1
+            "
+          >
+            <input
+              type="month"
+              value={exportMonth}
+              onChange={(event) =>
+                setExportMonth(event.target.value)
+              }
+              className="
+                h-9
+                min-w-0
+                rounded-lg
+                border
+                border-slate-200
+                bg-white
+                px-2.5
+                text-[11px]
+                text-slate-700
+                outline-none
+                transition
+
+                focus:border-indigo-400
+                focus:ring-4
+                focus:ring-indigo-500/10
+
+                dark:border-zinc-800
+                dark:bg-zinc-900
+                dark:text-zinc-200
+                dark:focus:border-indigo-500/50
+              "
+            />
+
+            <button
+              type="button"
+              disabled={!exportMonth}
+              onClick={() =>
+                handleExport("month")
+              }
+              className="
+                inline-flex
+                h-9
+                min-w-[82px]
+                items-center
+                justify-center
+                gap-1.5
+                rounded-lg
+                bg-indigo-600
+                px-3
+                text-[11px]
+                font-semibold
+                text-white
+                transition-all
+
+                hover:bg-indigo-500
+                hover:shadow-md
+                hover:shadow-indigo-500/15
+
+                active:scale-[0.97]
+
+                disabled:cursor-not-allowed
+                disabled:opacity-35
+              "
+            >
+              <HiOutlineArrowDownTray className="h-3.5 w-3.5" />
+              Export
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+
+
+  /* ==============================================================
     RENDER
   ============================================================== */
 
@@ -712,7 +1360,6 @@ export default function Reports() {
             p-1.5
 
             shadow-[0_8px_30px_-18px_rgba(15,23,42,0.25)]
-            backdrop-blur-sm
 
             dark:border-zinc-800
             dark:bg-zinc-950/80
@@ -720,12 +1367,13 @@ export default function Reports() {
 
             sm:w-auto
             sm:flex-nowrap
+            sm:backdrop-blur-sm
 
             lg:border-0
             lg:bg-transparent
             lg:p-0
             lg:shadow-none
-            lg:backdrop-blur-0
+            lg:backdrop-blur-none
           "
         >
 
@@ -803,7 +1451,7 @@ export default function Reports() {
 
           {/* USER FILTER */}
 
-          <div ref={userRef} className="relative min-w-0">
+          <div ref={userRef} className="relative w-full min-w-0 sm:w-auto">
             <button
               type="button"
               disabled={usersLoading}
@@ -836,63 +1484,22 @@ export default function Reports() {
               <HiOutlineChevronDown className={`h-3.5 w-3.5 shrink-0 text-slate-400 transition-transform dark:text-zinc-500 ${userOpen ? "rotate-180 text-indigo-500" : ""}`} />
             </button>
 
-            {userOpen && (
+            {/* MOBILE: bottom sheet (portal) */}
+            {userOpen && isMobile && (
+              <MobileSheet onClose={() => setUserOpen(false)}>
+                <div className="p-1.5" role="listbox">
+                  {userPanelContent}
+                </div>
+              </MobileSheet>
+            )}
+
+            {/* DESKTOP: anchored popover */}
+            {userOpen && !isMobile && (
               <div
-                className="absolute right-0 top-full z-[10000] mt-2 w-[min(320px,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-1.5 shadow-[0_20px_50px_-18px_rgba(15,23,42,0.28)] dark:border-zinc-800 dark:bg-zinc-950 dark:shadow-[0_20px_50px_-18px_rgba(0,0,0,0.7)]"
+                className="absolute right-0 top-full z-[10000] mt-2 w-[320px] overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-1.5 shadow-[0_20px_50px_-18px_rgba(15,23,42,0.28)] dark:border-zinc-800 dark:bg-zinc-950 dark:shadow-[0_20px_50px_-18px_rgba(0,0,0,0.7)]"
                 role="listbox"
               >
-                <div className="px-2.5 pb-1.5 pt-2">
-                  <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-slate-400 dark:text-zinc-600">Filter by user</p>
-                </div>
-
-                <button
-                  type="button"
-                  role="option"
-                  aria-selected={selectedUserId === ALL_USERS}
-                  onClick={() => { handleClearUser(); setUserOpen(false); }}
-                  className={`flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left transition-all ${selectedUserId === ALL_USERS ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300" : "text-slate-600 hover:bg-slate-50 dark:text-zinc-300 dark:hover:bg-zinc-900"}`}
-                >
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300">
-                    <HiOutlineUsers className="h-4 w-4" />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[11px] font-semibold">All users</span>
-                    <span className="block text-[9px] text-slate-400 dark:text-zinc-600">Show the complete team</span>
-                  </span>
-                  {selectedUserId === ALL_USERS && <span className="h-2 w-2 shrink-0 rounded-full bg-indigo-500" />}
-                </button>
-
-                <div className="my-1 border-t border-slate-100 dark:border-zinc-800" />
-
-                <div className="max-h-64 overflow-y-auto">
-                  {users.map((user) => {
-                    const active = user.id === selectedUserId;
-                    // const initial = user.name.trim().charAt(0).toUpperCase();
-                    return (
-                      <button
-                        key={user.id}
-                        type="button"
-                        role="option"
-                        aria-selected={active}
-                        onClick={() => { handleUserChange(user.id); setUserOpen(false); }}
-                        className={`flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left transition-all ${active ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300" : "text-slate-600 hover:bg-slate-50 dark:text-zinc-300 dark:hover:bg-zinc-900"}`}
-                      >
-                        <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[10px] font-bold ${user.deletedAt ? "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400" : active ? "bg-indigo-100 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300" : "bg-slate-100 text-slate-500 dark:bg-zinc-900 dark:text-zinc-400"}`}>
-                          <UserAvatar
-                            name={user.name}
-                            avatarUrl={user.avatarUrl}
-                          />
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate text-[11px] font-semibold">{user.name}</span>
-                          <span className="block text-[9px] text-slate-400 dark:text-zinc-600">{user.deletedAt ? "Inactive user" : "Team member"}</span>
-                        </span>
-                        {user.deletedAt && <span className="shrink-0 rounded-md bg-amber-50 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide text-amber-700 dark:bg-amber-500/10 dark:text-amber-400">Inactive</span>}
-                        {active && <span className="h-2 w-2 shrink-0 rounded-full bg-indigo-500" />}
-                      </button>
-                    );
-                  })}
-                </div>
+                {userPanelContent}
               </div>
             )}
           </div>
@@ -959,9 +1566,10 @@ export default function Reports() {
             >
               <button
                 type="button"
-                onClick={() =>
-                  setExportOpen((current) => !current)
-                }
+                onClick={() => {
+                  setExportOpen((current) => !current);
+                  setUserOpen(false);
+                }}
                 disabled={isExporting}
                 aria-expanded={exportOpen}
                 className={`
@@ -1030,24 +1638,24 @@ export default function Reports() {
                 </span>
               </button>
 
-              {/* EXPORT POPOVER */}
+              {/* MOBILE: bottom sheet (portal) */}
+              {exportOpen && !isExporting && isMobile && (
+                <MobileSheet onClose={() => setExportOpen(false)}>
+                  {exportPanelContent}
+                </MobileSheet>
+              )}
 
-              {exportOpen && !isExporting && (
+              {/* DESKTOP: anchored popover */}
+              {exportOpen && !isExporting && !isMobile && (
                 <div
                   className="
-                    fixed
-                    left-3
-                    right-3
-                    top-1/2
+                    absolute
+                    right-0
+                    top-full
                     z-[9999]
-                    max-h-[calc(100vh-2rem)]
-                    -translate-y-1/2
-                    overflow-y-auto
-                    rounded-2xl
-
-                    w-auto
-                    max-w-none
-                    overflow-visible
+                    mt-2.5
+                    w-[370px]
+                    max-h-[calc(100vh-7rem)]
 
                     rounded-2xl
                     border
@@ -1059,458 +1667,9 @@ export default function Reports() {
                     dark:border-zinc-800
                     dark:bg-zinc-950
                     dark:shadow-[0_20px_50px_-18px_rgba(0,0,0,0.65)]
-
-                    sm:absolute
-                    sm:left-auto
-                    sm:right-0
-                    sm:top-full
-                    sm:mt-2.5
-                    sm:w-[370px]
-                    sm:max-h-[calc(100vh-7rem)]
-                    sm:translate-y-0
                   "
                 >
-                  {/* POPOVER HEADER */}
-
-                  <div
-                    className="
-                      flex
-                      items-center
-                      justify-between
-                      border-b
-                      border-slate-100
-                      px-4
-                      py-3.5
-
-                      dark:border-zinc-800
-                    "
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <div
-                        className="
-                          flex
-                          h-8
-                          w-8
-                          items-center
-                          justify-center
-                          rounded-lg
-                          bg-indigo-50
-                          text-indigo-600
-
-                          dark:bg-indigo-500/10
-                          dark:text-indigo-400
-                        "
-                      >
-                        <HiOutlineArrowDownTray className="h-4 w-4" />
-                      </div>
-
-                      <div>
-                        <p
-                          className="
-                            text-xs
-                            font-semibold
-                            text-slate-900
-                            dark:text-white
-                          "
-                        >
-                          Export reports
-                        </p>
-
-                        <p
-                          className="
-                            mt-0.5
-                            text-[10px]
-                            text-slate-400
-                            dark:text-zinc-600
-                          "
-                        >
-                          Choose what you want to export
-                        </p>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => setExportOpen(false)}
-                      className="
-                        flex
-                        h-7
-                        w-7
-                        items-center
-                        justify-center
-                        rounded-lg
-                        text-slate-400
-                        transition
-                        hover:bg-slate-100
-                        hover:text-slate-700
-
-                        dark:text-zinc-500
-                        dark:hover:bg-zinc-900
-                        dark:hover:text-zinc-200
-                      "
-                    >
-                      <HiOutlineXMark className="h-4 w-4" />
-                    </button>
-                  </div>
-
-                  {/* EXPORT OPTIONS */}
-
-                  <div className="p-2">
-                    {/* ALL */}
-
-                    <button
-                      type="button"
-                      onClick={() => handleExport("all")}
-                      className="
-                        group
-                        flex
-                        w-full
-                        items-center
-                        gap-3
-                        rounded-xl
-                        px-3
-                        py-2.5
-                        text-left
-                        transition-all
-                        duration-150
-
-                        hover:bg-slate-50
-
-                        dark:hover:bg-zinc-900
-                      "
-                    >
-                      <div
-                        className="
-                          flex
-                          h-8
-                          w-8
-                          shrink-0
-                          items-center
-                          justify-center
-                          rounded-lg
-                          bg-slate-100
-                          text-slate-500
-                          transition
-                          group-hover:bg-indigo-50
-                          group-hover:text-indigo-600
-
-                          dark:bg-zinc-900
-                          dark:text-zinc-500
-                          dark:group-hover:bg-indigo-500/10
-                          dark:group-hover:text-indigo-400
-                        "
-                      >
-                        <HiOutlineArrowDownTray className="h-3.5 w-3.5" />
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-                        <p
-                          className="
-                            text-[11px]
-                            font-semibold
-                            text-slate-800
-                            dark:text-zinc-100
-                          "
-                        >
-                          All reports
-                        </p>
-
-                        <p
-                          className="
-                            mt-0.5
-                            text-[10px]
-                            text-slate-400
-                            dark:text-zinc-600
-                          "
-                        >
-                          Export the complete team history
-                        </p>
-                      </div>
-
-                      <HiOutlineChevronRight
-                        className="
-                          h-3.5
-                          w-3.5
-                          text-slate-300
-                          transition-transform
-                          group-hover:translate-x-0.5
-                          group-hover:text-indigo-500
-
-                          dark:text-zinc-700
-                        "
-                      />
-                    </button>
-
-                    {/* SELECTED DATE */}
-
-                    <button
-                      type="button"
-                      disabled={!dateParam}
-                      onClick={() => handleExport("date")}
-                      className="
-                        group
-                        flex
-                        w-full
-                        items-center
-                        gap-3
-                        rounded-xl
-                        px-3
-                        py-2.5
-                        text-left
-                        transition-all
-                        duration-150
-
-                        hover:bg-slate-50
-
-                        disabled:cursor-not-allowed
-                        disabled:opacity-40
-
-                        dark:hover:bg-zinc-900
-                      "
-                    >
-                      <div
-                        className="
-                          flex
-                          h-8
-                          w-8
-                          shrink-0
-                          items-center
-                          justify-center
-                          rounded-lg
-                          bg-slate-100
-                          text-slate-500
-
-                          dark:bg-zinc-900
-                          dark:text-zinc-500
-                        "
-                      >
-                        <HiOutlineDocumentMagnifyingGlass className="h-3.5 w-3.5" />
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-                        <p
-                          className="
-                            text-[11px]
-                            font-semibold
-                            text-slate-800
-                            dark:text-zinc-100
-                          "
-                        >
-                          Selected date
-                        </p>
-
-                        <p
-                          className="
-                            mt-0.5
-                            truncate
-                            text-[10px]
-                            text-slate-400
-                            dark:text-zinc-600
-                          "
-                        >
-                          {dateParam
-                            ? `Export reports from ${dateParam}`
-                            : "Select a date first"}
-                        </p>
-                      </div>
-
-                      {dateParam && (
-                        <HiOutlineChevronRight
-                          className="
-                            h-3.5
-                            w-3.5
-                            text-slate-300
-                            transition-transform
-                            group-hover:translate-x-0.5
-                            dark:text-zinc-700
-                          "
-                        />
-                      )}
-                    </button>
-
-                    {/* DATE RANGE */}
-
-                    <div
-                      className="
-                        mt-1
-                        border-t
-                        border-slate-100
-                        pt-2
-                        dark:border-zinc-800
-                      "
-                    >
-                      <div className="px-3 pb-1.5">
-                        <span
-                          className="
-                            text-[9px]
-                            font-bold
-                            uppercase
-                            tracking-[0.12em]
-                            text-slate-400
-                            dark:text-zinc-600
-                          "
-                        >
-                          Date range
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-1 gap-2 px-2 sm:grid-cols-2">
-                        <DayPickerInput
-                          value={exportFromDate}
-                          onChange={setExportFromDate}
-                          placeholder="From date"
-                        />
-
-                        <DayPickerInput
-                          value={exportToDate}
-                          onChange={setExportToDate}
-                          placeholder="To date"
-                        />
-                      </div>
-
-                      <button
-                        type="button"
-                        disabled={
-                          !exportFromDate ||
-                          !exportToDate
-                        }
-                        onClick={() => handleExport("range")}
-                        className="
-                          mx-2
-                          mt-2
-                          mb-1
-                          inline-flex
-                          h-9
-                          w-[calc(100%-1rem)]
-                          items-center
-                          justify-center
-                          gap-1.5
-                          rounded-lg
-                          bg-indigo-600
-                          px-3
-                          text-[11px]
-                          font-semibold
-                          text-white
-                          transition-all
-                          duration-200
-
-                          hover:bg-indigo-500
-                          hover:shadow-md
-                          hover:shadow-indigo-500/15
-
-                          active:scale-[0.97]
-
-                          disabled:cursor-not-allowed
-                          disabled:opacity-35
-                        "
-                      >
-                        <HiOutlineArrowDownTray className="h-3.5 w-3.5" />
-                        Export date range
-                      </button>
-                    </div>
-
-                    {/* MONTH */}
-
-                    <div
-                      className="
-                        mt-2
-                        border-t
-                        border-slate-100
-                        pt-2
-                        dark:border-zinc-800
-                      "
-                    >
-                      <div className="px-3 pb-1.5">
-                        <span
-                          className="
-                            text-[9px]
-                            font-bold
-                            uppercase
-                            tracking-[0.12em]
-                            text-slate-400
-                            dark:text-zinc-600
-                          "
-                        >
-                          Month
-                        </span>
-                      </div>
-
-                      <div
-                        className="
-                          grid
-                          grid-cols-[minmax(0,1fr)_auto]
-                          gap-2
-                          px-2
-                          pb-1
-                        "
-                      >
-                        <input
-                          type="month"
-                          value={exportMonth}
-                          onChange={(event) =>
-                            setExportMonth(event.target.value)
-                          }
-                          className="
-                            h-9
-                            min-w-0
-                            rounded-lg
-                            border
-                            border-slate-200
-                            bg-white
-                            px-2.5
-                            text-[11px]
-                            text-slate-700
-                            outline-none
-                            transition
-
-                            focus:border-indigo-400
-                            focus:ring-4
-                            focus:ring-indigo-500/10
-
-                            dark:border-zinc-800
-                            dark:bg-zinc-900
-                            dark:text-zinc-200
-                            dark:focus:border-indigo-500/50
-                          "
-                        />
-
-                        <button
-                          type="button"
-                          disabled={!exportMonth}
-                          onClick={() =>
-                            handleExport("month")
-                          }
-                          className="
-                            inline-flex
-                            h-9
-                            min-w-[82px]
-                            items-center
-                            justify-center
-                            gap-1.5
-                            rounded-lg
-                            bg-indigo-600
-                            px-3
-                            text-[11px]
-                            font-semibold
-                            text-white
-                            transition-all
-
-                            hover:bg-indigo-500
-                            hover:shadow-md
-                            hover:shadow-indigo-500/15
-
-                            active:scale-[0.97]
-
-                            disabled:cursor-not-allowed
-                            disabled:opacity-35
-                          "
-                        >
-                          <HiOutlineArrowDownTray className="h-3.5 w-3.5" />
-                          Export
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+                  {exportPanelContent}
                 </div>
               )}
             </div>
@@ -2001,9 +2160,6 @@ function ReportCard({
   report: ReportItem;
 }) {
 
-
-
-
   const isDeleted =
     Boolean(
       report.user.deletedAt
@@ -2201,9 +2357,6 @@ function ReportCard({
               >
                 {report.user.name}
               </p>
-
-
-
 
             </div>
 

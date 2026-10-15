@@ -10,6 +10,7 @@ import {
   HiOutlineXCircle,
   HiOutlineUserCircle,
   HiOutlineEnvelope,
+  HiOutlineAtSymbol,
   HiOutlineShieldCheck,
 } from "react-icons/hi2";
 
@@ -242,6 +243,10 @@ export default function Settings() {
 
   const displayName = profile?.name ?? user?.name ?? "";
   const displayEmail = profile?.email ?? user?.email ?? "";
+  const displayUsername =
+    (profile as { username?: string } | null)?.username ??
+    (user as { username?: string } | null)?.username ??
+    "";
   const avatarUrl = profile?.avatarUrl ?? user?.avatarUrl;
   const initial = displayName.trim().charAt(0).toUpperCase() || "U";
 
@@ -269,6 +274,7 @@ export default function Settings() {
             {profileLoading && !displayName ? (
               <div className="space-y-2">
                 <div className="h-4 w-32 animate-pulse rounded bg-slate-100 dark:bg-zinc-800" />
+                <div className="h-3 w-24 animate-pulse rounded bg-slate-100 dark:bg-zinc-800" />
                 <div className="h-3 w-48 animate-pulse rounded bg-slate-100 dark:bg-zinc-800" />
               </div>
             ) : (
@@ -276,6 +282,14 @@ export default function Settings() {
                 <h2 className="truncate text-sm font-bold text-slate-800 sm:text-base dark:text-zinc-100">
                   {displayName || "Your account"}
                 </h2>
+
+                {displayUsername && (
+                  <p className="mt-0.5 flex items-center gap-1.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+                    <HiOutlineAtSymbol className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate">{displayUsername}</span>
+                  </p>
+                )}
+
                 <p className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500 dark:text-zinc-500">
                   <HiOutlineEnvelope className="h-3.5 w-3.5 shrink-0" />
                   <span className="truncate">{displayEmail || "—"}</span>
@@ -304,8 +318,8 @@ export default function Settings() {
                 onClick={() => setTab(item.id)}
                 aria-current={active ? "page" : undefined}
                 className={`flex shrink-0 items-center gap-3 rounded-2xl border px-4 py-3 text-left transition lg:w-full ${active
-                    ? "border-indigo-200 bg-indigo-50 text-indigo-700 dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-300"
-                    : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400 dark:hover:bg-zinc-900"
+                  ? "border-indigo-200 bg-indigo-50 text-indigo-700 dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-300"
+                  : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400 dark:hover:bg-zinc-900"
                   }`}
               >
                 {item.icon}
@@ -338,34 +352,6 @@ export default function Settings() {
                 ) : (
                   <div className="h-28 w-full animate-pulse rounded-xl bg-slate-100 dark:bg-zinc-900" />
                 )}
-              </Panel>
-
-              <Panel
-                title="Account details"
-                subtitle="These details are read-only."
-                badge="View only"
-              >
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  {profileLoading ? (
-                    <>
-                      <ProfileSkeleton />
-                      <ProfileSkeleton />
-                    </>
-                  ) : (
-                    <>
-                      <ProfileDetail
-                        icon={<HiOutlineUserCircle className="h-4 w-4" />}
-                        label="Name"
-                        value={profile?.name ?? "—"}
-                      />
-                      <ProfileDetail
-                        icon={<HiOutlineEnvelope className="h-4 w-4" />}
-                        label="Email"
-                        value={profile?.email ?? "—"}
-                      />
-                    </>
-                  )}
-                </div>
               </Panel>
             </div>
           )}
@@ -467,8 +453,8 @@ export default function Settings() {
                         <div
                           key={segment}
                           className={`h-1.5 flex-1 rounded-full transition-all ${passwordStrength.value >= segment * 25
-                              ? strengthBar
-                              : "bg-slate-100 dark:bg-zinc-800"
+                            ? strengthBar
+                            : "bg-slate-100 dark:bg-zinc-800"
                             }`}
                         />
                       ))}
@@ -577,50 +563,6 @@ function Panel({
 }
 
 /* ================================================================
-   PROFILE DETAIL
-================================================================ */
-
-function ProfileDetail({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="min-w-0">
-      <div className="mb-1.5 flex items-center gap-1.5">
-        <span className="text-slate-400 dark:text-zinc-600">{icon}</span>
-        <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-400 dark:text-zinc-600">
-          {label}
-        </span>
-      </div>
-
-      <div className="flex min-h-12 min-w-0 items-center overflow-hidden rounded-xl border border-slate-200 bg-slate-50/70 px-4 text-sm font-medium text-slate-700 dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-zinc-300">
-        <span className="truncate" title={value}>
-          {value}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-/* ================================================================
-   PROFILE SKELETON
-================================================================ */
-
-function ProfileSkeleton() {
-  return (
-    <div>
-      <div className="mb-1.5 h-3 w-16 animate-pulse rounded bg-slate-100 dark:bg-zinc-800" />
-      <div className="h-12 w-full animate-pulse rounded-xl bg-slate-100 dark:bg-zinc-900" />
-    </div>
-  );
-}
-
-/* ================================================================
    PASSWORD INPUT
 ================================================================ */
 
@@ -689,8 +631,8 @@ function RequirementChip({
   return (
     <span
       className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition ${valid
-          ? "border-emerald-200 bg-emerald-50 text-emerald-600 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400"
-          : "border-slate-200 bg-slate-50 text-slate-400 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-600"
+        ? "border-emerald-200 bg-emerald-50 text-emerald-600 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400"
+        : "border-slate-200 bg-slate-50 text-slate-400 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-600"
         }`}
     >
       {valid ? (

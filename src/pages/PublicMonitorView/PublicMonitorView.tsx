@@ -433,7 +433,7 @@ export default function PublicMonitorView() {
                     <div className="flex items-center gap-3">
                         <div className="flex h-8 w-8 items-center justify-center">
                             <img
-                                src="/group.png"
+                                src="/logo.png"
                                 alt="Team Work"
                                 className="h-6 w-6 object-contain"
                             />

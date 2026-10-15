@@ -1,3 +1,4 @@
+
 import {
   useState,
   type FormEvent,
@@ -13,7 +14,6 @@ import {
 } from "react-icons/hi2";
 
 import { useNavigate } from "react-router-dom";
-
 import { toast } from "sonner";
 
 import { useAuth } from "../../context/AuthContext";
@@ -23,18 +23,20 @@ export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(
+    event: FormEvent<HTMLFormElement>,
+  ) {
     event.preventDefault();
 
-    const cleanEmail = email.trim();
+    const cleanIdentifier = identifier.trim();
 
-    if (!cleanEmail) {
-      toast.error("Please enter your email address.");
+    if (!cleanIdentifier) {
+      toast.error("Please enter your username or email.");
       return;
     }
 
@@ -46,7 +48,7 @@ export default function Login() {
     try {
       setLoading(true);
 
-      await login(cleanEmail, password);
+      await login(cleanIdentifier, password);
 
       navigate("/dashboard", { replace: true });
     } catch (error: any) {
@@ -65,101 +67,60 @@ export default function Login() {
     <main className="min-h-screen bg-[var(--background)] text-[var(--text-primary)]">
       <PageTitle title="Login" />
 
-      {/* =====================================================
-          BACKGROUND
-      ===================================================== */}
-
+      {/* Background */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div
           className="
-            absolute
-            -right-40
-            -top-40
-            h-[520px]
-            w-[520px]
-            rounded-full
-            bg-[var(--brand)]/8
-            blur-[120px]
-            dark:bg-[var(--brand)]/12
+            absolute -right-40 -top-40
+            h-[520px] w-[520px]
+            rounded-full bg-[var(--brand)]/8
+            blur-[120px] dark:bg-[var(--brand)]/12
           "
         />
 
         <div
           className="
-            absolute
-            -bottom-48
-            -left-40
-            h-[480px]
-            w-[480px]
-            rounded-full
-            bg-blue-500/8
-            blur-[120px]
-            dark:bg-blue-500/10
+            absolute -bottom-48 -left-40
+            h-[480px] w-[480px]
+            rounded-full bg-blue-500/8
+            blur-[120px] dark:bg-blue-500/10
           "
         />
       </div>
 
-      {/* =====================================================
-          HEADER
-      ===================================================== */}
-
+      {/* Header */}
       <header
         className="
-          relative
-          z-10
-          flex
-          h-16
-          items-center
-          border-b
-          border-[var(--border)]/60
-          bg-[var(--surface)]/70
-          px-5
-          backdrop-blur-md
-          sm:px-8
-          lg:px-10
+          relative z-10 flex h-16 items-center
+          border-b border-[var(--border)]/60
+          bg-[var(--surface)]/70 px-5 backdrop-blur-md
+          sm:px-8 lg:px-10
         "
       >
         <div className="flex items-center gap-3">
           <div
             className="
-              flex
-              h-9
-              w-9
-              items-center
-              justify-center
-              rounded-lg
-              bg-[var(--brand)]/10
-              ring-1
-              ring-[var(--brand)]/15
+              flex h-9 w-9 items-center justify-center
+              rounded-lg bg-[var(--brand)]/10
+              ring-1 ring-[var(--brand)]/15
             "
           >
             <img
-              src="/group.png"
+              src="/logo.png"
               alt="Team Work"
-              className="h-6 w-6 object-contain"
+              className="h-15 w-15 object-contain"
             />
           </div>
 
           <div className="leading-none">
-            <p
-              className="
-                text-sm
-                font-semibold
-                tracking-tight
-                text-[var(--text-primary)]
-              "
-            >
+            <p className="text-sm font-semibold tracking-tight text-[var(--text-primary)]">
               Team Work
             </p>
 
             <p
               className="
-                mt-1
-                text-[9px]
-                font-medium
-                uppercase
-                tracking-[0.14em]
-                text-[var(--text-muted)]
+                mt-1 text-[9px] font-medium uppercase
+                tracking-[0.14em] text-[var(--text-muted)]
               "
             >
               Reporting System
@@ -168,61 +129,34 @@ export default function Login() {
         </div>
       </header>
 
-      {/* =====================================================
-          LOGIN AREA
-      ===================================================== */}
-
+      {/* Login area */}
       <section
         className="
-          relative
-          z-10
-          flex
-          min-h-[calc(100vh-4rem)]
-          items-center
-          justify-center
-          px-4
-          py-10
-          sm:px-6
-          sm:py-12
+          relative z-10 flex min-h-[calc(100vh-4rem)]
+          items-center justify-center px-4 py-10
+          sm:px-6 sm:py-12
         "
       >
         <div className="w-full max-w-[420px]">
-          {/* =================================================
-              LOGIN PANEL
-          ================================================= */}
-
           <div
             className="
-              overflow-hidden
-              rounded-2xl
-              border
-              border-[var(--border)]/70
+              overflow-hidden rounded-2xl
+              border border-[var(--border)]/70
               bg-[var(--surface)]
               shadow-[0_12px_40px_rgba(15,23,42,0.06)]
               dark:shadow-[0_16px_45px_rgba(0,0,0,0.22)]
             "
           >
-            {/* Top brand line */}
-
             <div className="h-[3px] w-full bg-[var(--brand)]" />
 
             <div className="p-6 sm:p-8">
-              {/* =================================================
-                  HEADER
-              ================================================= */}
-
+              {/* Login heading */}
               <div className="mb-7">
                 <div
                   className="
-                    mb-5
-                    flex
-                    h-10
-                    w-10
-                    items-center
-                    justify-center
-                    rounded-xl
-                    bg-[var(--brand)]/10
-                    text-[var(--brand)]
+                    mb-5 flex h-10 w-10 items-center
+                    justify-center rounded-xl
+                    bg-[var(--brand)]/10 text-[var(--brand)]
                   "
                 >
                   <HiOutlineShieldCheck className="h-5 w-5" />
@@ -230,11 +164,8 @@ export default function Login() {
 
                 <h1
                   className="
-                    text-xl
-                    font-semibold
-                    tracking-tight
-                    text-[var(--text-primary)]
-                    sm:text-[22px]
+                    text-xl font-semibold tracking-tight
+                    text-[var(--text-primary)] sm:text-[22px]
                   "
                 >
                   Welcome back
@@ -242,9 +173,7 @@ export default function Login() {
 
                 <p
                   className="
-                    mt-1.5
-                    text-sm
-                    leading-5
+                    mt-1.5 text-sm leading-5
                     text-[var(--text-muted)]
                   "
                 >
@@ -252,72 +181,54 @@ export default function Login() {
                 </p>
               </div>
 
-              {/* =================================================
-                  FORM
-              ================================================= */}
-
+              {/* Login form */}
               <form
                 onSubmit={handleSubmit}
                 className="space-y-5"
               >
-                {/* EMAIL */}
-
+                {/* Username or email */}
                 <div>
                   <label
-                    htmlFor="email"
+                    htmlFor="identifier"
                     className="
-                      mb-2
-                      block
-                      text-xs
-                      font-medium
+                      mb-2 block text-xs font-medium
                       text-[var(--text-secondary)]
                     "
                   >
-                    Email address
+                    Username or email
                   </label>
 
                   <div className="relative">
                     <HiOutlineEnvelope
                       className="
-                        pointer-events-none
-                        absolute
-                        left-3.5
-                        top-1/2
-                        h-[18px]
-                        w-[18px]
-                        -translate-y-1/2
-                        text-[var(--text-subtle)]
+                        pointer-events-none absolute left-3.5
+                        top-1/2 h-[18px] w-[18px]
+                        -translate-y-1/2 text-[var(--text-subtle)]
                       "
                     />
 
                     <input
-                      id="email"
-                      type="email"
-                      value={email}
+                      id="identifier"
+                      name="identifier"
+                      type="text"
+                      value={identifier}
                       onChange={(event) =>
-                        setEmail(event.target.value)
+                        setIdentifier(event.target.value)
                       }
-                      autoComplete="email"
-                      placeholder="name@company.com"
+                      autoComplete="username"
+                      placeholder="Enter username or email"
                       disabled={loading}
+                      required
                       className="
-                        h-11
-                        w-full
-                        rounded-lg
-                        border
-                        border-[var(--border)]
+                        h-11 w-full rounded-lg
+                        border border-[var(--border)]
                         bg-[var(--background)]
-                        pl-10.5
-                        pr-3.5
-                        text-sm
+                        pl-10.5 pr-3.5 text-sm
                         text-[var(--text-primary)]
+                        outline-none transition duration-150
                         placeholder:text-[var(--text-subtle)]
-                        outline-none
-                        transition
-                        duration-150
                         focus:border-[var(--brand)]
-                        focus:ring-2
-                        focus:ring-[var(--brand)]/10
+                        focus:ring-2 focus:ring-[var(--brand)]/10
                         disabled:cursor-not-allowed
                         disabled:opacity-50
                       "
@@ -325,16 +236,12 @@ export default function Login() {
                   </div>
                 </div>
 
-                {/* PASSWORD */}
-
+                {/* Password */}
                 <div>
                   <label
                     htmlFor="password"
                     className="
-                      mb-2
-                      block
-                      text-xs
-                      font-medium
+                      mb-2 block text-xs font-medium
                       text-[var(--text-secondary)]
                     "
                   >
@@ -344,24 +251,16 @@ export default function Login() {
                   <div className="relative">
                     <HiOutlineLockClosed
                       className="
-                        pointer-events-none
-                        absolute
-                        left-3.5
-                        top-1/2
-                        h-[18px]
-                        w-[18px]
-                        -translate-y-1/2
-                        text-[var(--text-subtle)]
+                        pointer-events-none absolute left-3.5
+                        top-1/2 h-[18px] w-[18px]
+                        -translate-y-1/2 text-[var(--text-subtle)]
                       "
                     />
 
                     <input
                       id="password"
-                      type={
-                        showPassword
-                          ? "text"
-                          : "password"
-                      }
+                      name="password"
+                      type={showPassword ? "text" : "password"}
                       value={password}
                       onChange={(event) =>
                         setPassword(event.target.value)
@@ -369,24 +268,17 @@ export default function Login() {
                       autoComplete="current-password"
                       placeholder="Enter your password"
                       disabled={loading}
+                      required
                       className="
-                        h-11
-                        w-full
-                        rounded-lg
-                        border
-                        border-[var(--border)]
+                        h-11 w-full rounded-lg
+                        border border-[var(--border)]
                         bg-[var(--background)]
-                        pl-10.5
-                        pr-11
-                        text-sm
+                        pl-10.5 pr-11 text-sm
                         text-[var(--text-primary)]
+                        outline-none transition duration-150
                         placeholder:text-[var(--text-subtle)]
-                        outline-none
-                        transition
-                        duration-150
                         focus:border-[var(--brand)]
-                        focus:ring-2
-                        focus:ring-[var(--brand)]/10
+                        focus:ring-2 focus:ring-[var(--brand)]/10
                         disabled:cursor-not-allowed
                         disabled:opacity-50
                       "
@@ -395,9 +287,7 @@ export default function Login() {
                     <button
                       type="button"
                       onClick={() =>
-                        setShowPassword(
-                          (value) => !value
-                        )
+                        setShowPassword((value) => !value)
                       }
                       disabled={loading}
                       aria-label={
@@ -406,18 +296,10 @@ export default function Login() {
                           : "Show password"
                       }
                       className="
-                        absolute
-                        right-2
-                        top-1/2
-                        flex
-                        h-8
-                        w-8
-                        -translate-y-1/2
-                        items-center
-                        justify-center
-                        rounded-md
-                        text-[var(--text-subtle)]
-                        transition
+                        absolute right-2 top-1/2
+                        flex h-8 w-8 -translate-y-1/2
+                        items-center justify-center rounded-md
+                        text-[var(--text-subtle)] transition
                         hover:bg-[var(--surface)]
                         hover:text-[var(--text-secondary)]
                       "
@@ -431,29 +313,17 @@ export default function Login() {
                   </div>
                 </div>
 
-                {/* SIGN IN */}
-
+                {/* Sign in */}
                 <button
                   type="submit"
                   disabled={loading}
                   className="
-                    flex
-                    h-11
-                    w-full
-                    items-center
-                    justify-center
-                    gap-2
-                    rounded-lg
-                    bg-[var(--brand)]
-                    px-4
-                    text-sm
-                    font-semibold
-                    text-white
-                    shadow-sm
-                    shadow-[var(--brand)]/20
-                    transition
-                    duration-150
-                    hover:brightness-95
+                    flex h-11 w-full items-center
+                    justify-center gap-2 rounded-lg
+                    bg-[var(--brand)] px-4 text-sm
+                    font-semibold text-white shadow-sm
+                    shadow-[var(--brand)]/20 transition
+                    duration-150 hover:brightness-95
                     active:scale-[0.99]
                     disabled:cursor-not-allowed
                     disabled:opacity-50
@@ -463,95 +333,38 @@ export default function Login() {
                     <>
                       <span
                         className="
-                          h-4
-                          w-4
-                          animate-spin
-                          rounded-full
-                          border-2
-                          border-white/30
-                          border-t-white
+                          h-4 w-4 animate-spin rounded-full
+                          border-2 border-white/30 border-t-white
                         "
                       />
-
                       Signing in...
                     </>
                   ) : (
                     <>
                       Sign in
-
                       <HiOutlineArrowRight className="h-4 w-4" />
                     </>
                   )}
                 </button>
               </form>
 
-              {/* =================================================
-                  SECURITY NOTE
-              ================================================= */}
-
+              {/* Security note */}
               <div
                 className="
-                  mt-6
-                  flex
-                  items-center
-                  justify-center
-                  gap-1.5
-                  border-t
-                  border-[var(--border)]/60
-                  pt-5
+                  mt-6 flex items-center justify-center gap-1.5
+                  border-t border-[var(--border)]/60 pt-5
+                  text-xs text-[var(--text-muted)]
                 "
               >
-                <HiOutlineLockClosed
-                  className="
-                    h-3.5
-                    w-3.5
-                    text-[var(--brand)]/70
-                  "
-                />
-
-                <span
-                  className="
-                    text-[11px]
-                    text-[var(--text-muted)]
-                  "
-                >
-                  Secured & encrypted access
-                </span>
+                <HiOutlineShieldCheck className="h-4 w-4 text-[var(--brand)]" />
+                Secure sign-in to your workspace
               </div>
             </div>
           </div>
 
-          {/* =================================================
-              FOOTER
-          ================================================= */}
-
-          <div
-            className="
-              mt-5
-              flex
-              items-center
-              justify-between
-              px-1
-            "
-          >
-            <span
-              className="
-                text-[11px]
-                text-[var(--text-muted)]
-              "
-            >
-              Team Work
-            </span>
-
-            <span
-              className="
-                text-[11px]
-                text-[var(--text-muted)]
-              "
-            >
-              © {new Date().getFullYear()}
-            </span>
-          </div>
+          <p className="mt-5 text-center text-xs text-[var(--text-muted)]">
+            Team Work · Reporting System
+          </p>
         </div>
       </section>
     </main>

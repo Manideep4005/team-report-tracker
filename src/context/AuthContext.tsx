@@ -1,3 +1,4 @@
+
 import {
     createContext,
     useContext,
@@ -16,302 +17,140 @@ import {
 
 import type { User } from "../services/auth";
 
-
 interface Context {
-
     user: User | null;
 
     login: (
-        email: string,
-        password: string
+        identifier: string,
+        password: string,
     ) => Promise<void>;
 
     logout: () => Promise<void>;
 
-    /*
-     * Update the currently authenticated user
-     * inside AuthContext.
-     */
-    updateUser: (
-        user: User
-    ) => void;
+    updateUser: (user: User) => void;
 
-    /*
-     * Re-fetch the currently authenticated user
-     * from the backend.
-     *
-     * This is important after role/permission changes.
-     */
     refreshUser: () => Promise<void>;
 
-    hasPermission: (
-        permission: string
-    ) => boolean;
+    hasPermission: (permission: string) => boolean;
 
-    hasAnyPermission: (
-        permissions: string[]
-    ) => boolean;
+    hasAnyPermission: (permissions: string[]) => boolean;
 
-    hasAllPermissions: (
-        permissions: string[]
-    ) => boolean;
+    hasAllPermissions: (permissions: string[]) => boolean;
 
     loading: boolean;
 }
 
-
-const AuthContext =
-    createContext({} as Context);
-
+const AuthContext = createContext({} as Context);
 
 export function AuthProvider({
-
     children,
-
 }: {
-
     children: ReactNode;
-
 }) {
-
-    const [
-        user,
-        setUser,
-    ] = useState<User | null>(null);
-
-
-    const [
-        loading,
-        setLoading,
-    ] = useState(true);
-
+    const [user, setUser] = useState<User | null>(null);
+    const [loading, setLoading] = useState(true);
 
     /*
-     * =========================================================
-     * LOAD USER
-     * =========================================================
+     * Load the authenticated user from the backend.
      */
-
     async function loadUser() {
-
         try {
-
-            const response =
-                await auth.me();
-
-            setUser(
-                response.user
-            );
-
+            const response = await auth.me();
+            setUser(response.user);
         } catch {
-
             setUser(null);
-
         } finally {
-
             setLoading(false);
-
         }
     }
 
-
     /*
-     * =========================================================
-     * INITIAL LOAD
-     * =========================================================
+     * Load the session when the application starts.
      */
-
     useEffect(() => {
-
-        loadUser();
-
+        void loadUser();
     }, []);
 
-
     /*
-     * =========================================================
-     * LOGIN
-     * =========================================================
+     * Login using either username or email.
      */
-
     async function login(
+        identifier: string,
+        password: string,
+    ): Promise<void> {
+        const response = await auth.login({
+            identifier: identifier.trim(),
+            password,
+        });
 
-        email: string,
-
-        password: string
-
-    ) {
-
-        const response =
-            await auth.login({
-
-                email,
-
-                password,
-
-            });
-
-
-        setUser(
-            response.user
-        );
-
+        setUser(response.user);
     }
 
-
     /*
-     * =========================================================
-     * LOGOUT
-     * =========================================================
+     * Logout the current user.
      */
-
-    async function logout() {
-
+    async function logout(): Promise<void> {
         await auth.logout();
-
         setUser(null);
-
     }
 
-
     /*
-     * =========================================================
-     * UPDATE USER
-     * =========================================================
+     * Update the authenticated user in context.
      */
-
-    function updateUser(
-        user: User
-    ) {
-
+    function updateUser(user: User): void {
         setUser(user);
-
     }
 
-
     /*
-     * =========================================================
-     * REFRESH CURRENT USER
-     *
-     * Used when role/permission changes.
-     * =========================================================
+     * Refresh the current user's details and permissions.
      */
-
-    async function refreshUser() {
-
+    async function refreshUser(): Promise<void> {
         try {
-
-            const response =
-                await auth.me();
-
-            setUser(
-                response.user
-            );
-
+            const response = await auth.me();
+            setUser(response.user);
         } catch {
-
-            /*
-             * If the current session is no longer valid,
-             * clear the authenticated user.
-             */
-
             setUser(null);
-
         }
-
     }
-
 
     /*
-     * =========================================================
-     * PERMISSION CHECKS
-     * =========================================================
+     * Permission checks.
      */
-
-    function checkPermission(
-        permission: string
-    ) {
-
-        return hasPermission(
-            user,
-            permission
-        );
-
+    function checkPermission(permission: string): boolean {
+        return hasPermission(user, permission);
     }
-
 
     function checkAnyPermission(
-        permissions: string[]
-    ) {
-
-        return hasAnyPermission(
-            user,
-            permissions
-        );
-
+        permissions: string[],
+    ): boolean {
+        return hasAnyPermission(user, permissions);
     }
-
 
     function checkAllPermissions(
-        permissions: string[]
-    ) {
-
-        return hasAllPermissions(
-            user,
-            permissions
-        );
-
+        permissions: string[],
+    ): boolean {
+        return hasAllPermissions(user, permissions);
     }
 
-
-    /*
-     * =========================================================
-     * PROVIDER
-     * =========================================================
-     */
-
     return (
-
         <AuthContext.Provider
             value={{
-
                 user,
-
                 login,
-
                 logout,
-
                 updateUser,
-
                 refreshUser,
-
-                hasPermission:
-                    checkPermission,
-
-                hasAnyPermission:
-                    checkAnyPermission,
-
-                hasAllPermissions:
-                    checkAllPermissions,
-
+                hasPermission: checkPermission,
+                hasAnyPermission: checkAnyPermission,
+                hasAllPermissions: checkAllPermissions,
                 loading,
-
             }}
         >
-
             {children}
-
         </AuthContext.Provider>
-
     );
-
 }
 
-
 export function useAuth() {
-
-    return useContext(
-        AuthContext
-    );
-
+    return useContext(AuthContext);
 }

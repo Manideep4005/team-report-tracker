@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import {
     useMutation,
@@ -18,6 +18,9 @@ import {
     HiOutlineShieldCheck,
     HiOutlineTrash,
     HiOutlineExclamationTriangle,
+    HiOutlineXMark,
+    HiOutlineSignal,
+    HiOutlineNoSymbol,
 } from "react-icons/hi2";
 
 import {
@@ -40,6 +43,8 @@ interface PermissionItem {
     code: string;
     name?: string;
 }
+
+type LinkStatus = "Active" | "Expired" | "Revoked";
 
 
 /* =========================================================
@@ -86,7 +91,7 @@ function isExpired(
 function getLinkStatus(
     isActive: boolean,
     expiresAt: string | null
-): "Active" | "Expired" | "Revoked" {
+): LinkStatus {
 
     if (!isActive) {
         return "Revoked";
@@ -163,10 +168,7 @@ function getExpirationText(
 ========================================================= */
 
 function getStatusClasses(
-    status:
-        | "Active"
-        | "Expired"
-        | "Revoked"
+    status: LinkStatus
 ): string {
 
     if (status === "Active") {
@@ -174,8 +176,10 @@ function getStatusClasses(
         return `
             bg-emerald-50
             text-emerald-700
+            ring-emerald-600/15
             dark:bg-emerald-950/30
             dark:text-emerald-400
+            dark:ring-emerald-400/20
         `;
     }
 
@@ -184,17 +188,228 @@ function getStatusClasses(
         return `
             bg-amber-50
             text-amber-700
+            ring-amber-600/15
             dark:bg-amber-950/30
             dark:text-amber-400
+            dark:ring-amber-400/20
         `;
     }
 
     return `
         bg-red-50
         text-red-700
+        ring-red-600/15
         dark:bg-red-950/30
         dark:text-red-400
+        dark:ring-red-400/20
     `;
+}
+
+
+/* =========================================================
+   SMALL UI PIECES
+========================================================= */
+
+function StatusBadge({
+    status,
+}: {
+    status: LinkStatus;
+}) {
+
+    return (
+        <span
+            className={`
+                inline-flex
+                items-center
+                gap-1.5
+                rounded-full
+                px-2.5
+                py-1
+                text-[10px]
+                font-semibold
+                ring-1
+                ring-inset
+                ${getStatusClasses(status)}
+            `}
+        >
+            <span className="h-1.5 w-1.5 rounded-full bg-current" />
+            {status}
+        </span>
+    );
+}
+
+
+function StatCard({
+    label,
+    value,
+    icon,
+    tone,
+}: {
+    label: string;
+    value: number;
+    icon: ReactNode;
+    tone: "blue" | "emerald" | "amber" | "red";
+}) {
+
+    const tones = {
+        blue: "bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400",
+        emerald: "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400",
+        amber: "bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400",
+        red: "bg-red-50 text-red-600 dark:bg-red-950/40 dark:text-red-400",
+    };
+
+    return (
+        <div className="
+            flex
+            items-center
+            gap-3
+            rounded-2xl
+            border
+            border-slate-200
+            bg-white
+            p-3.5
+            shadow-[0_1px_2px_rgba(15,23,42,0.04)]
+            dark:border-zinc-800
+            dark:bg-zinc-950
+            sm:p-4
+        ">
+            <div className={`
+                flex
+                h-9
+                w-9
+                shrink-0
+                items-center
+                justify-center
+                rounded-xl
+                sm:h-10
+                sm:w-10
+                ${tones[tone]}
+            `}>
+                {icon}
+            </div>
+
+            <div className="min-w-0">
+                <p className="
+                    text-xl
+                    font-bold
+                    leading-none
+                    tabular-nums
+                    text-slate-900
+                    dark:text-white
+                    sm:text-2xl
+                ">
+                    {value}
+                </p>
+
+                <p className="
+                    mt-1.5
+                    truncate
+                    text-[10px]
+                    font-semibold
+                    uppercase
+                    tracking-wider
+                    text-slate-400
+                    dark:text-zinc-500
+                ">
+                    {label}
+                </p>
+            </div>
+        </div>
+    );
+}
+
+
+function ModalShell({
+    onClose,
+    locked,
+    maxWidth,
+    zIndex,
+    children,
+}: {
+    onClose: () => void;
+    locked: boolean;
+    maxWidth: string;
+    zIndex: string;
+    children: ReactNode;
+}) {
+
+    useEffect(() => {
+
+        const handleKey = (
+            event: KeyboardEvent
+        ) => {
+            if (
+                event.key === "Escape" &&
+                !locked
+            ) {
+                onClose();
+            }
+        };
+
+        document.addEventListener(
+            "keydown",
+            handleKey
+        );
+
+        return () =>
+            document.removeEventListener(
+                "keydown",
+                handleKey
+            );
+
+    }, [onClose, locked]);
+
+    return (
+        <div
+            className={`
+                fixed
+                inset-0
+                ${zIndex}
+                flex
+                items-center
+                justify-center
+                overflow-y-auto
+                bg-slate-900/50
+                p-4
+                backdrop-blur-sm
+                dark:bg-black/70
+            `}
+            onMouseDown={event => {
+
+                if (
+                    event.target ===
+                    event.currentTarget &&
+                    !locked
+                ) {
+                    onClose();
+                }
+
+            }}
+        >
+            <div
+                role="dialog"
+                aria-modal="true"
+                className={`
+                    my-auto
+                    w-full
+                    ${maxWidth}
+                    overflow-hidden
+                    rounded-2xl
+                    border
+                    border-slate-200
+                    bg-white
+                    shadow-2xl
+                    dark:border-zinc-800
+                    dark:bg-zinc-950
+                `}
+                onMouseDown={event =>
+                    event.stopPropagation()
+                }
+            >
+                {children}
+            </div>
+        </div>
+    );
 }
 
 
@@ -347,6 +562,34 @@ export default function PublicMonitorManagement() {
 
     const links =
         data?.data ?? [];
+
+
+    /* =====================================================
+       STATS
+    ===================================================== */
+
+    const stats = links.reduce(
+        (
+            acc,
+            link
+        ) => {
+
+            const status =
+                getLinkStatus(
+                    link.isActive,
+                    link.expiresAt
+                );
+
+            acc[status] += 1;
+
+            return acc;
+        },
+        {
+            Active: 0,
+            Expired: 0,
+            Revoked: 0,
+        } as Record<LinkStatus, number>
+    );
 
 
     /* =====================================================
@@ -692,79 +935,75 @@ export default function PublicMonitorManagement() {
                 flex
                 flex-col
                 gap-4
+                border-b
+                border-slate-200/80
+                pb-5
+                dark:border-zinc-800/80
                 sm:flex-row
-                sm:items-end
+                sm:items-center
                 sm:justify-between
+                sm:pb-6
             ">
 
                 <div className="
+                    flex
                     min-w-0
+                    items-center
+                    gap-3.5
                 ">
 
                     <div className="
                         flex
+                        h-11
+                        w-11
+                        shrink-0
                         items-center
-                        gap-3
+                        justify-center
+                        rounded-xl
+                        bg-blue-600
+                        text-white
+                        shadow-sm
+                        shadow-blue-600/25
                     ">
 
-                        <div className="
-                            flex
-                            h-10
-                            w-10
-                            shrink-0
-                            items-center
-                            justify-center
-                            rounded-xl
-                            bg-blue-50
-                            text-blue-600
-                            dark:bg-blue-950/40
-                            dark:text-blue-400
+                        <HiOutlineShieldCheck
+                            size={22}
+                        />
+
+                    </div>
+
+
+                    <div className="min-w-0">
+
+                        <h1 className="
+                            text-xl
+                            font-bold
+                            tracking-tight
+                            text-slate-900
+                            dark:text-white
+                            sm:text-2xl
                         ">
-
-                            <HiOutlineShieldCheck
-                                size={21}
-                            />
-
-                        </div>
+                            Public Monitor
+                        </h1>
 
 
-                        <div className="
-                            min-w-0
+                        <p className="
+                            mt-0.5
+                            text-xs
+                            leading-5
+                            text-slate-500
+                            dark:text-zinc-500
                         ">
-
-                            <h1 className="
-                                text-xl
-                                font-bold
-                                tracking-tight
-                                text-slate-900
-                                dark:text-white
-                                sm:text-2xl
-                            ">
-                                Public Monitor
-                            </h1>
-
-
-                            <p className="
-                                mt-1
-                                text-xs
-                                leading-5
-                                text-slate-500
-                                dark:text-zinc-500
-                            ">
-                                Share your team's report
-                                status with a secure link.
-                            </p>
-
-                        </div>
+                            Share your team's report
+                            status with a secure link.
+                        </p>
 
                     </div>
 
                 </div>
 
 
-                {/* =================================================
-                    HEADER ACTIONS
-                ================================================= */}
+                {/* HEADER ACTIONS */}
 
                 <div className="
                     flex
@@ -794,8 +1033,11 @@ export default function PublicMonitorManagement() {
                             border-slate-200
                             bg-white
                             text-slate-500
+                            shadow-sm
                             transition
                             hover:bg-slate-50
+                            hover:text-slate-700
+                            active:scale-[0.97]
                             disabled:opacity-50
                             dark:border-zinc-800
                             dark:bg-zinc-900
@@ -803,6 +1045,7 @@ export default function PublicMonitorManagement() {
                             dark:hover:bg-zinc-800
                         "
                         title="Refresh"
+                        aria-label="Refresh"
                     >
 
                         <HiOutlineArrowPath
@@ -816,8 +1059,6 @@ export default function PublicMonitorManagement() {
 
                     </button>
 
-
-                    {/* CREATE PERMISSION */}
 
                     {canCreateMonitor && (
 
@@ -846,6 +1087,7 @@ export default function PublicMonitorManagement() {
                                 shadow-blue-600/20
                                 transition
                                 hover:bg-blue-700
+                                active:scale-[0.97]
                                 sm:flex-none
                             "
                         >
@@ -854,16 +1096,11 @@ export default function PublicMonitorManagement() {
                                 size={17}
                             />
 
-                            <span className="
-                                hidden
-                                sm:inline
-                            ">
+                            <span className="hidden sm:inline">
                                 Generate Monitor Link
                             </span>
 
-                            <span className="
-                                sm:hidden
-                            ">
+                            <span className="sm:hidden">
                                 Generate
                             </span>
 
@@ -877,62 +1114,96 @@ export default function PublicMonitorManagement() {
 
 
             {/* =================================================
+                STATS
+            ================================================= */}
+
+            <div className="
+                grid
+                grid-cols-2
+                gap-3
+                lg:grid-cols-4
+            ">
+
+                <StatCard
+                    label="Total links"
+                    value={links.length}
+                    tone="blue"
+                    icon={<HiOutlineLink size={19} />}
+                />
+
+                <StatCard
+                    label="Active"
+                    value={stats.Active}
+                    tone="emerald"
+                    icon={<HiOutlineSignal size={19} />}
+                />
+
+                <StatCard
+                    label="Expired"
+                    value={stats.Expired}
+                    tone="amber"
+                    icon={<HiOutlineClock size={19} />}
+                />
+
+                <StatCard
+                    label="Revoked"
+                    value={stats.Revoked}
+                    tone="red"
+                    icon={<HiOutlineNoSymbol size={19} />}
+                />
+
+            </div>
+
+
+            {/* =================================================
                 INFORMATION
             ================================================= */}
 
             <div className="
+                flex
+                items-start
+                gap-3
                 rounded-2xl
                 border
                 border-blue-100
-                bg-blue-50
+                bg-blue-50/70
                 p-4
                 dark:border-blue-950
                 dark:bg-blue-950/20
             ">
 
-                <div className="
-                    flex
-                    gap-3
-                ">
+                <HiOutlineLink
+                    size={18}
+                    className="
+                        mt-0.5
+                        shrink-0
+                        text-blue-600
+                        dark:text-blue-400
+                    "
+                />
 
-                    <HiOutlineLink
-                        size={19}
-                        className="
-                            mt-0.5
-                            shrink-0
-                            text-blue-600
-                            dark:text-blue-400
-                        "
-                    />
+                <div className="min-w-0">
 
-
-                    <div className="
-                        min-w-0
+                    <p className="
+                        text-xs
+                        font-semibold
+                        text-blue-800
+                        dark:text-blue-300
                     ">
+                        Public monitoring links
+                    </p>
 
-                        <p className="
-                            text-xs
-                            font-semibold
-                            text-blue-800
-                            dark:text-blue-300
-                        ">
-                            Public monitoring links
-                        </p>
-
-
-                        <p className="
-                            mt-1
-                            text-[11px]
-                            leading-5
-                            text-blue-600
-                            dark:text-blue-400
-                        ">
-                            Generate a link that allows
-                            others to view your team's
-                            report status without logging in.
-                        </p>
-
-                    </div>
+                    <p className="
+                        mt-0.5
+                        text-[11px]
+                        leading-5
+                        text-blue-600
+                        dark:text-blue-400
+                    ">
+                        Generate a link that allows
+                        others to view your team's
+                        report status without logging in.
+                    </p>
 
                 </div>
 
@@ -952,16 +1223,20 @@ export default function PublicMonitorManagement() {
                         border
                         border-emerald-200
                         bg-white
+                        shadow-[0_1px_2px_rgba(15,23,42,0.04)]
                         dark:border-emerald-950
                         dark:bg-zinc-950
                     ">
 
                         <div className="
+                            flex
+                            items-center
+                            gap-3
                             border-b
                             border-emerald-100
                             bg-emerald-50/60
                             px-4
-                            py-4
+                            py-3.5
                             sm:px-5
                             dark:border-emerald-950
                             dark:bg-emerald-950/20
@@ -969,55 +1244,44 @@ export default function PublicMonitorManagement() {
 
                             <div className="
                                 flex
+                                h-9
+                                w-9
+                                shrink-0
                                 items-center
-                                gap-3
+                                justify-center
+                                rounded-xl
+                                bg-emerald-100
+                                text-emerald-600
+                                dark:bg-emerald-950/50
+                                dark:text-emerald-400
                             ">
 
-                                <div className="
-                                    flex
-                                    h-9
-                                    w-9
-                                    shrink-0
-                                    items-center
-                                    justify-center
-                                    rounded-xl
-                                    bg-emerald-100
+                                <HiOutlineCheck
+                                    size={18}
+                                />
+
+                            </div>
+
+
+                            <div className="min-w-0 flex-1">
+
+                                <h2 className="
+                                    text-sm
+                                    font-bold
+                                    text-emerald-800
+                                    dark:text-emerald-300
+                                ">
+                                    Monitor link generated
+                                </h2>
+
+                                <p className="
+                                    mt-0.5
+                                    text-[11px]
                                     text-emerald-600
-                                    dark:bg-emerald-950/50
                                     dark:text-emerald-400
                                 ">
-
-                                    <HiOutlineCheck
-                                        size={18}
-                                    />
-
-                                </div>
-
-
-                                <div className="
-                                    min-w-0
-                                ">
-
-                                    <h2 className="
-                                        text-sm
-                                        font-bold
-                                        text-emerald-800
-                                        dark:text-emerald-300
-                                    ">
-                                        Monitor link generated
-                                    </h2>
-
-
-                                    <p className="
-                                        mt-0.5
-                                        text-[11px]
-                                        text-emerald-600
-                                        dark:text-emerald-400
-                                    ">
-                                        Copy this link and share it.
-                                    </p>
-
-                                </div>
+                                    Copy this link and share it.
+                                </p>
 
                             </div>
 
@@ -1037,8 +1301,11 @@ export default function PublicMonitorManagement() {
                             ">
 
                                 <div className="
+                                    flex
                                     min-w-0
                                     flex-1
+                                    items-center
+                                    gap-2.5
                                     rounded-xl
                                     border
                                     border-slate-200
@@ -1049,7 +1316,17 @@ export default function PublicMonitorManagement() {
                                     dark:bg-zinc-900
                                 ">
 
+                                    <HiOutlineLink
+                                        size={16}
+                                        className="
+                                            shrink-0
+                                            text-slate-400
+                                            dark:text-zinc-500
+                                        "
+                                    />
+
                                     <p className="
+                                        min-w-0
                                         break-all
                                         text-[11px]
                                         leading-5
@@ -1083,8 +1360,11 @@ export default function PublicMonitorManagement() {
                                         text-xs
                                         font-semibold
                                         text-white
+                                        shadow-sm
+                                        shadow-emerald-600/20
                                         transition
                                         hover:bg-emerald-700
+                                        active:scale-[0.97]
                                         sm:w-auto
                                     "
                                 >
@@ -1116,6 +1396,7 @@ export default function PublicMonitorManagement() {
                 border
                 border-slate-200
                 bg-white
+                shadow-[0_1px_2px_rgba(15,23,42,0.04)]
                 dark:border-zinc-800
                 dark:bg-zinc-950
             ">
@@ -1124,15 +1405,13 @@ export default function PublicMonitorManagement() {
 
                 <div className="
                     flex
-                    flex-col
-                    gap-2
+                    items-center
+                    justify-between
+                    gap-3
                     border-b
                     border-slate-100
                     px-4
                     py-4
-                    sm:flex-row
-                    sm:items-center
-                    sm:justify-between
                     sm:px-5
                     dark:border-zinc-800
                 ">
@@ -1147,7 +1426,6 @@ export default function PublicMonitorManagement() {
                         ">
                             Monitoring Links
                         </h2>
-
 
                         <p className="
                             mt-0.5
@@ -1167,16 +1445,60 @@ export default function PublicMonitorManagement() {
                     {isFetching && (
 
                         <span className="
+                            inline-flex
+                            items-center
+                            gap-1.5
                             text-[10px]
                             text-slate-400
                             dark:text-zinc-500
                         ">
+                            <HiOutlineArrowPath
+                                size={12}
+                                className="animate-spin"
+                            />
                             Refreshing...
                         </span>
 
                     )}
 
                 </div>
+
+
+                {/* Column headings (desktop) */}
+
+                {!isLoading &&
+                    links.length > 0 && (
+
+                        <div className="
+                            hidden
+                            grid-cols-[130px_minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,1fr)_110px]
+                            items-center
+                            gap-4
+                            border-b
+                            border-slate-100
+                            bg-slate-50/70
+                            px-5
+                            py-2.5
+                            text-[10px]
+                            font-bold
+                            uppercase
+                            tracking-wider
+                            text-slate-400
+                            dark:border-zinc-800
+                            dark:bg-zinc-900/50
+                            dark:text-zinc-500
+                            lg:grid
+                        ">
+                            <span>Status</span>
+                            <span>Created by</span>
+                            <span>Created</span>
+                            <span>Expiration</span>
+                            <span className="text-right">
+                                {canRevokeMonitor ? "Action" : ""}
+                            </span>
+                        </div>
+
+                    )}
 
 
                 {/* Loading */}
@@ -1195,7 +1517,7 @@ export default function PublicMonitorManagement() {
                                 <div
                                     key={item}
                                     className="
-                                        h-24
+                                        h-20
                                         animate-pulse
                                         rounded-xl
                                         bg-slate-100
@@ -1268,6 +1590,39 @@ export default function PublicMonitorManagement() {
                                 report status.
                             </p>
 
+                            {canCreateMonitor && (
+
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setShowGenerateModal(
+                                            true
+                                        )
+                                    }
+                                    className="
+                                        mt-5
+                                        inline-flex
+                                        h-9
+                                        items-center
+                                        justify-center
+                                        gap-1.5
+                                        rounded-xl
+                                        bg-blue-600
+                                        px-3.5
+                                        text-[11px]
+                                        font-semibold
+                                        text-white
+                                        transition
+                                        hover:bg-blue-700
+                                        active:scale-[0.97]
+                                    "
+                                >
+                                    <HiOutlinePlus size={15} />
+                                    Generate Monitor Link
+                                </button>
+
+                            )}
+
                         </div>
 
                     )}
@@ -1305,12 +1660,6 @@ export default function PublicMonitorManagement() {
                                         );
 
 
-                                    const statusClasses =
-                                        getStatusClasses(
-                                            status
-                                        );
-
-
                                     return (
                                         <div
                                             key={
@@ -1318,202 +1667,228 @@ export default function PublicMonitorManagement() {
                                             }
                                             className="
                                                 p-4
-                                                sm:p-5
+                                                transition-colors
+                                                hover:bg-slate-50/60
+                                                dark:hover:bg-zinc-900/40
+                                                sm:px-5
+                                                lg:grid
+                                                lg:grid-cols-[130px_minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,1fr)_110px]
+                                                lg:items-center
+                                                lg:gap-4
+                                                lg:py-3.5
                                             "
                                         >
 
+                                            {/* STATUS */}
+
                                             <div className="
                                                 flex
-                                                flex-col
-                                                gap-4
-                                                lg:flex-row
-                                                lg:items-center
-                                                lg:justify-between
+                                                items-center
+                                                justify-between
+                                                lg:block
                                             ">
 
-                                                {/* LINK INFO */}
+                                                <StatusBadge
+                                                    status={status}
+                                                />
+
+                                                {/* mobile-only revoke shortcut spacing handled below */}
+
+                                            </div>
+
+
+                                            {/* CREATED BY */}
+
+                                            <div className="
+                                                mt-3
+                                                flex
+                                                min-w-0
+                                                items-center
+                                                gap-2.5
+                                                lg:mt-0
+                                            ">
 
                                                 <div className="
-                                                    min-w-0
-                                                    flex-1
+                                                    flex
+                                                    h-7
+                                                    w-7
+                                                    shrink-0
+                                                    items-center
+                                                    justify-center
+                                                    rounded-full
+                                                    bg-slate-100
+                                                    text-[10px]
+                                                    font-bold
+                                                    text-slate-500
+                                                    dark:bg-zinc-900
+                                                    dark:text-zinc-400
                                                 ">
-
-                                                    <div className="
-                                                        flex
-                                                        flex-wrap
-                                                        items-center
-                                                        gap-2
-                                                    ">
-
-                                                        <span
-                                                            className={`
-                                                                inline-flex
-                                                                items-center
-                                                                gap-1.5
-                                                                rounded-full
-                                                                px-2.5
-                                                                py-1
-                                                                text-[10px]
-                                                                font-semibold
-                                                                ${statusClasses}
-                                                            `}
-                                                        >
-
-                                                            <span className="
-                                                                h-1.5
-                                                                w-1.5
-                                                                rounded-full
-                                                                bg-current
-                                                            " />
-
-                                                            {status}
-
-                                                        </span>
-
-
-                                                        <span className="
-                                                            text-[11px]
-                                                            text-slate-400
-                                                            dark:text-zinc-500
-                                                        ">
-                                                            Created by{" "}
-                                                            {
-                                                                link.createdBy.name
-                                                            }
-                                                        </span>
-
-                                                    </div>
-
-
-                                                    <div className="
-                                                        mt-2
-                                                        flex
-                                                        flex-wrap
-                                                        items-center
-                                                        gap-x-4
-                                                        gap-y-1
-                                                        text-[11px]
-                                                        text-slate-500
-                                                        dark:text-zinc-500
-                                                    ">
-
-                                                        <span className="
-                                                            inline-flex
-                                                            items-center
-                                                            gap-1.5
-                                                        ">
-
-                                                            <HiOutlineClock
-                                                                size={14}
-                                                            />
-
-                                                            {
-                                                                getExpirationText(
-                                                                    link.expiresAt
-                                                                )
-                                                            }
-
-                                                        </span>
-
-
-                                                        <span>
-                                                            Created{" "}
-                                                            {
-                                                                formatDate(
-                                                                    link.createdAt
-                                                                )
-                                                            }
-                                                        </span>
-
-                                                    </div>
-
-
-                                                    {link.revokedAt && (
-
-                                                        <p className="
-                                                            mt-1.5
-                                                            text-[10px]
-                                                            text-red-500
-                                                        ">
-
-                                                            Revoked{" "}
-                                                            {
-                                                                formatDate(
-                                                                    link.revokedAt
-                                                                )
-                                                            }
-
-                                                            {link.revokedBy
-                                                                ? ` by ${link.revokedBy.name}`
-                                                                : ""}
-
-                                                        </p>
-
-                                                    )}
-
+                                                    {link.createdBy.name
+                                                        ?.trim()
+                                                        .charAt(0)
+                                                        .toUpperCase()}
                                                 </div>
 
+                                                <div className="min-w-0">
+                                                    <p className="
+                                                        truncate
+                                                        text-xs
+                                                        font-semibold
+                                                        text-slate-700
+                                                        dark:text-zinc-200
+                                                    ">
+                                                        {link.createdBy.name}
+                                                    </p>
+                                                    <p className="
+                                                        text-[10px]
+                                                        text-slate-400
+                                                        dark:text-zinc-500
+                                                    ">
+                                                        Creator
+                                                    </p>
+                                                </div>
 
-                                                {/* =================================================
-                                                    REVOKE ACTION
-                                                ================================================= */}
+                                            </div>
+
+
+                                            {/* CREATED */}
+
+                                            <div className="
+                                                mt-3
+                                                text-[11px]
+                                                text-slate-500
+                                                dark:text-zinc-500
+                                                lg:mt-0
+                                            ">
+                                                <span className="
+                                                    mr-1.5
+                                                    text-slate-400
+                                                    dark:text-zinc-600
+                                                    lg:hidden
+                                                ">
+                                                    Created
+                                                </span>
+                                                {formatDate(
+                                                    link.createdAt
+                                                )}
+                                            </div>
+
+
+                                            {/* EXPIRATION */}
+
+                                            <div className="
+                                                mt-1.5
+                                                min-w-0
+                                                text-[11px]
+                                                text-slate-500
+                                                dark:text-zinc-500
+                                                lg:mt-0
+                                            ">
+
+                                                <span className="
+                                                    inline-flex
+                                                    items-center
+                                                    gap-1.5
+                                                ">
+
+                                                    <HiOutlineClock
+                                                        size={14}
+                                                        className="shrink-0"
+                                                    />
+
+                                                    {
+                                                        getExpirationText(
+                                                            link.expiresAt
+                                                        )
+                                                    }
+
+                                                </span>
+
+
+                                                {link.revokedAt && (
+
+                                                    <p className="
+                                                        mt-1
+                                                        text-[10px]
+                                                        leading-4
+                                                        text-red-500
+                                                    ">
+
+                                                        Revoked{" "}
+                                                        {
+                                                            formatDate(
+                                                                link.revokedAt
+                                                            )
+                                                        }
+
+                                                        {link.revokedBy
+                                                            ? ` by ${link.revokedBy.name}`
+                                                            : ""}
+
+                                                    </p>
+
+                                                )}
+
+                                            </div>
+
+
+                                            {/* REVOKE ACTION */}
+
+                                            <div className="
+                                                mt-3
+                                                flex
+                                                lg:mt-0
+                                                lg:justify-end
+                                            ">
 
                                                 {active &&
                                                     canRevokeMonitor && (
 
-                                                        <div className="
-                                                            flex
-                                                            w-full
-                                                            shrink-0
-                                                            lg:w-auto
-                                                        ">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                handleRevoke(
+                                                                    link.id
+                                                                )
+                                                            }
+                                                            disabled={
+                                                                revokeMutation.isPending
+                                                            }
+                                                            className="
+                                                                inline-flex
+                                                                h-9
+                                                                w-full
+                                                                items-center
+                                                                justify-center
+                                                                gap-1.5
+                                                                rounded-xl
+                                                                border
+                                                                border-red-200
+                                                                bg-white
+                                                                px-3
+                                                                text-[11px]
+                                                                font-semibold
+                                                                text-red-600
+                                                                transition
+                                                                hover:bg-red-50
+                                                                active:scale-[0.97]
+                                                                disabled:cursor-not-allowed
+                                                                disabled:opacity-50
+                                                                dark:border-red-950
+                                                                dark:bg-zinc-950
+                                                                dark:text-red-400
+                                                                dark:hover:bg-red-950/30
+                                                                lg:w-auto
+                                                            "
+                                                        >
 
-                                                            <button
-                                                                type="button"
-                                                                onClick={() =>
-                                                                    handleRevoke(
-                                                                        link.id
-                                                                    )
-                                                                }
-                                                                disabled={
-                                                                    revokeMutation.isPending
-                                                                }
-                                                                className="
-                                                                    inline-flex
-                                                                    h-9
-                                                                    w-full
-                                                                    items-center
-                                                                    justify-center
-                                                                    gap-1.5
-                                                                    rounded-xl
-                                                                    border
-                                                                    border-red-200
-                                                                    bg-white
-                                                                    px-3
-                                                                    text-[11px]
-                                                                    font-semibold
-                                                                    text-red-600
-                                                                    transition
-                                                                    hover:bg-red-50
-                                                                    disabled:cursor-not-allowed
-                                                                    disabled:opacity-50
-                                                                    dark:border-red-950
-                                                                    dark:bg-zinc-950
-                                                                    dark:text-red-400
-                                                                    dark:hover:bg-red-950/30
-                                                                    lg:w-auto
-                                                                "
-                                                            >
+                                                            <HiOutlineTrash
+                                                                size={15}
+                                                            />
 
-                                                                <HiOutlineTrash
-                                                                    size={15}
-                                                                />
+                                                            Revoke
 
-                                                                Revoke
-
-                                                            </button>
-
-                                                        </div>
+                                                        </button>
 
                                                     )}
 
@@ -1538,188 +1913,214 @@ export default function PublicMonitorManagement() {
             {showGenerateModal &&
                 canCreateMonitor && (
 
-                    <div
-                        className="
-                            fixed
-                            inset-0
-                            z-[100]
-                            flex
-                            items-center
-                            justify-center
-                            overflow-y-auto
-                            bg-black/60
-                            p-4
-                            backdrop-blur-sm
-                        "
-                        onMouseDown={event => {
-
-                            if (
-                                event.target ===
-                                event.currentTarget &&
-                                !createMutation.isPending
-                            ) {
-
-                                setShowGenerateModal(
-                                    false
-                                );
-                            }
-
-                        }}
+                    <ModalShell
+                        zIndex="z-[100]"
+                        maxWidth="max-w-md"
+                        locked={createMutation.isPending}
+                        onClose={() =>
+                            setShowGenerateModal(
+                                false
+                            )
+                        }
                     >
 
-                        <div
-                            className="
-                                my-auto
-                                w-full
-                                max-w-md
-                                overflow-hidden
-                                rounded-2xl
-                                border
-                                border-slate-200
-                                bg-white
-                                shadow-2xl
-                                dark:border-zinc-800
-                                dark:bg-zinc-950
-                            "
-                            onMouseDown={event =>
-                                event.stopPropagation()
-                            }
-                        >
+                        <div className="
+                            flex
+                            items-start
+                            justify-between
+                            gap-3
+                            border-b
+                            border-slate-100
+                            px-5
+                            py-4
+                            dark:border-zinc-800
+                        ">
 
                             <div className="
-                                border-b
-                                border-slate-100
-                                px-5
-                                py-4
-                                dark:border-zinc-800
+                                flex
+                                items-center
+                                gap-3
                             ">
 
-                                <h2 className="
-                                    text-sm
-                                    font-bold
-                                    text-slate-900
-                                    dark:text-white
+                                <div className="
+                                    flex
+                                    h-9
+                                    w-9
+                                    shrink-0
+                                    items-center
+                                    justify-center
+                                    rounded-xl
+                                    bg-blue-50
+                                    text-blue-600
+                                    dark:bg-blue-950/40
+                                    dark:text-blue-400
                                 ">
-                                    Generate Monitor Link
-                                </h2>
+                                    <HiOutlineLink size={18} />
+                                </div>
 
+                                <div>
 
-                                <p className="
-                                    mt-1
-                                    text-[11px]
+                                    <h2 className="
+                                        text-sm
+                                        font-bold
+                                        text-slate-900
+                                        dark:text-white
+                                    ">
+                                        Generate Monitor Link
+                                    </h2>
+
+                                    <p className="
+                                        mt-0.5
+                                        text-[11px]
+                                        text-slate-400
+                                        dark:text-zinc-500
+                                    ">
+                                        Configure how long this
+                                        link should remain active.
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+                            <button
+                                type="button"
+                                disabled={createMutation.isPending}
+                                onClick={() =>
+                                    setShowGenerateModal(
+                                        false
+                                    )
+                                }
+                                aria-label="Close"
+                                className="
+                                    flex
+                                    h-8
+                                    w-8
+                                    shrink-0
+                                    items-center
+                                    justify-center
+                                    rounded-lg
                                     text-slate-400
+                                    transition
+                                    hover:bg-slate-100
+                                    hover:text-slate-700
+                                    disabled:opacity-50
                                     dark:text-zinc-500
+                                    dark:hover:bg-zinc-900
+                                    dark:hover:text-zinc-200
+                                "
+                            >
+                                <HiOutlineXMark size={18} />
+                            </button>
+
+                        </div>
+
+
+                        <div className="
+                            space-y-5
+                            p-5
+                        ">
+
+                            <div>
+
+                                <label className="
+                                    mb-2
+                                    block
+                                    text-[11px]
+                                    font-semibold
+                                    uppercase
+                                    tracking-wide
+                                    text-slate-500
+                                    dark:text-zinc-400
                                 ">
-                                    Configure how long this
-                                    link should remain active.
-                                </p>
+                                    Link expiration
+                                </label>
+
+
+                                <div className="
+                                    grid
+                                    grid-cols-3
+                                    gap-1
+                                    rounded-xl
+                                    bg-slate-100
+                                    p-1
+                                    dark:bg-zinc-900
+                                ">
+
+                                    {(
+                                        [
+                                            "MINUTES",
+                                            "HOURS",
+                                            "NEVER",
+                                        ] as ExpirationType[]
+                                    ).map(
+                                        type => {
+
+                                            const selected =
+                                                expirationType ===
+                                                type;
+
+                                            let label =
+                                                "Never";
+
+                                            if (
+                                                type ===
+                                                "MINUTES"
+                                            ) {
+                                                label =
+                                                    "Minutes";
+                                            }
+
+                                            if (
+                                                type ===
+                                                "HOURS"
+                                            ) {
+                                                label =
+                                                    "Hours";
+                                            }
+
+                                            return (
+                                                <button
+                                                    key={
+                                                        type
+                                                    }
+                                                    type="button"
+                                                    onClick={() =>
+                                                        setExpirationType(
+                                                            type
+                                                        )
+                                                    }
+                                                    className={`
+                                                        rounded-lg
+                                                        px-2
+                                                        py-2.5
+                                                        text-[11px]
+                                                        font-semibold
+                                                        transition
+                                                        sm:text-xs
+                                                        ${selected
+                                                            ? "bg-white text-blue-700 shadow-sm ring-1 ring-blue-500/30 dark:bg-zinc-800 dark:text-blue-400 dark:ring-blue-500/40"
+                                                            : "text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                                                        }
+                                                    `}
+                                                >
+                                                    {label}
+                                                </button>
+                                            );
+                                        }
+                                    )}
+
+                                </div>
 
                             </div>
 
 
-                            <div className="
-                                space-y-5
-                                p-5
-                            ">
+                            {expirationType !==
+                                "NEVER" && (
 
-                                <div>
+                                    <div>
 
-                                    <label className="
-                                        mb-2
-                                        block
-                                        text-[11px]
-                                        font-semibold
-                                        uppercase
-                                        tracking-wide
-                                        text-slate-500
-                                        dark:text-zinc-400
-                                    ">
-                                        Link expiration
-                                    </label>
-
-
-                                    <div className="
-                                        grid
-                                        grid-cols-3
-                                        gap-2
-                                    ">
-
-                                        {(
-                                            [
-                                                "MINUTES",
-                                                "HOURS",
-                                                "NEVER",
-                                            ] as ExpirationType[]
-                                        ).map(
-                                            type => {
-
-                                                const selected =
-                                                    expirationType ===
-                                                    type;
-
-                                                let label =
-                                                    "Never";
-
-                                                if (
-                                                    type ===
-                                                    "MINUTES"
-                                                ) {
-                                                    label =
-                                                        "Minutes";
-                                                }
-
-                                                if (
-                                                    type ===
-                                                    "HOURS"
-                                                ) {
-                                                    label =
-                                                        "Hours";
-                                                }
-
-                                                return (
-                                                    <button
-                                                        key={
-                                                            type
-                                                        }
-                                                        type="button"
-                                                        onClick={() =>
-                                                            setExpirationType(
-                                                                type
-                                                            )
-                                                        }
-                                                        className={`
-                                                            rounded-xl
-                                                            border
-                                                            px-2
-                                                            py-3
-                                                            text-[11px]
-                                                            font-semibold
-                                                            transition
-                                                            sm:px-3
-                                                            sm:text-xs
-                                                            ${selected
-                                                                ? "border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-500 dark:bg-blue-950/30 dark:text-blue-400"
-                                                                : "border-slate-200 bg-white text-slate-500 hover:bg-slate-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800"
-                                                            }
-                                                        `}
-                                                    >
-                                                        {label}
-                                                    </button>
-                                                );
-                                            }
-                                        )}
-
-                                    </div>
-
-                                </div>
-
-
-                                {expirationType !==
-                                    "NEVER" && (
-
-                                        <div>
-
-                                            <label className="
+                                        <label className="
                                             mb-2
                                             block
                                             text-[11px]
@@ -1729,26 +2130,26 @@ export default function PublicMonitorManagement() {
                                             text-slate-500
                                             dark:text-zinc-400
                                         ">
-                                                {expirationType ===
-                                                    "MINUTES"
-                                                    ? "Duration in minutes"
-                                                    : "Duration in hours"}
-                                            </label>
+                                            {expirationType ===
+                                                "MINUTES"
+                                                ? "Duration in minutes"
+                                                : "Duration in hours"}
+                                        </label>
 
 
-                                            <input
-                                                type="number"
-                                                min="1"
-                                                step="1"
-                                                value={
-                                                    expirationValue
-                                                }
-                                                onChange={event =>
-                                                    setExpirationValue(
-                                                        event.target.value
-                                                    )
-                                                }
-                                                className="
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            step="1"
+                                            value={
+                                                expirationValue
+                                            }
+                                            onChange={event =>
+                                                setExpirationValue(
+                                                    event.target.value
+                                                )
+                                            }
+                                            className="
                                                 w-full
                                                 rounded-xl
                                                 border
@@ -1761,29 +2162,32 @@ export default function PublicMonitorManagement() {
                                                 outline-none
                                                 transition
                                                 focus:border-blue-500
-                                                focus:ring-2
+                                                focus:ring-4
                                                 focus:ring-blue-500/10
                                                 dark:border-zinc-800
                                                 dark:bg-zinc-900
                                                 dark:text-white
                                             "
-                                                placeholder={
-                                                    expirationType ===
-                                                        "MINUTES"
-                                                        ? "30"
-                                                        : "2"
-                                                }
-                                            />
+                                            placeholder={
+                                                expirationType ===
+                                                    "MINUTES"
+                                                    ? "30"
+                                                    : "2"
+                                            }
+                                        />
 
-                                        </div>
+                                    </div>
 
-                                    )}
+                                )}
 
 
-                                {expirationType ===
-                                    "NEVER" && (
+                            {expirationType ===
+                                "NEVER" && (
 
-                                        <div className="
+                                    <div className="
+                                        flex
+                                        items-start
+                                        gap-2.5
                                         rounded-xl
                                         border
                                         border-amber-200
@@ -1797,108 +2201,117 @@ export default function PublicMonitorManagement() {
                                         dark:bg-amber-950/20
                                         dark:text-amber-400
                                     ">
+                                        <HiOutlineExclamationTriangle
+                                            size={16}
+                                            className="mt-0.5 shrink-0"
+                                        />
+                                        <span>
                                             This link will remain active
                                             until it is manually revoked.
-                                        </div>
+                                        </span>
+                                    </div>
 
-                                    )}
-
-                            </div>
-
-
-                            <div className="
-                                flex
-                                flex-col-reverse
-                                gap-2
-                                border-t
-                                border-slate-100
-                                px-5
-                                py-4
-                                sm:flex-row
-                                sm:items-center
-                                sm:justify-end
-                                dark:border-zinc-800
-                            ">
-
-                                <button
-                                    type="button"
-                                    disabled={
-                                        createMutation.isPending
-                                    }
-                                    onClick={() =>
-                                        setShowGenerateModal(
-                                            false
-                                        )
-                                    }
-                                    className="
-                                        h-10
-                                        w-full
-                                        rounded-xl
-                                        border
-                                        border-slate-200
-                                        bg-white
-                                        px-4
-                                        text-xs
-                                        font-semibold
-                                        text-slate-600
-                                        transition
-                                        hover:bg-slate-50
-                                        disabled:opacity-50
-                                        sm:w-auto
-                                        dark:border-zinc-800
-                                        dark:bg-zinc-900
-                                        dark:text-zinc-300
-                                        dark:hover:bg-zinc-800
-                                    "
-                                >
-                                    Cancel
-                                </button>
-
-
-                                <button
-                                    type="button"
-                                    disabled={
-                                        createMutation.isPending
-                                    }
-                                    onClick={
-                                        handleGenerate
-                                    }
-                                    className="
-                                        inline-flex
-                                        h-10
-                                        w-full
-                                        items-center
-                                        justify-center
-                                        gap-2
-                                        rounded-xl
-                                        bg-blue-600
-                                        px-4
-                                        text-xs
-                                        font-semibold
-                                        text-white
-                                        transition
-                                        hover:bg-blue-700
-                                        disabled:cursor-not-allowed
-                                        disabled:opacity-60
-                                        sm:w-auto
-                                    "
-                                >
-
-                                    <HiOutlinePlus
-                                        size={15}
-                                    />
-
-                                    {createMutation.isPending
-                                        ? "Generating..."
-                                        : "Generate Link"}
-
-                                </button>
-
-                            </div>
+                                )}
 
                         </div>
 
-                    </div>
+
+                        <div className="
+                            flex
+                            flex-col-reverse
+                            gap-2
+                            border-t
+                            border-slate-100
+                            bg-slate-50/60
+                            px-5
+                            py-4
+                            sm:flex-row
+                            sm:items-center
+                            sm:justify-end
+                            dark:border-zinc-800
+                            dark:bg-zinc-900/30
+                        ">
+
+                            <button
+                                type="button"
+                                disabled={
+                                    createMutation.isPending
+                                }
+                                onClick={() =>
+                                    setShowGenerateModal(
+                                        false
+                                    )
+                                }
+                                className="
+                                    h-10
+                                    w-full
+                                    rounded-xl
+                                    border
+                                    border-slate-200
+                                    bg-white
+                                    px-4
+                                    text-xs
+                                    font-semibold
+                                    text-slate-600
+                                    transition
+                                    hover:bg-slate-50
+                                    disabled:opacity-50
+                                    sm:w-auto
+                                    dark:border-zinc-800
+                                    dark:bg-zinc-900
+                                    dark:text-zinc-300
+                                    dark:hover:bg-zinc-800
+                                "
+                            >
+                                Cancel
+                            </button>
+
+
+                            <button
+                                type="button"
+                                disabled={
+                                    createMutation.isPending
+                                }
+                                onClick={
+                                    handleGenerate
+                                }
+                                className="
+                                    inline-flex
+                                    h-10
+                                    w-full
+                                    items-center
+                                    justify-center
+                                    gap-2
+                                    rounded-xl
+                                    bg-blue-600
+                                    px-4
+                                    text-xs
+                                    font-semibold
+                                    text-white
+                                    shadow-sm
+                                    shadow-blue-600/20
+                                    transition
+                                    hover:bg-blue-700
+                                    active:scale-[0.97]
+                                    disabled:cursor-not-allowed
+                                    disabled:opacity-60
+                                    sm:w-auto
+                                "
+                            >
+
+                                <HiOutlinePlus
+                                    size={15}
+                                />
+
+                                {createMutation.isPending
+                                    ? "Generating..."
+                                    : "Generate Link"}
+
+                            </button>
+
+                        </div>
+
+                    </ModalShell>
 
                 )}
 
@@ -1910,209 +2323,175 @@ export default function PublicMonitorManagement() {
             {revokeLinkId &&
                 canRevokeMonitor && (
 
-                    <div
-                        className="
-                            fixed
-                            inset-0
-                            z-[110]
-                            flex
-                            items-center
-                            justify-center
-                            overflow-y-auto
-                            bg-black/60
-                            p-4
-                            backdrop-blur-sm
-                        "
-                        onMouseDown={event => {
-
-                            if (
-                                event.target ===
-                                event.currentTarget &&
-                                !revokeMutation.isPending
-                            ) {
-
-                                setRevokeLinkId(
-                                    null
-                                );
-                            }
-
-                        }}
+                    <ModalShell
+                        zIndex="z-[110]"
+                        maxWidth="max-w-sm"
+                        locked={revokeMutation.isPending}
+                        onClose={() =>
+                            setRevokeLinkId(
+                                null
+                            )
+                        }
                     >
 
-                        <div
-                            className="
-                                my-auto
-                                w-full
-                                max-w-sm
-                                overflow-hidden
-                                rounded-2xl
-                                border
-                                border-slate-200
-                                bg-white
-                                shadow-2xl
-                                dark:border-zinc-800
-                                dark:bg-zinc-950
-                            "
-                            onMouseDown={event =>
-                                event.stopPropagation()
-                            }
-                        >
+                        <div className="
+                            flex
+                            justify-center
+                            px-5
+                            pt-6
+                        ">
 
                             <div className="
                                 flex
+                                h-12
+                                w-12
+                                items-center
                                 justify-center
-                                px-5
-                                pt-6
+                                rounded-2xl
+                                bg-red-50
+                                text-red-600
+                                dark:bg-red-950/30
+                                dark:text-red-400
                             ">
 
-                                <div className="
-                                    flex
-                                    h-12
-                                    w-12
-                                    items-center
-                                    justify-center
-                                    rounded-2xl
-                                    bg-red-50
-                                    text-red-600
-                                    dark:bg-red-950/30
-                                    dark:text-red-400
-                                ">
-
-                                    <HiOutlineExclamationTriangle
-                                        size={24}
-                                    />
-
-                                </div>
-
-                            </div>
-
-
-                            <div className="
-                                px-5
-                                py-4
-                                text-center
-                            ">
-
-                                <h2 className="
-                                    text-sm
-                                    font-bold
-                                    text-slate-900
-                                    dark:text-white
-                                ">
-                                    Revoke monitoring link?
-                                </h2>
-
-
-                                <p className="
-                                    mx-auto
-                                    mt-2
-                                    max-w-xs
-                                    text-xs
-                                    leading-5
-                                    text-slate-500
-                                    dark:text-zinc-500
-                                ">
-                                    Anyone using this link will
-                                    immediately lose access to
-                                    the public monitoring page.
-                                    This action cannot be undone.
-                                </p>
-
-                            </div>
-
-
-                            <div className="
-                                flex
-                                flex-col-reverse
-                                gap-2
-                                border-t
-                                border-slate-100
-                                px-5
-                                py-4
-                                sm:flex-row
-                                sm:justify-end
-                                dark:border-zinc-800
-                            ">
-
-                                <button
-                                    type="button"
-                                    disabled={
-                                        revokeMutation.isPending
-                                    }
-                                    onClick={() =>
-                                        setRevokeLinkId(
-                                            null
-                                        )
-                                    }
-                                    className="
-                                        h-10
-                                        w-full
-                                        rounded-xl
-                                        border
-                                        border-slate-200
-                                        bg-white
-                                        px-4
-                                        text-xs
-                                        font-semibold
-                                        text-slate-600
-                                        transition
-                                        hover:bg-slate-50
-                                        disabled:opacity-50
-                                        sm:w-auto
-                                        dark:border-zinc-800
-                                        dark:bg-zinc-900
-                                        dark:text-zinc-300
-                                        dark:hover:bg-zinc-800
-                                    "
-                                >
-                                    Cancel
-                                </button>
-
-
-                                <button
-                                    type="button"
-                                    disabled={
-                                        revokeMutation.isPending
-                                    }
-                                    onClick={
-                                        confirmRevoke
-                                    }
-                                    className="
-                                        inline-flex
-                                        h-10
-                                        w-full
-                                        items-center
-                                        justify-center
-                                        gap-2
-                                        rounded-xl
-                                        bg-red-600
-                                        px-4
-                                        text-xs
-                                        font-semibold
-                                        text-white
-                                        transition
-                                        hover:bg-red-700
-                                        disabled:cursor-not-allowed
-                                        disabled:opacity-60
-                                        sm:w-auto
-                                    "
-                                >
-
-                                    <HiOutlineTrash
-                                        size={15}
-                                    />
-
-                                    {revokeMutation.isPending
-                                        ? "Revoking..."
-                                        : "Revoke Link"}
-
-                                </button>
+                                <HiOutlineExclamationTriangle
+                                    size={24}
+                                />
 
                             </div>
 
                         </div>
 
-                    </div>
+
+                        <div className="
+                            px-5
+                            py-4
+                            text-center
+                        ">
+
+                            <h2 className="
+                                text-sm
+                                font-bold
+                                text-slate-900
+                                dark:text-white
+                            ">
+                                Revoke monitoring link?
+                            </h2>
+
+
+                            <p className="
+                                mx-auto
+                                mt-2
+                                max-w-xs
+                                text-xs
+                                leading-5
+                                text-slate-500
+                                dark:text-zinc-500
+                            ">
+                                Anyone using this link will
+                                immediately lose access to
+                                the public monitoring page.
+                                This action cannot be undone.
+                            </p>
+
+                        </div>
+
+
+                        <div className="
+                            flex
+                            flex-col-reverse
+                            gap-2
+                            border-t
+                            border-slate-100
+                            bg-slate-50/60
+                            px-5
+                            py-4
+                            sm:flex-row
+                            sm:justify-end
+                            dark:border-zinc-800
+                            dark:bg-zinc-900/30
+                        ">
+
+                            <button
+                                type="button"
+                                disabled={
+                                    revokeMutation.isPending
+                                }
+                                onClick={() =>
+                                    setRevokeLinkId(
+                                        null
+                                    )
+                                }
+                                className="
+                                    h-10
+                                    w-full
+                                    rounded-xl
+                                    border
+                                    border-slate-200
+                                    bg-white
+                                    px-4
+                                    text-xs
+                                    font-semibold
+                                    text-slate-600
+                                    transition
+                                    hover:bg-slate-50
+                                    disabled:opacity-50
+                                    sm:w-auto
+                                    dark:border-zinc-800
+                                    dark:bg-zinc-900
+                                    dark:text-zinc-300
+                                    dark:hover:bg-zinc-800
+                                "
+                            >
+                                Cancel
+                            </button>
+
+
+                            <button
+                                type="button"
+                                disabled={
+                                    revokeMutation.isPending
+                                }
+                                onClick={
+                                    confirmRevoke
+                                }
+                                className="
+                                    inline-flex
+                                    h-10
+                                    w-full
+                                    items-center
+                                    justify-center
+                                    gap-2
+                                    rounded-xl
+                                    bg-red-600
+                                    px-4
+                                    text-xs
+                                    font-semibold
+                                    text-white
+                                    shadow-sm
+                                    shadow-red-600/20
+                                    transition
+                                    hover:bg-red-700
+                                    active:scale-[0.97]
+                                    disabled:cursor-not-allowed
+                                    disabled:opacity-60
+                                    sm:w-auto
+                                "
+                            >
+
+                                <HiOutlineTrash
+                                    size={15}
+                                />
+
+                                {revokeMutation.isPending
+                                    ? "Revoking..."
+                                    : "Revoke Link"}
+
+                            </button>
+
+                        </div>
+
+                    </ModalShell>
 
                 )}
 

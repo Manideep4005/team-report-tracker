@@ -22,6 +22,7 @@ import PublicMonitorView
 import Chat from "./pages/Chat/Chat";
 import Resume from "./pages/Resume/Resume";
 import Profile from "./pages/ResumeProfile/ResumeProfile";
+import EmailReminders from "./pages/EmailReminders/EmailReminders";
 
 
 
@@ -216,6 +217,17 @@ function App() {
                     >
                         <DashboardLayout>
                             <Profile />
+                        </DashboardLayout>
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/email-reminders"
+                element={
+                    <ProtectedRoute>
+                        <DashboardLayout>
+                            <EmailReminders />
                         </DashboardLayout>
                     </ProtectedRoute>
                 }

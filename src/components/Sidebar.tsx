@@ -16,6 +16,7 @@ import {
   HiOutlineSun,
   HiOutlineUsers,
   HiOutlineXMark,
+  HiOutlineEnvelope,
 } from "react-icons/hi2";
 import { NavLink, useNavigate } from "react-router-dom";
 import { createPortal } from "react-dom";
@@ -23,6 +24,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import UserAvatar from "./UserAvatar";
+import { GlassIconButton, GlassTooltip } from "./Glass";
 
 interface SidebarProps {
   open: boolean;
@@ -66,12 +68,12 @@ export default function Sidebar({ open, collapsed, onClose, onToggleCollapse }: 
   const closeMenus = () => { setAccountOpen(false); setThemeOpen(false); };
   const handleLogout = async () => { closeMenus(); onClose(); await logout(); navigate("/"); };
   const goTo = (path: string) => { closeMenus(); onClose(); navigate(path); };
-  const showManagementSection = hasPermission("USER_VIEW") || hasPermission("ROLE_VIEW") || hasPermission("PERMISSION_VIEW") || hasPermission("LOGIN_HISTORY_VIEW") || hasPermission("PUBLIC_MONITOR_VIEW");
+  const showManagementSection = hasPermission("USER_VIEW") || hasPermission("ROLE_VIEW") || hasPermission("PERMISSION_VIEW") || hasPermission("LOGIN_HISTORY_VIEW") || hasPermission("PUBLIC_MONITOR_VIEW") || hasPermission("EMAIL_REMINDER_VIEW");
 
   const showTooltip = (label: string, element: HTMLAnchorElement) => {
     if (!collapsed) return;
     const rect = element.getBoundingClientRect();
-    setTooltip({ label, top: rect.top + rect.height / 2, left: rect.right + 10 });
+    setTooltip({ label, top: rect.top + rect.height / 2, left: rect.right + 16 });
   };
 
   const NavItem = ({ to, label, icon, visible = true, mobile }: { to: string; label: string; icon: ReactNode; visible?: boolean; mobile: boolean }) => {
@@ -111,14 +113,21 @@ export default function Sidebar({ open, collapsed, onClose, onToggleCollapse }: 
         <NavItem to="/permissions" label="Permissions" icon={<HiOutlineKey size={19} />} visible={hasPermission("PERMISSION_VIEW")} mobile={mobile} />
         <NavItem to="/login-history" label="Login History" icon={<HiOutlineArrowRightOnRectangle size={19} />} visible={hasPermission("LOGIN_HISTORY_VIEW")} mobile={mobile} />
         <NavItem to="/public-monitor" label="Public Monitor" icon={<HiOutlineLink size={19} />} visible={hasPermission("PUBLIC_MONITOR_VIEW")} mobile={mobile} />
+        <NavItem
+          to="/email-reminders"
+          label="Email Reminders"
+          icon={<HiOutlineEnvelope size={19} />}
+          visible={hasPermission("EMAIL_REMINDER_VIEW")}
+          mobile={mobile}
+        />
       </div>}
     </nav>
   );
 
   const brand = (mobile = false) => (
     <div className={cx("flex min-w-0 items-center gap-3", collapsed && !mobile && "justify-center")}>
-      <div className="flex h-9 w-8 shrink-0 items-center justify-center overflow-hidden rounded-xl">
-        <img src="/group.png" alt="Team Work" className="h-full w-full object-cover" />
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl">
+        <img src="/logo.png" alt="Team Work" className="h-full w-full object-cover" />
       </div>
       {(!collapsed || mobile) && <div className="min-w-0"><h1 className="truncate text-sm font-bold tracking-tight text-[var(--text-primary)]">Team Work</h1><p className="mt-0.5 truncate text-[10px] font-medium text-[var(--text-muted)]">Report Tracker</p></div>}
     </div>
@@ -151,19 +160,75 @@ export default function Sidebar({ open, collapsed, onClose, onToggleCollapse }: 
   );
 
   return <>
-    <div onClick={() => { closeMenus(); onClose(); }} className={cx("pointer-events-none fixed inset-0 z-[190] bg-slate-900/40 opacity-0 backdrop-blur-[3px] transition-[opacity,visibility] duration-300 lg:hidden", open && "pointer-events-auto visible opacity-100")} />
+
+    <button
+      type="button"
+      aria-label="Close navigation overlay"
+      onClick={() => {
+        closeMenus();
+        onClose();
+      }}
+      className={cx(
+        "fixed inset-0 z-[190] bg-slate-900/40 backdrop-blur-[3px]",
+        "transition-opacity duration-300 lg:hidden",
+        open
+          ? "visible pointer-events-auto opacity-100"
+          : "invisible pointer-events-none opacity-0"
+      )}
+    />
     <aside className={cx("fixed inset-y-0 left-0 z-[200] flex w-[min(280px,86vw)] -translate-x-full flex-col border-r border-[var(--border)] bg-[var(--surface)] shadow-[20px_0_60px_rgb(15_23_42_/_0.12)] transition-transform duration-300 ease-out dark:shadow-[20px_0_60px_rgb(0_0_0_/_0.35)] lg:hidden", open && "translate-x-0")}>
-      <div className="flex items-center justify-between gap-3 border-b border-[var(--border-subtle)] p-4">{brand(true)}<button type="button" onClick={() => { closeMenus(); onClose(); }} aria-label="Close navigation" title="Close navigation" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] border border-[var(--border)] bg-[var(--surface-subtle)] text-[var(--text-muted)] transition-all hover:rotate-90 hover:border-[var(--border-strong)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"><HiOutlineXMark size={20} /></button></div>
+      <div className="flex items-center justify-between gap-3 border-b border-[var(--border-subtle)] p-4">{brand(true)}
+
+        {/* MOBILE CLOSE — liquid glass */}
+        <GlassIconButton
+          size={36}
+          onClick={() => {
+            closeMenus();
+            onClose();
+          }}
+          aria-label="Close navigation"
+          title="Close navigation"
+        >
+          <HiOutlineXMark
+            size={18}
+            strokeWidth={2.25}
+            className="transition-transform duration-300 group-hover:rotate-90"
+          />
+        </GlassIconButton>
+      </div>
       {renderNavigation(true)}<div className="shrink-0 border-t border-[var(--border-subtle)] bg-[var(--surface)] p-4">{renderUserCard(accountRefMobile, true)}</div>
     </aside>
     <aside className={cx("relative sticky top-0 z-40 hidden h-screen min-h-0 flex-col overflow-visible border-r border-[var(--border)] bg-[var(--surface)] shadow-[6px_0_24px_rgb(15_23_42_/_0.04)] transition-[width] duration-200 lg:flex", collapsed ? "w-[72px]" : "w-[248px]")}>
       <div className={cx("flex min-h-[72px] items-center border-b border-[var(--border-subtle)]", collapsed ? "justify-center" : "justify-between gap-3 px-4")}>{brand()}</div>
-      <button type="button" onClick={onToggleCollapse} aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"} title={collapsed ? "Expand sidebar" : "Collapse sidebar"} className="absolute -right-3 top-[72px] z-20 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface-elevated)] text-[var(--text-muted)] shadow-[0_3px_10px_rgb(15_23_42_/_0.12)] transition-all duration-150 hover:scale-105 hover:border-indigo-400/60 hover:bg-indigo-500/10 hover:text-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 dark:shadow-[0_3px_10px_rgb(0_0_0_/_0.28)] dark:hover:text-indigo-300">
-        <span aria-hidden="true" className="absolute -inset-1 -z-10 rounded-full bg-indigo-400/25 blur-md animate-pulse motion-reduce:animate-none dark:bg-indigo-400/35" />
-        {collapsed ? <HiOutlineChevronRight size={17} strokeWidth={2.25} /> : <HiOutlineChevronLeft size={17} strokeWidth={2.25} />}
-      </button>
+
+      {/* DESKTOP COLLAPSE / EXPAND — liquid glass */}
+      <div className="absolute -right-4 top-[72px] z-20 -translate-y-1/2">
+        <GlassIconButton
+          size={32}
+          onClick={onToggleCollapse}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {collapsed ? (
+            <HiOutlineChevronRight
+              size={16}
+              strokeWidth={2.5}
+              className="transition-transform duration-300 group-hover:translate-x-0.5"
+            />
+          ) : (
+            <HiOutlineChevronLeft
+              size={16}
+              strokeWidth={2.5}
+              className="transition-transform duration-300 group-hover:-translate-x-0.5"
+            />
+          )}
+        </GlassIconButton>
+      </div>
       {renderNavigation(false)}<div className={cx("relative shrink-0 border-t border-[var(--border-subtle)] bg-[var(--surface)]", collapsed ? "p-3" : "p-4")}>{renderUserCard(accountRefDesktop)}</div>
     </aside>
-    {tooltip && typeof document !== "undefined" && createPortal(<div role="tooltip" className="pointer-events-none fixed z-[1000] -translate-y-1/2 whitespace-nowrap rounded-lg border border-[var(--border)] bg-[var(--surface-elevated)] px-2.5 py-[7px] text-[11px] font-semibold text-[var(--text-primary)] shadow-[var(--shadow-md)]" style={{ top: tooltip.top, left: tooltip.left }}>{tooltip.label}</div>, document.body)}
+    {tooltip && typeof document !== "undefined" && createPortal(
+      <GlassTooltip key={tooltip.label} label={tooltip.label} top={tooltip.top} left={tooltip.left} />,
+      document.body
+    )}
   </>;
 }

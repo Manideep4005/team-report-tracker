@@ -19,6 +19,7 @@ export interface UserRole {
 export interface ManagedUser {
     id: string;
     name: string;
+    username: string;
     email: string;
     avatarUrl: string;
 
@@ -40,6 +41,7 @@ export interface ManagedUser {
 export interface CreateUserPayload {
     name: string;
     email: string;
+    username: string;
     roleId: string;
 }
 
@@ -51,6 +53,7 @@ export interface CreateUserPayload {
 export interface UpdateUserPayload {
     name?: string;
     email?: string;
+    username: string;
     roleId?: string;
 }
 
