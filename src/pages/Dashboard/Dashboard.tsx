@@ -238,8 +238,7 @@ export default function Dashboard() {
     isToday &&
     !data?.myReport &&
     now.getDay() !== 0 &&
-    (now.getHours() > 13 ||
-      (now.getHours() === 13 && now.getMinutes() >= 0));
+    (now.getHours() > 13 || (now.getHours() === 13 && now.getMinutes() >= 0));
 
   /* ====================================================================== */
   /* Progress Ring Animation                                                */
@@ -365,7 +364,7 @@ export default function Dashboard() {
     const reports = [...data.reports];
 
     const currentUserIndex = reports.findIndex(
-      (report) => String(report.userId) === String(user?.id)
+      (report) => String(report.userId) === String(user?.id),
     );
 
     /*
@@ -654,7 +653,7 @@ export default function Dashboard() {
                   >
                     <div
                       className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ring-1 ring-black/[0.04] dark:ring-white/[0.05] ${avatarClasses(
-                        report.user.name
+                        report.user.name,
                       )}`}
                     >
                       <UserAvatar
@@ -675,7 +674,7 @@ export default function Dashboard() {
                             {
                               hour: "2-digit",
                               minute: "2-digit",
-                            }
+                            },
                           )}
                         </time>
                       </div>
@@ -818,7 +817,7 @@ export default function Dashboard() {
                   <div className="flex min-w-0 items-center gap-3">
                     <div
                       className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ring-1 ring-black/[0.04] dark:ring-white/[0.05] ${avatarClasses(
-                        member.name
+                        member.name,
                       )}`}
                     >
                       <UserAvatar

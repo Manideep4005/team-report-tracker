@@ -1,15 +1,6 @@
-import React, {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
   HiOutlineAcademicCap,
@@ -117,6 +108,16 @@ export const THEME_STYLES = `
 
 @media (prefers-reduced-motion: reduce) {
   .rs-sheet { animation: none; }
+}
+
+@keyframes rs-indeterminate {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(260%); }
+}
+.rs-indeterminate { animation: rs-indeterminate 1.2s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rs-indeterminate { animation: none; }
 }
 `;
 
@@ -267,7 +268,9 @@ function sectionSummary(section: ResumeSection): string {
     return count ? "Written" : "Empty";
   }
   if (section.type === "SKILLS") {
-    return count ? `${count} ${count === 1 ? "category" : "categories"}` : "Empty";
+    return count
+      ? `${count} ${count === 1 ? "category" : "categories"}`
+      : "Empty";
   }
   return count ? `${count} ${count === 1 ? "entry" : "entries"}` : "Empty";
 }
@@ -466,13 +469,7 @@ function CommaSeparatedInput({
   );
 }
 
-function AddButton({
-  onClick,
-  label,
-}: {
-  onClick: () => void;
-  label: string;
-}) {
+function AddButton({ onClick, label }: { onClick: () => void; label: string }) {
   return (
     <button
       type="button"
@@ -791,8 +788,8 @@ function SkillsEditor({
 }) {
   const skills: ResumeSkillsContent =
     section.content &&
-      typeof section.content === "object" &&
-      Array.isArray((section.content as ResumeSkillsContent).categories)
+    typeof section.content === "object" &&
+    Array.isArray((section.content as ResumeSkillsContent).categories)
       ? (section.content as ResumeSkillsContent)
       : { categories: [] };
 
@@ -896,7 +893,9 @@ function ProjectsEditor({
         <EntryCard
           key={item.id}
           title={item.name || `Project ${index + 1}`}
-          subtitle={(item.technologies ?? []).slice(0, 4).join(", ") || undefined}
+          subtitle={
+            (item.technologies ?? []).slice(0, 4).join(", ") || undefined
+          }
           defaultOpen={items.length === 1 || !item.name}
           onRemove={() => updateItems(items.filter((e) => e.id !== item.id))}
         >
@@ -1160,9 +1159,13 @@ function SectionEditor({
     case "SUMMARY":
       return <SummaryEditor section={section} updateSection={updateSection} />;
     case "EXPERIENCE":
-      return <ExperienceEditor section={section} updateSection={updateSection} />;
+      return (
+        <ExperienceEditor section={section} updateSection={updateSection} />
+      );
     case "EDUCATION":
-      return <EducationEditor section={section} updateSection={updateSection} />;
+      return (
+        <EducationEditor section={section} updateSection={updateSection} />
+      );
     case "SKILLS":
       return <SkillsEditor section={section} updateSection={updateSection} />;
     case "PROJECTS":
@@ -1723,7 +1726,9 @@ function MoreMenu({
               className={cn(itemCls, "hidden xl:flex")}
             >
               <HiOutlineSquares2X2 size={18} />
-              {splitActive ? "Hide side-by-side preview" : "Side-by-side preview"}
+              {splitActive
+                ? "Hide side-by-side preview"
+                : "Side-by-side preview"}
             </button>
           </div>
         </>
@@ -1756,6 +1761,50 @@ function computeCompleteness(content: ResumeProfileContent): number {
   return Math.round((checks.filter(Boolean).length / checks.length) * 100);
 }
 
+function ExportingOverlay({ progress }: { progress: number }) {
+  const percent = Math.round(progress);
+  const done = percent >= 100;
+
+  return (
+    <div
+      className="rs-scope fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 px-6 backdrop-blur-[2px]"
+      role="status"
+      aria-live="polite"
+    >
+      <div className="rs-sheet w-full max-w-xs rounded-2xl border border-[var(--rs-rule)] bg-[var(--rs-paper-raised)] p-6 text-center shadow-2xl">
+        <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-[var(--rs-brass-wash)] text-[var(--rs-brass)]">
+          {done ? (
+            <HiOutlineCheck size={26} />
+          ) : (
+            <HiOutlineArrowDownTray size={26} className="animate-bounce" />
+          )}
+        </div>
+
+        <h2 className="mt-4 text-[17px] font-semibold text-[var(--rs-ink)]">
+          {done ? "Your PDF is ready" : "Preparing your PDF"}
+        </h2>
+
+        <p className="mt-1.5 text-[13.5px] leading-5 text-[var(--rs-ink-soft)]">
+          {done
+            ? "Your download has started."
+            : "This can take a few seconds. Your download will start automatically."}
+        </p>
+
+        <div className="mt-5 h-2 w-full overflow-hidden rounded-full bg-[var(--rs-rule)]">
+          <div
+            className="h-full rounded-full bg-[var(--rs-brass)] transition-[width] duration-300 ease-out"
+            style={{ width: `${percent}%` }}
+          />
+        </div>
+
+        <p className="mt-2 text-[12.5px] font-medium tabular-nums text-[var(--rs-ink-soft)]">
+          {percent}%
+        </p>
+      </div>
+    </div>
+  );
+}
+
 /* ============================================================
    MAIN
 ============================================================ */
@@ -1763,7 +1812,8 @@ function computeCompleteness(content: ResumeProfileContent): number {
 export default function Resume() {
   const queryClient = useQueryClient();
 
-  const [content, setContent] = useState<ResumeProfileContent>(emptyResumeContent);
+  const [content, setContent] =
+    useState<ResumeProfileContent>(emptyResumeContent);
   const savedSnapshot = useRef<string>("");
 
   const [openId, setOpenId] = useState<string | null>(PERSONAL_ID);
@@ -1771,6 +1821,7 @@ export default function Resume() {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewDocked, setPreviewDocked] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [exportProgress, setExportProgress] = useState(0);
 
   /* MODAL BEHAVIOUR: lock page scroll, close on Escape */
   useEffect(() => {
@@ -1812,7 +1863,9 @@ export default function Resume() {
   /* LOAD CUSTOMIZATION */
   useEffect(() => {
     if (customizationQuery.data?.content) {
-      const normalized = normalizeResumeContent(customizationQuery.data.content);
+      const normalized = normalizeResumeContent(
+        customizationQuery.data.content,
+      );
       setContent(normalized);
       savedSnapshot.current = JSON.stringify(normalized);
     }
@@ -1847,7 +1900,9 @@ export default function Resume() {
       toast.success("Profile imported into your resume.");
     },
     onError: (error: any) => {
-      toast.error(error?.response?.data?.message || "Unable to import profile.");
+      toast.error(
+        error?.response?.data?.message || "Unable to import profile.",
+      );
     },
   });
 
@@ -1932,7 +1987,9 @@ export default function Resume() {
 
     setContent((previous) => ({
       ...previous,
-      sections: (previous.sections ?? []).filter((section) => section.id !== id),
+      sections: (previous.sections ?? []).filter(
+        (section) => section.id !== id,
+      ),
     }));
 
     if (openId === id) setOpenId(null);
@@ -1968,10 +2025,22 @@ export default function Resume() {
   }
 
   async function download() {
-    try {
-      setIsDownloading(true);
+    if (isDownloading) return;
 
+    setExportProgress(0);
+    setIsDownloading(true);
+
+    const timer = window.setInterval(() => {
+      setExportProgress((current) =>
+        Math.min(90, current + (90 - current) * 0.08 + 0.3),
+      );
+    }, 200);
+
+    try {
       const response = await downloadResumePdf();
+
+      window.clearInterval(timer);
+
       const url = window.URL.createObjectURL(response.data);
       const anchor = document.createElement("a");
 
@@ -1984,11 +2053,16 @@ export default function Resume() {
 
       window.URL.revokeObjectURL(url);
 
-      toast.success("Resume downloaded.");
+      setExportProgress(100);
+      await new Promise((resolve) => setTimeout(resolve, 500));
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Unable to download resume.");
+      toast.error(
+        error?.response?.data?.message || "Unable to download resume.",
+      );
     } finally {
+      window.clearInterval(timer);
       setIsDownloading(false);
+      setExportProgress(0);
     }
   }
 
@@ -1998,8 +2072,13 @@ export default function Resume() {
       <div className="rs-scope flex min-h-[70vh] items-center justify-center bg-[var(--rs-paper)]">
         <style>{THEME_STYLES}</style>
         <div className="flex flex-col items-center gap-3">
-          <HiOutlineArrowPath size={24} className="animate-spin text-[var(--rs-brass)]" />
-          <p className="text-[14px] text-[var(--rs-ink-soft)]">Loading your resume…</p>
+          <HiOutlineArrowPath
+            size={24}
+            className="animate-spin text-[var(--rs-brass)]"
+          />
+          <p className="text-[14px] text-[var(--rs-ink-soft)]">
+            Loading your resume…
+          </p>
         </div>
       </div>
     );
@@ -2110,7 +2189,8 @@ export default function Resume() {
                   {content.fullName?.trim() || "Your resume"}
                 </h1>
                 <p className="mt-0.5 truncate text-[13.5px] text-[var(--rs-ink-soft)]">
-                  {content.headline?.trim() || "Add a headline in Personal details"}
+                  {content.headline?.trim() ||
+                    "Add a headline in Personal details"}
                 </p>
 
                 <div className="mt-2 flex flex-wrap items-center gap-1.5">
@@ -2267,6 +2347,8 @@ export default function Resume() {
       {previewOpen && (
         <PreviewSheet content={content} onClose={() => setPreviewOpen(false)} />
       )}
+
+      {isDownloading && <ExportingOverlay progress={exportProgress} />}
     </main>
   );
 }
